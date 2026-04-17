@@ -16,6 +16,9 @@ export default auth((req) => {
     if (role === 'caregiver') {
       return NextResponse.redirect(new URL('/caregiver/dashboard', req.url))
     }
+    if (role === 'client') {
+      return NextResponse.redirect(new URL('/client/dashboard', req.url))
+    }
   }
 
   if (pathname.startsWith('/client')) {
