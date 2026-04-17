@@ -10,6 +10,7 @@ export async function requireAuth() {
 export async function requireRole(role: 'client' | 'caregiver') {
   const session = await requireAuth()
   if (session.user.role !== role) {
+    if (session.user.role === null) redirect('/get-started')
     redirect(session.user.role === 'client' ? '/client/dashboard' : '/caregiver/dashboard')
   }
   return session

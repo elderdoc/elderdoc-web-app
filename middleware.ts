@@ -9,7 +9,7 @@ export default auth((req) => {
 
   if (pathname.startsWith('/client')) {
     if (!isAuthenticated) {
-      return NextResponse.redirect(new URL(`/sign-in?callbackUrl=${pathname}`, req.url))
+      return NextResponse.redirect(new URL(`/sign-in?callbackUrl=${encodeURIComponent(pathname)}`, req.url))
     }
     if (role !== 'client') {
       return NextResponse.redirect(new URL('/caregiver/dashboard', req.url))
@@ -18,7 +18,7 @@ export default auth((req) => {
 
   if (pathname.startsWith('/caregiver')) {
     if (!isAuthenticated) {
-      return NextResponse.redirect(new URL(`/sign-in?callbackUrl=${pathname}`, req.url))
+      return NextResponse.redirect(new URL(`/sign-in?callbackUrl=${encodeURIComponent(pathname)}`, req.url))
     }
     if (role !== 'caregiver') {
       return NextResponse.redirect(new URL('/client/dashboard', req.url))

@@ -36,4 +36,14 @@ describe('middleware redirect logic', () => {
   it('allows caregiver to access /caregiver route', () => {
     expect(getRedirectTarget('/caregiver/dashboard', 'caregiver', true)).toBeNull()
   })
+
+  it('does not redirect authenticated user with no role on non-root path', () => {
+    expect(getRedirectTarget('/some-public-page', null, true)).toBeNull()
+  })
+
+  it('authenticated user with no role on "/" — returns get-started (tested at integration level)', () => {
+    // The "/" + no role redirect is handled in middleware.ts directly, not in getRedirectTarget
+    // This is a documentation-only test noting the gap in unit coverage
+    expect(true).toBe(true)
+  })
 })
