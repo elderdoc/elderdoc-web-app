@@ -186,7 +186,7 @@ export const notifications = pgTable('notifications', {
   userId:    uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   type:      text('type').notNull(),
   payload:   jsonb('payload').notNull(),
-  read:      boolean('read').default(false),
+  read:      boolean('read').notNull().default(false),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 })
 
