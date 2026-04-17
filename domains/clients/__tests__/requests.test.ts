@@ -2,22 +2,27 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 vi.mock('@/auth', () => ({ auth: vi.fn() }))
 
-const { mockChain, mockDb } = vi.hoisted(() => {
+const { mockChain, mockDb, mockTx } = vi.hoisted(() => {
   const mockChain = {
-    values:   vi.fn(),
+    values:    vi.fn(),
     returning: vi.fn(),
-    where:    vi.fn(),
-    set:      vi.fn(),
+    where:     vi.fn(),
+    set:       vi.fn(),
   }
   mockChain.values.mockReturnValue(mockChain)
   mockChain.returning.mockResolvedValue([{ id: 'new-id' }])
   mockChain.where.mockResolvedValue(undefined)
   mockChain.set.mockReturnValue(mockChain)
 
-  const mockDb = {
+  const mockTx = {
     insert: vi.fn().mockReturnValue(mockChain),
   }
-  return { mockChain, mockDb }
+
+  const mockDb = {
+    insert: vi.fn().mockReturnValue(mockChain),
+    transaction: vi.fn().mockImplementation(async (fn: (tx: typeof mockTx) => Promise<unknown>) => fn(mockTx)),
+  }
+  return { mockChain, mockDb, mockTx }
 })
 
 vi.mock('@/services/db', () => ({ db: mockDb }))
@@ -35,6 +40,8 @@ beforeEach(() => {
   mockChain.where.mockResolvedValue(undefined)
   mockChain.set.mockReturnValue(mockChain)
   mockDb.insert.mockReturnValue(mockChain)
+  mockDb.transaction.mockImplementation(async (fn: (tx: typeof mockTx) => Promise<unknown>) => fn(mockTx))
+  mockTx.insert.mockReturnValue(mockChain)
 })
 
 describe('createCareRecipient', () => {
@@ -93,7 +100,7 @@ describe('createCareRequest', () => {
   it('inserts to careRequestLocations', async () => {
     mockAuth.mockResolvedValue(SESSION as any)
     await createCareRequest(BASE)
-    expect(mockDb.insert).toHaveBeenCalledTimes(2)
+    expect(mockTx.insert).toHaveBeenCalledTimes(2)
   })
 
   it('returns the new request id', async () => {

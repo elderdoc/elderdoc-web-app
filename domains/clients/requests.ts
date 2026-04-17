@@ -55,31 +55,35 @@ export async function createCareRequest(data: {
   const session = await auth()
   if (!session?.user?.id) throw new Error('Unauthorized')
 
-  const [row] = await db.insert(careRequests).values({
-    clientId:     session.user.id,
-    recipientId:  data.recipientId,
-    careType:     data.careType,
-    frequency:    data.frequency,
-    days:         data.days,
-    shifts:       data.shifts,
-    startDate:    data.startDate,
-    durationHours:data.durationHours,
-    genderPref:   data.genderPref,
-    languagePref: data.languagePref,
-    budgetType:   data.budgetType,
-    budgetAmount: data.budgetAmount,
-    title:        data.title,
-    description:  data.description,
-    status:       'active',
-  }).returning({ id: careRequests.id })
+  const result = await db.transaction(async (tx) => {
+    const [row] = await tx.insert(careRequests).values({
+      clientId:     session.user.id,
+      recipientId:  data.recipientId,
+      careType:     data.careType,
+      frequency:    data.frequency,
+      days:         data.days,
+      shifts:       data.shifts,
+      startDate:    data.startDate,
+      durationHours:data.durationHours,
+      genderPref:   data.genderPref,
+      languagePref: data.languagePref,
+      budgetType:   data.budgetType,
+      budgetAmount: data.budgetAmount && !isNaN(Number(data.budgetAmount)) ? data.budgetAmount : undefined,
+      title:        data.title,
+      description:  data.description,
+      status:       'active',
+    }).returning({ id: careRequests.id })
 
-  await db.insert(careRequestLocations).values({
-    requestId: row.id,
-    address1:  data.address.address1,
-    address2:  data.address.address2,
-    city:      data.address.city,
-    state:     data.address.state,
+    await tx.insert(careRequestLocations).values({
+      requestId: row.id,
+      address1:  data.address.address1,
+      address2:  data.address.address2,
+      city:      data.address.city,
+      state:     data.address.state,
+    })
+
+    return row
   })
 
-  return { id: row.id }
+  return { id: result.id }
 }
