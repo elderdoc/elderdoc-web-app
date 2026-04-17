@@ -19,7 +19,11 @@ export function ApplyModal({ requestId, requestTitle }: Props) {
   useEffect(() => {
     if (!open) return
     function onKeyDown(e: KeyboardEvent) {
-      if (e.key === 'Escape') handleClose()
+      if (e.key === 'Escape') {
+        setCoverNote('')
+        setError(null)
+        setOpen(false)
+      }
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
