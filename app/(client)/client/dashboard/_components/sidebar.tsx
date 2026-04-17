@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { signOut } from 'next-auth/react'
+import { Bell } from 'lucide-react'
 
 const NAV_LINKS = [
   { href: '/client/dashboard',                label: 'Home' },
@@ -56,6 +57,7 @@ export function Sidebar({ userName, userInitials, userImage, unreadCount }: Side
       {/* Bottom: bell + user */}
       <div className="border-t border-border px-4 py-4 space-y-3">
         <Link href="/client/dashboard/notifications" className="relative flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
+          <Bell className="h-4 w-4" />
           <span>Notifications</span>
           {unreadCount > 0 && (
             <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
