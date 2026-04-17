@@ -70,6 +70,7 @@ export async function acceptOffer(matchId: string): Promise<void> {
     })
 
     await tx.update(matches).set({ status: 'accepted' }).where(eq(matches.id, matchId))
+    await tx.update(careRequests).set({ status: 'matched' }).where(eq(careRequests.id, match.requestId))
   })
 }
 
@@ -77,7 +78,10 @@ export async function declineOffer(matchId: string): Promise<void> {
   const session = await auth()
   if (!session?.user?.id) throw new Error('Unauthorized')
   const profile = await getProfile(session.user.id)
-  await db.update(matches).set({ status: 'declined' }).where(
-    and(eq(matches.id, matchId), eq(matches.caregiverId, profile.id), eq(matches.status, 'pending'))
-  )
+  const updated = await db
+    .update(matches)
+    .set({ status: 'declined' })
+    .where(and(eq(matches.id, matchId), eq(matches.caregiverId, profile.id), eq(matches.status, 'pending')))
+    .returning({ id: matches.id })
+  if (updated.length === 0) throw new Error('Match not found or already settled')
 }

@@ -21,7 +21,7 @@ const { mockSelectChain, mockMutateChain, mockDb, mockTx } = vi.hoisted(() => {
   mockMutateChain.values.mockReturnValue(mockMutateChain)
   mockMutateChain.returning.mockResolvedValue([{ id: 'new-id' }])
   mockMutateChain.set.mockReturnValue(mockMutateChain)
-  mockMutateChain.where.mockResolvedValue(undefined)
+  mockMutateChain.where.mockReturnValue(mockMutateChain)
 
   const mockTx = {
     insert: vi.fn().mockReturnValue(mockMutateChain),
@@ -58,7 +58,7 @@ beforeEach(() => {
   mockMutateChain.values.mockReturnValue(mockMutateChain)
   mockMutateChain.returning.mockResolvedValue([{ id: 'new-id' }])
   mockMutateChain.set.mockReturnValue(mockMutateChain)
-  mockMutateChain.where.mockResolvedValue(undefined)
+  mockMutateChain.where.mockReturnValue(mockMutateChain)
   mockDb.insert.mockReturnValue(mockMutateChain)
   mockDb.update.mockReturnValue(mockMutateChain)
   mockDb.select.mockReturnValue(mockSelectChain)
@@ -142,6 +142,7 @@ describe('acceptOffer', () => {
     }))
     expect(mockTx.update).toHaveBeenCalled()
     expect(mockMutateChain.set).toHaveBeenCalledWith({ status: 'accepted' })
+    expect(mockMutateChain.set).toHaveBeenCalledWith({ status: 'matched' })
   })
 
   it('throws Unauthorized if match belongs to another caregiver', async () => {
@@ -175,10 +176,17 @@ describe('declineOffer', () => {
   it('updates match status to declined scoped to caregiverId', async () => {
     mockAuth.mockResolvedValue(SESSION as any)
     mockDb.query.caregiverProfiles.findFirst.mockResolvedValue(PROFILE)
+    mockMutateChain.returning.mockResolvedValue([{ id: 'match-1' }])
     await declineOffer('match-1')
     expect(mockDb.update).toHaveBeenCalled()
     expect(mockMutateChain.set).toHaveBeenCalledWith({ status: 'declined' })
-    // where was called — meaning a where clause was applied (not an unscoped update)
     expect(mockMutateChain.where).toHaveBeenCalled()
+  })
+
+  it('throws Match not found or already settled when no rows updated', async () => {
+    mockAuth.mockResolvedValue(SESSION as any)
+    mockDb.query.caregiverProfiles.findFirst.mockResolvedValue(PROFILE)
+    mockMutateChain.returning.mockResolvedValueOnce([]) // 0 rows updated
+    await expect(declineOffer('match-1')).rejects.toThrow('Match not found or already settled')
   })
 })
