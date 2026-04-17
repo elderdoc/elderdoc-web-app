@@ -14,6 +14,16 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'No file' }, { status: 400 })
   }
 
+  const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp']
+  const MAX_BYTES = 5 * 1024 * 1024
+
+  if (!ALLOWED_TYPES.includes(file.type)) {
+    return NextResponse.json({ error: 'Invalid file type' }, { status: 415 })
+  }
+  if (file.size > MAX_BYTES) {
+    return NextResponse.json({ error: 'File too large' }, { status: 413 })
+  }
+
   const arrayBuffer = await file.arrayBuffer()
   const buffer = Buffer.from(arrayBuffer)
   const safeName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_').replace(/\.{2,}/g, '_')

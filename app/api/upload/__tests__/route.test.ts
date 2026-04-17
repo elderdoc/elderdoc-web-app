@@ -69,4 +69,23 @@ describe('POST /api/upload', () => {
     expect(key).not.toContain('..')
     expect(key).toContain('user-1')
   })
+
+  it('returns 415 when file type is not allowed', async () => {
+    mockAuth.mockResolvedValue(SESSION as any)
+    const file = new File(['fake'], 'script.html', { type: 'text/html' })
+    const res = await POST(makeRequest(file))
+    expect(res.status).toBe(415)
+    const body = await res.json()
+    expect(body.error).toBe('Invalid file type')
+  })
+
+  it('returns 413 when file exceeds 5MB', async () => {
+    mockAuth.mockResolvedValue(SESSION as any)
+    const largeContent = new Uint8Array(6 * 1024 * 1024)
+    const file = new File([largeContent], 'big.jpg', { type: 'image/jpeg' })
+    const res = await POST(makeRequest(file))
+    expect(res.status).toBe(413)
+    const body = await res.json()
+    expect(body.error).toBe('File too large')
+  })
 })
