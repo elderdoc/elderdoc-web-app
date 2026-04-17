@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useTransition, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { applyToRequest } from '@/domains/caregivers/actions'
 
@@ -13,19 +13,35 @@ export function ApplyModal({ requestId, requestTitle }: Props) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
   const [coverNote, setCoverNote] = useState('')
+  const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
+
+  useEffect(() => {
+    if (!open) return
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') handleClose()
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [open])
 
   function handleClose() {
     setCoverNote('')
+    setError(null)
     setOpen(false)
   }
 
   function handleSubmit() {
     if (!coverNote.trim()) return
+    setError(null)
     startTransition(async () => {
-      await applyToRequest(requestId, coverNote.trim())
-      router.refresh()
-      handleClose()
+      try {
+        await applyToRequest(requestId, coverNote.trim())
+        handleClose()
+        router.refresh()
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.')
+      }
     })
   }
 
@@ -45,6 +61,7 @@ export function ApplyModal({ requestId, requestTitle }: Props) {
             <button
               type="button"
               onClick={handleClose}
+              aria-label="Close"
               className="absolute right-4 top-4 text-muted-foreground hover:text-foreground"
             >
               ✕
@@ -59,10 +76,15 @@ export function ApplyModal({ requestId, requestTitle }: Props) {
               onChange={(e) => setCoverNote(e.target.value)}
               maxLength={500}
               rows={5}
+              required
+              aria-required="true"
               className="w-full rounded-md border border-border px-3 py-2 text-sm resize-none"
               placeholder="Introduce yourself and explain why you're a great fit…"
             />
-            <p className="text-right text-xs text-muted-foreground mt-1 mb-5">{coverNote.length}/500</p>
+            <p className="text-right text-xs text-muted-foreground mt-1 mb-3">{coverNote.length}/500</p>
+            {error && (
+              <p className="text-sm text-destructive mb-3">{error}</p>
+            )}
             <div className="flex justify-end gap-3">
               <button
                 type="button"
