@@ -15,7 +15,7 @@ export default function CaregiverComplete() {
             className="checkmark"
           >
             <style>{`
-              .checkmark-path {
+              .caregiver-complete-checkmark {
                 stroke-dasharray: 50;
                 stroke-dashoffset: 50;
                 animation: draw 0.5s ease-out 0.2s forwards;
@@ -25,7 +25,7 @@ export default function CaregiverComplete() {
               }
             `}</style>
             <path
-              className="checkmark-path"
+              className="caregiver-complete-checkmark"
               d="M10 21l8 8 14-16"
               stroke="#1A6B4A"
               strokeWidth="3"
