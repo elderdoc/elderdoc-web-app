@@ -3,6 +3,11 @@ import { db } from '@/services/db'
 import { careRecipients } from '@/db/schema'
 import { eq, desc } from 'drizzle-orm'
 import { CareRecipientModal } from '../_components/care-recipient-modal'
+import { CONDITIONS } from '@/lib/constants'
+
+const CONDITIONS_LABELS: Record<string, string> = Object.fromEntries(
+  CONDITIONS.map((c) => [c.key, c.label])
+)
 
 export default async function RecipientsPage() {
   const session = await requireRole('client')
@@ -60,7 +65,7 @@ export default async function RecipientsPage() {
                 {r.conditions && r.conditions.length > 0 && (
                   <div className="flex flex-wrap gap-1">
                     {r.conditions.slice(0, 3).map((c) => (
-                      <span key={c} className="rounded bg-muted px-1.5 py-0.5 text-xs">{c}</span>
+                      <span key={c} className="rounded bg-muted px-1.5 py-0.5 text-xs">{CONDITIONS_LABELS[c] ?? c}</span>
                     ))}
                     {r.conditions.length > 3 && (
                       <span className="rounded bg-muted px-1.5 py-0.5 text-xs">+{r.conditions.length - 3} more</span>
