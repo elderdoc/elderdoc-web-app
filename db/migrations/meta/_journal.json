@@ -8,6 +8,13 @@
       "when": 1776389059145,
       "tag": "0000_talented_nextwave",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1776389246153,
+      "tag": "0001_late_boomerang",
+      "breakpoints": true
     }
   ]
 }

@@ -1,8 +1,8 @@
 import {
   pgTable, uuid, text, timestamp, boolean,
-  integer, numeric, jsonb, primaryKey,
+  integer, numeric, jsonb, primaryKey, check,
 } from 'drizzle-orm/pg-core'
-import { relations } from 'drizzle-orm'
+import { relations, sql } from 'drizzle-orm'
 
 export const users = pgTable('users', {
   id:        uuid('id').defaultRandom().primaryKey(),
@@ -86,7 +86,7 @@ export const careRecipients = pgTable('care_recipients', {
 export const careRequests = pgTable('care_requests', {
   id:           uuid('id').defaultRandom().primaryKey(),
   clientId:     uuid('client_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
-  recipientId:  uuid('recipient_id').references(() => careRecipients.id),
+  recipientId:  uuid('recipient_id').references(() => careRecipients.id, { onDelete: 'set null' }),
   title:        text('title'),
   description:  text('description'),
   careType:     text('care_type').notNull(),
@@ -142,7 +142,10 @@ export const jobs = pgTable('jobs', {
   clientId:      uuid('client_id').notNull().references(() => users.id),
   status:        text('status', { enum: ['active', 'completed', 'cancelled'] }).default('active'),
   createdAt:     timestamp('created_at').defaultNow().notNull(),
-})
+}, (t) => [
+  check('jobs_source_check',
+    sql`(${t.matchId} IS NOT NULL)::int + (${t.applicationId} IS NOT NULL)::int = 1`),
+])
 
 export const shifts = pgTable('shifts', {
   id:        uuid('id').defaultRandom().primaryKey(),
@@ -214,4 +217,61 @@ export const caregiverProfilesRelations = relations(caregiverProfiles, ({ one, m
   workPrefs:      many(caregiverWorkPrefs),
   location:       one(caregiverLocations, { fields: [caregiverProfiles.id], references: [caregiverLocations.caregiverId] }),
   matches:        many(matches),
+}))
+
+export const careRecipientsRelations = relations(careRecipients, ({ one, many }) => ({
+  client:       one(users, { fields: [careRecipients.clientId], references: [users.id] }),
+  careRequests: many(careRequests),
+}))
+
+export const careRequestsRelations = relations(careRequests, ({ one, many }) => ({
+  client:    one(users, { fields: [careRequests.clientId], references: [users.id] }),
+  recipient: one(careRecipients, { fields: [careRequests.recipientId], references: [careRecipients.id] }),
+  location:  one(careRequestLocations, { fields: [careRequests.id], references: [careRequestLocations.requestId] }),
+  matches:   many(matches),
+  applications: many(jobApplications),
+  jobs:      many(jobs),
+}))
+
+export const matchesRelations = relations(matches, ({ one }) => ({
+  request:   one(careRequests, { fields: [matches.requestId], references: [careRequests.id] }),
+  caregiver: one(caregiverProfiles, { fields: [matches.caregiverId], references: [caregiverProfiles.id] }),
+}))
+
+export const jobApplicationsRelations = relations(jobApplications, ({ one }) => ({
+  request:   one(careRequests, { fields: [jobApplications.requestId], references: [careRequests.id] }),
+  caregiver: one(caregiverProfiles, { fields: [jobApplications.caregiverId], references: [caregiverProfiles.id] }),
+}))
+
+export const jobsRelations = relations(jobs, ({ one, many }) => ({
+  request:     one(careRequests, { fields: [jobs.requestId], references: [careRequests.id] }),
+  caregiver:   one(caregiverProfiles, { fields: [jobs.caregiverId], references: [caregiverProfiles.id] }),
+  client:      one(users, { fields: [jobs.clientId], references: [users.id] }),
+  match:       one(matches, { fields: [jobs.matchId], references: [matches.id] }),
+  application: one(jobApplications, { fields: [jobs.applicationId], references: [jobApplications.id] }),
+  shifts:      many(shifts),
+  carePlan:    one(carePlans, { fields: [jobs.id], references: [carePlans.jobId] }),
+  messages:    many(messages),
+  payments:    many(payments),
+}))
+
+export const shiftsRelations = relations(shifts, ({ one }) => ({
+  job: one(jobs, { fields: [shifts.jobId], references: [jobs.id] }),
+}))
+
+export const carePlansRelations = relations(carePlans, ({ one }) => ({
+  job: one(jobs, { fields: [carePlans.jobId], references: [jobs.id] }),
+}))
+
+export const messagesRelations = relations(messages, ({ one }) => ({
+  job:    one(jobs, { fields: [messages.jobId], references: [jobs.id] }),
+  sender: one(users, { fields: [messages.senderId], references: [users.id] }),
+}))
+
+export const notificationsRelations = relations(notifications, ({ one }) => ({
+  user: one(users, { fields: [notifications.userId], references: [users.id] }),
+}))
+
+export const paymentsRelations = relations(payments, ({ one }) => ({
+  job: one(jobs, { fields: [payments.jobId], references: [jobs.id] }),
 }))
