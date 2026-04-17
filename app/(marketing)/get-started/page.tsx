@@ -54,7 +54,7 @@ export default function RoleSelectionPage() {
           </Link>
 
           <Link
-            href="/get-started/caregiver/step-1"
+            href="/sign-in?callbackUrl=%2Fget-started%2Fcaregiver%2Fstep-1"
             className="group flex flex-col gap-4 rounded-[12px] border border-border bg-card p-8 shadow-[var(--shadow-card)] transition-all hover:border-primary/30 hover:shadow-[var(--shadow-hover)]"
           >
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
