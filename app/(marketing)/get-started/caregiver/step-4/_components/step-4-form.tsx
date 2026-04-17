@@ -53,7 +53,8 @@ export function Step4Form({
     form.state.length > 0 &&
     travelDistances.length > 0 &&
     hourlyMin.length > 0 &&
-    hourlyMax.length > 0
+    hourlyMax.length > 0 &&
+    Number(hourlyMin) <= Number(hourlyMax)
 
   function handleContinue() {
     if (!isValid) return
