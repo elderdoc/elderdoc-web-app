@@ -23,11 +23,13 @@ interface CaregiverCardProps {
 
 export function CaregiverCard({ caregiver, onSendOffer, className }: CaregiverCardProps) {
   const initials = caregiver.name
-    ?.split(' ')
-    .map(n => n[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2) ?? '?'
+    ? caregiver.name
+        .split(' ')
+        .filter(Boolean)
+        .map(n => n[0].toUpperCase())
+        .slice(0, 2)
+        .join('')
+    : '?'
 
   const careTypeLabels = caregiver.careTypes.map(
     key => CARE_TYPES.find(ct => ct.key === key)?.label ?? key

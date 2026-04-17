@@ -57,4 +57,9 @@ describe('CaregiverCard', () => {
     render(<CaregiverCard caregiver={{ ...mockCaregiver, name: null }} />)
     expect(screen.getByText('Anonymous Caregiver')).toBeDefined()
   })
+
+  it('shows single initial for single-word name', () => {
+    render(<CaregiverCard caregiver={{ ...mockCaregiver, name: 'Madonna' }} />)
+    expect(screen.getByText('M')).toBeDefined()
+  })
 })
