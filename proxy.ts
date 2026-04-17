@@ -7,6 +7,17 @@ export default auth((req) => {
   const isAuthenticated = !!session?.user
   const role = session?.user?.role
 
+  if (pathname.startsWith('/get-started/caregiver')) {
+    if (!isAuthenticated) {
+      return NextResponse.redirect(
+        new URL(`/sign-in?callbackUrl=${encodeURIComponent(pathname)}`, req.url)
+      )
+    }
+    if (role === 'caregiver') {
+      return NextResponse.redirect(new URL('/caregiver/dashboard', req.url))
+    }
+  }
+
   if (pathname.startsWith('/client')) {
     if (!isAuthenticated) {
       return NextResponse.redirect(new URL(`/sign-in?callbackUrl=${encodeURIComponent(pathname)}`, req.url))

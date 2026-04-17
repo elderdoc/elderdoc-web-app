@@ -34,6 +34,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           token.userId = dbUser[0].id
           token.role   = dbUser[0].role ?? null
         }
+      } else if (token.userId && !token.role) {
+        // Re-check DB when role is not yet established (e.g. after caregiver onboarding sets role)
+        const [dbUser] = await db
+          .select({ role: users.role })
+          .from(users)
+          .where(eq(users.id, token.userId as string))
+          .limit(1)
+        if (dbUser?.role) token.role = dbUser.role
       }
       return token
     },
