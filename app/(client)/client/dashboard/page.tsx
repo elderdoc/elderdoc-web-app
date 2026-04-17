@@ -31,12 +31,15 @@ export default async function ClientDashboard() {
   const session = await requireRole('client')
   const userId = session.user.id!
 
-  // Batch 1 — count queries (no dependencies)
   const [
     [recipientCount],
     [activeRequestCount],
     [pendingMatchCount],
+    recentRequests,
+    recentRecipientsRaw,
+    recentRequestsActivityRaw,
   ] = await Promise.all([
+    // Count queries
     db.select({ value: count() }).from(careRecipients).where(eq(careRecipients.clientId, userId)),
     db.select({ value: count() }).from(careRequests).where(and(eq(careRequests.clientId, userId), eq(careRequests.status, 'active'))),
     db
@@ -44,10 +47,7 @@ export default async function ClientDashboard() {
       .from(matches)
       .innerJoin(careRequests, eq(matches.requestId, careRequests.id))
       .where(and(eq(careRequests.clientId, userId), eq(matches.status, 'pending'))),
-  ])
-
-  // Batch 2 — data queries (no dependencies)
-  const [recentRequests, recentRecipientsRaw, recentRequestsActivityRaw] = await Promise.all([
+    // Data queries
     db
       .select({
         id:           careRequests.id,
@@ -66,12 +66,14 @@ export default async function ClientDashboard() {
       .select({ name: careRecipients.name, createdAt: careRecipients.createdAt })
       .from(careRecipients)
       .where(eq(careRecipients.clientId, userId))
-      .orderBy(desc(careRecipients.createdAt)),
+      .orderBy(desc(careRecipients.createdAt))
+      .limit(10),
     db
       .select({ careType: careRequests.careType, createdAt: careRequests.createdAt })
       .from(careRequests)
       .where(eq(careRequests.clientId, userId))
-      .orderBy(desc(careRequests.createdAt)),
+      .orderBy(desc(careRequests.createdAt))
+      .limit(10),
   ])
 
   const activity: ActivityItem[] = [
