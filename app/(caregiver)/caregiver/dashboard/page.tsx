@@ -62,7 +62,7 @@ export default async function CaregiverDashboard() {
     db.select({ date: shifts.date, startTime: shifts.startTime, createdAt: shifts.createdAt })
       .from(shifts)
       .innerJoin(jobs, eq(shifts.jobId, jobs.id))
-      .where(and(eq(jobs.caregiverId, profile.id), eq(shifts.status, 'scheduled')))
+      .where(eq(jobs.caregiverId, profile.id))
       .orderBy(desc(shifts.createdAt))
       .limit(10),
   ])
