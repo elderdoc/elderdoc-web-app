@@ -7,5 +7,12 @@ interface RecipientOption {
 }
 
 export function CareRequestModal({ recipients }: { recipients: RecipientOption[] }) {
-  return null
+  return (
+    <button
+      type="button"
+      className="px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm font-medium"
+    >
+      + Care Request
+    </button>
+  )
 }

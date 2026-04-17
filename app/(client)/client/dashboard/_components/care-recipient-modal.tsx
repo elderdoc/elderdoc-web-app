@@ -3,5 +3,12 @@ export function CareRecipientModal({ onRecipientCreated, triggerLabel }: {
   onRecipientCreated?: (id: string, name: string) => void
   triggerLabel?: string
 } = {}) {
-  return null
+  return (
+    <button
+      type="button"
+      className="px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm font-medium"
+    >
+      {triggerLabel ?? '+ Add Recipient'}
+    </button>
+  )
 }
