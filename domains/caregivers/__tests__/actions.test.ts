@@ -83,6 +83,9 @@ describe('applyToRequest', () => {
   it('inserts to jobApplications with correct fields', async () => {
     mockAuth.mockResolvedValue(SESSION as any)
     mockDb.query.caregiverProfiles.findFirst.mockResolvedValue(PROFILE)
+    mockSelectChain.where
+      .mockResolvedValueOnce([])                     // no existing application
+      .mockResolvedValueOnce([{ status: 'active' }]) // careRequest is active
     await applyToRequest('req-1', 'I am available weekends')
     expect(mockDb.insert).toHaveBeenCalled()
     expect(mockMutateChain.values).toHaveBeenCalledWith(expect.objectContaining({
@@ -91,6 +94,22 @@ describe('applyToRequest', () => {
       coverNote:   'I am available weekends',
       status:      'pending',
     }))
+  })
+
+  it('throws Already applied if application exists', async () => {
+    mockAuth.mockResolvedValue(SESSION as any)
+    mockDb.query.caregiverProfiles.findFirst.mockResolvedValue(PROFILE)
+    mockSelectChain.where.mockResolvedValueOnce([{ id: 'existing-app' }])
+    await expect(applyToRequest('req-1', 'note')).rejects.toThrow('Already applied')
+  })
+
+  it('throws Request not available if careRequest is not active', async () => {
+    mockAuth.mockResolvedValue(SESSION as any)
+    mockDb.query.caregiverProfiles.findFirst.mockResolvedValue(PROFILE)
+    mockSelectChain.where
+      .mockResolvedValueOnce([])                        // no existing application
+      .mockResolvedValueOnce([{ status: 'cancelled' }]) // careRequest is not active
+    await expect(applyToRequest('req-1', 'note')).rejects.toThrow('Request not available')
   })
 })
 
@@ -124,6 +143,13 @@ describe('acceptOffer', () => {
     mockDb.query.caregiverProfiles.findFirst.mockResolvedValue(PROFILE)
     mockSelectChain.where
       .mockResolvedValueOnce([{ requestId: 'req-1', caregiverId: 'other-profile' }])
+    await expect(acceptOffer('match-1')).rejects.toThrow('Unauthorized')
+  })
+
+  it('throws Unauthorized if match is not found', async () => {
+    mockAuth.mockResolvedValue(SESSION as any)
+    mockDb.query.caregiverProfiles.findFirst.mockResolvedValue(PROFILE)
+    mockSelectChain.where.mockResolvedValueOnce([]) // no match found
     await expect(acceptOffer('match-1')).rejects.toThrow('Unauthorized')
   })
 })

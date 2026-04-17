@@ -17,6 +17,22 @@ export async function applyToRequest(requestId: string, coverNote: string): Prom
   const session = await auth()
   if (!session?.user?.id) throw new Error('Unauthorized')
   const profile = await getProfile(session.user.id)
+
+  const [existing] = await db
+    .select({ id: jobApplications.id })
+    .from(jobApplications)
+    .where(and(
+      eq(jobApplications.requestId, requestId),
+      eq(jobApplications.caregiverId, profile.id)
+    ))
+  if (existing) throw new Error('Already applied')
+
+  const [careReq] = await db
+    .select({ status: careRequests.status })
+    .from(careRequests)
+    .where(eq(careRequests.id, requestId))
+  if (!careReq || careReq.status !== 'active') throw new Error('Request not available')
+
   await db.insert(jobApplications).values({
     requestId,
     caregiverId: profile.id,
@@ -34,7 +50,7 @@ export async function acceptOffer(matchId: string): Promise<void> {
     const [match] = await tx
       .select({ requestId: matches.requestId, caregiverId: matches.caregiverId })
       .from(matches)
-      .where(eq(matches.id, matchId))
+      .where(and(eq(matches.id, matchId), eq(matches.status, 'pending')))
 
     if (!match || match.caregiverId !== profile.id) throw new Error('Unauthorized')
 
@@ -42,6 +58,8 @@ export async function acceptOffer(matchId: string): Promise<void> {
       .select({ clientId: careRequests.clientId })
       .from(careRequests)
       .where(eq(careRequests.id, match.requestId))
+
+    if (!request) throw new Error('Request not found')
 
     await tx.insert(jobs).values({
       matchId,
@@ -60,6 +78,6 @@ export async function declineOffer(matchId: string): Promise<void> {
   if (!session?.user?.id) throw new Error('Unauthorized')
   const profile = await getProfile(session.user.id)
   await db.update(matches).set({ status: 'declined' }).where(
-    and(eq(matches.id, matchId), eq(matches.caregiverId, profile.id))
+    and(eq(matches.id, matchId), eq(matches.caregiverId, profile.id), eq(matches.status, 'pending'))
   )
 }
