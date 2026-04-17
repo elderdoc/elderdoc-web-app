@@ -4,10 +4,6 @@ import { db } from '@/services/db'
 import { users } from '@/db/schema'
 import { eq } from 'drizzle-orm'
 
-if (!process.env.AUTH_GOOGLE_ID || !process.env.AUTH_GOOGLE_SECRET) {
-  throw new Error('Missing AUTH_GOOGLE_ID or AUTH_GOOGLE_SECRET')
-}
-
 export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [
     Google({
