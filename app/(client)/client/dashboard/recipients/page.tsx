@@ -9,7 +9,14 @@ export default async function RecipientsPage() {
   const userId = session.user.id!
 
   const recipients = await db
-    .select()
+    .select({
+      id:           careRecipients.id,
+      name:         careRecipients.name,
+      relationship: careRecipients.relationship,
+      photoUrl:     careRecipients.photoUrl,
+      conditions:   careRecipients.conditions,
+      mobilityLevel:careRecipients.mobilityLevel,
+    })
     .from(careRecipients)
     .where(eq(careRecipients.clientId, userId))
     .orderBy(desc(careRecipients.createdAt))
@@ -33,6 +40,7 @@ export default async function RecipientsPage() {
             return (
               <div key={r.id} className="rounded-lg border border-border bg-card p-5 space-y-3">
                 <div className="flex items-center gap-3">
+                  {/* TODO: replace with next/image once storage domain is in remotePatterns */}
                   {r.photoUrl ? (
                     <img src={r.photoUrl} alt={r.name} className="h-12 w-12 rounded-full object-cover" />
                   ) : (
@@ -44,7 +52,7 @@ export default async function RecipientsPage() {
                     <p className="font-medium truncate">{r.name}</p>
                     {r.relationship && (
                       <span className="inline-block rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground capitalize">
-                        {r.relationship.replace('-', ' ')}
+                        {r.relationship.replace(/-/g, ' ')}
                       </span>
                     )}
                   </div>
@@ -61,7 +69,7 @@ export default async function RecipientsPage() {
                 )}
                 {r.mobilityLevel && (
                   <p className="text-xs text-muted-foreground capitalize">
-                    Mobility: {r.mobilityLevel.replace('-', ' ')}
+                    Mobility: {r.mobilityLevel.replace(/-/g, ' ')}
                   </p>
                 )}
               </div>

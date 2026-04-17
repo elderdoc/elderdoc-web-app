@@ -4,6 +4,11 @@ import { careRequests, careRecipients } from '@/db/schema'
 import { eq, desc } from 'drizzle-orm'
 import { formatDistanceToNow } from 'date-fns'
 import { CareRequestModal } from '../_components/care-request-modal'
+import { CARE_TYPES } from '@/lib/constants'
+
+const CARE_TYPE_LABELS: Record<string, string> = Object.fromEntries(
+  CARE_TYPES.map((c) => [c.key, c.label])
+)
 
 const STATUS_LABELS: Record<string, string> = {
   draft:     'Draft',
@@ -69,7 +74,7 @@ export default async function RequestsPage() {
               <div className="min-w-0 space-y-1">
                 <p className="font-medium truncate">{req.title ?? '(Untitled)'}</p>
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <span className="rounded bg-muted px-1.5 py-0.5">{req.careType}</span>
+                  <span className="rounded bg-muted px-1.5 py-0.5">{CARE_TYPE_LABELS[req.careType] ?? req.careType}</span>
                   {req.recipientName && <span>for {req.recipientName}</span>}
                   <span>· {formatDistanceToNow(req.createdAt, { addSuffix: true })}</span>
                 </div>
