@@ -22,6 +22,13 @@
       "when": 1776422163722,
       "tag": "0002_natural_rockslide",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1776428808688,
+      "tag": "0003_sad_raider",
+      "breakpoints": true
     }
   ]
 }

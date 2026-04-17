@@ -1,0 +1,1 @@
+ALTER TABLE "caregiver_profiles" ADD CONSTRAINT "caregiver_profiles_user_id_unique" UNIQUE("user_id");

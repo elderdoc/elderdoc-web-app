@@ -62,11 +62,6 @@ export async function saveCaregiverStep2(data: {
   const profile = await getOrCreateProfile(session.user.id)
 
   await db
-    .update(caregiverProfiles)
-    .set({ experience: data.experience, education: data.education, completedStep: 2 })
-    .where(eq(caregiverProfiles.id, profile.id))
-
-  await db
     .delete(caregiverCertifications)
     .where(eq(caregiverCertifications.caregiverId, profile.id))
 
@@ -85,6 +80,11 @@ export async function saveCaregiverStep2(data: {
       .insert(caregiverLanguages)
       .values(data.languages.map(language => ({ caregiverId: profile.id, language })))
   }
+
+  await db
+    .update(caregiverProfiles)
+    .set({ experience: data.experience, education: data.education, completedStep: 2 })
+    .where(eq(caregiverProfiles.id, profile.id))
 
   redirect('/get-started/caregiver/step-3')
 }

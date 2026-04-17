@@ -16,7 +16,7 @@ export const users = pgTable('users', {
 
 export const caregiverProfiles = pgTable('caregiver_profiles', {
   id:            uuid('id').defaultRandom().primaryKey(),
-  userId:        uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  userId:        uuid('user_id').notNull().unique().references(() => users.id, { onDelete: 'cascade' }),
   headline:      text('headline'),
   about:         text('about'),
   photoUrl:      text('photo_url'),
