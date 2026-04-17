@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 vi.mock('@/auth', () => ({ auth: vi.fn() }))
 vi.mock('ai', () => ({
-  streamText: vi.fn().mockReturnValue({ toDataStreamResponse: vi.fn().mockReturnValue(new Response('ok')) }),
+  streamText: vi.fn().mockReturnValue({ toTextStreamResponse: vi.fn().mockReturnValue(new Response('ok')) }),
 }))
 vi.mock('@ai-sdk/openai', () => ({ openai: vi.fn().mockReturnValue('mock-model') }))
 
@@ -51,6 +51,6 @@ describe('POST /api/care-request/generate', () => {
     mockAuth.mockResolvedValue(SESSION as any)
     const res = await POST(makeRequest(BODY))
     expect(res).toBeInstanceOf(Response)
-    expect(res.status).not.toBe(401)
+    expect(res.status).toBe(200)
   })
 })

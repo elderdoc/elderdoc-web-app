@@ -29,7 +29,7 @@ Budget: ${data.budgetType ?? ''} ${data.budgetAmount ? `$${data.budgetAmount}` :
 
 export async function POST(req: Request) {
   const session = await auth()
-  if (!session?.user?.id) return new Response('Unauthorized', { status: 401 })
+  if (!session?.user?.id) return Response.json({ error: 'Unauthorized' }, { status: 401 })
 
   const body: CareRequestGenerateInput = await req.json()
   const prompt = buildPrompt(body)
@@ -44,5 +44,5 @@ DESCRIPTION: <2-3 sentences describing the care needed, max 500 characters>
 Be warm, specific, and professional.`,
   })
 
-  return result.toDataStreamResponse()
+  return result.toTextStreamResponse()
 }
