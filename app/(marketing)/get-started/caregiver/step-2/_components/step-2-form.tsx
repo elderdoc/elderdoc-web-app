@@ -40,7 +40,7 @@ export function Step2Form({
     )
   }
 
-  const isValid = experience && education
+  const isValid = experience.length > 0 && education.length > 0
 
   function handleContinue() {
     if (!isValid) return
