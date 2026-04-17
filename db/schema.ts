@@ -9,6 +9,7 @@ export const users = pgTable('users', {
   email:     text('email').notNull().unique(),
   name:      text('name'),
   image:     text('image'),
+  phone:     text('phone'),
   role:      text('role', { enum: ['client', 'caregiver'] }),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 })

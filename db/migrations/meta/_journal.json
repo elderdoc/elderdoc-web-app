@@ -15,6 +15,13 @@
       "when": 1776389246153,
       "tag": "0001_late_boomerang",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1776422163722,
+      "tag": "0002_natural_rockslide",
+      "breakpoints": true
     }
   ]
 }
