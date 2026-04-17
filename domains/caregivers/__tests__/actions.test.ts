@@ -119,6 +119,12 @@ describe('acceptOffer', () => {
     await expect(acceptOffer('match-1')).rejects.toThrow('Unauthorized')
   })
 
+  it('throws if profile not found', async () => {
+    mockAuth.mockResolvedValue(SESSION as any)
+    mockDb.query.caregiverProfiles.findFirst.mockResolvedValue(null)
+    await expect(acceptOffer('match-1')).rejects.toThrow('Profile not found')
+  })
+
   it('runs transaction: inserts job and updates match to accepted', async () => {
     mockAuth.mockResolvedValue(SESSION as any)
     mockDb.query.caregiverProfiles.findFirst.mockResolvedValue(PROFILE)
@@ -160,11 +166,19 @@ describe('declineOffer', () => {
     await expect(declineOffer('match-1')).rejects.toThrow('Unauthorized')
   })
 
-  it('updates match status to declined', async () => {
+  it('throws if profile not found', async () => {
+    mockAuth.mockResolvedValue(SESSION as any)
+    mockDb.query.caregiverProfiles.findFirst.mockResolvedValue(null)
+    await expect(declineOffer('match-1')).rejects.toThrow('Profile not found')
+  })
+
+  it('updates match status to declined scoped to caregiverId', async () => {
     mockAuth.mockResolvedValue(SESSION as any)
     mockDb.query.caregiverProfiles.findFirst.mockResolvedValue(PROFILE)
     await declineOffer('match-1')
     expect(mockDb.update).toHaveBeenCalled()
     expect(mockMutateChain.set).toHaveBeenCalledWith({ status: 'declined' })
+    // where was called — meaning a where clause was applied (not an unscoped update)
+    expect(mockMutateChain.where).toHaveBeenCalled()
   })
 })
