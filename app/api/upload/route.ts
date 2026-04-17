@@ -16,7 +16,8 @@ export async function POST(req: Request) {
 
   const arrayBuffer = await file.arrayBuffer()
   const buffer = Buffer.from(arrayBuffer)
-  const key = `avatars/${session.user.id}/${file.name}`
+  const safeName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_').replace(/\.{2,}/g, '_')
+  const key = `avatars/${session.user.id}/${safeName}`
   const url = await uploadFile(key, buffer, file.type || 'application/octet-stream')
 
   return NextResponse.json({ url })

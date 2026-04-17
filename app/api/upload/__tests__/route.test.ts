@@ -59,4 +59,14 @@ describe('POST /api/upload', () => {
     expect(key).toContain('user-1')
     expect(key).toContain('avatar.png')
   })
+
+  it('sanitizes filename in storage key', async () => {
+    mockAuth.mockResolvedValue(SESSION as any)
+    mockUpload.mockResolvedValue('http://localhost:9000/elderdoc/avatars/user-1/safe.jpg')
+    const file = new File(['fake image'], '../../malicious/../photo.jpg', { type: 'image/jpeg' })
+    await POST(makeRequest(file))
+    const [key] = mockUpload.mock.calls[0]
+    expect(key).not.toContain('..')
+    expect(key).toContain('user-1')
+  })
 })
