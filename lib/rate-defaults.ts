@@ -14,13 +14,15 @@ const RATE_MAP: Record<ExperienceKey, RateRange> = {
 }
 
 export function getRateDefaults(experience: ExperienceKey): RateRange {
-  return RATE_MAP[experience]
+  const result = RATE_MAP[experience]
+  if (!result) throw new Error(`Unknown experience key: "${experience}"`)
+  return result
 }
 
-export const EXPERIENCE_OPTIONS: Array<{ key: ExperienceKey; label: string }> = [
+export const EXPERIENCE_OPTIONS = [
   { key: 'less-than-1', label: 'Less than 1 year' },
   { key: '1-2',         label: '1–2 years' },
   { key: '3-5',         label: '3–5 years' },
   { key: '5-10',        label: '5–10 years' },
   { key: '10-plus',     label: '10+ years' },
-]
+] as const

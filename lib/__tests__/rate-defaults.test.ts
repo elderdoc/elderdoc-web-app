@@ -25,4 +25,8 @@ describe('getRateDefaults', () => {
   it('EXPERIENCE_OPTIONS contains all 5 options', () => {
     expect(EXPERIENCE_OPTIONS).toHaveLength(5)
   })
+
+  it('throws for unknown experience key', () => {
+    expect(() => getRateDefaults('unknown' as ExperienceKey)).toThrow('Unknown experience key: "unknown"')
+  })
 })
