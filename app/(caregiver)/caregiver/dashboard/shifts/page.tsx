@@ -3,6 +3,12 @@ import { db } from '@/services/db'
 import { caregiverProfiles, shifts, jobs, careRequests } from '@/db/schema'
 import { eq, and, asc } from 'drizzle-orm'
 
+const SHIFT_STATUS_LABELS: Record<string, string> = {
+  scheduled: 'Scheduled',
+  completed: 'Completed',
+  cancelled: 'Cancelled',
+}
+
 const SHIFT_STATUS_CLASSES: Record<string, string> = {
   scheduled: 'bg-blue-100 text-blue-700',
   completed: 'bg-muted text-muted-foreground',
@@ -58,7 +64,7 @@ export default async function ShiftsPage() {
                 </p>
               </div>
               <span className={`shrink-0 text-xs px-2 py-0.5 rounded-full font-medium ${SHIFT_STATUS_CLASSES[shift.status ?? 'scheduled'] ?? ''}`}>
-                Scheduled
+                {SHIFT_STATUS_LABELS[shift.status ?? 'scheduled'] ?? shift.status}
               </span>
             </div>
           ))}
