@@ -1,0 +1,88 @@
+'use client'
+
+import { useState, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
+import { applyToRequest } from '@/domains/caregivers/actions'
+
+interface Props {
+  requestId: string
+  requestTitle: string
+}
+
+export function ApplyModal({ requestId, requestTitle }: Props) {
+  const router = useRouter()
+  const [open, setOpen] = useState(false)
+  const [coverNote, setCoverNote] = useState('')
+  const [isPending, startTransition] = useTransition()
+
+  function handleClose() {
+    setCoverNote('')
+    setOpen(false)
+  }
+
+  function handleSubmit() {
+    if (!coverNote.trim()) return
+    startTransition(async () => {
+      await applyToRequest(requestId, coverNote.trim())
+      router.refresh()
+      handleClose()
+    })
+  }
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm font-medium"
+      >
+        Apply
+      </button>
+
+      {open && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="relative w-full max-w-md rounded-xl bg-background p-8 shadow-xl">
+            <button
+              type="button"
+              onClick={handleClose}
+              className="absolute right-4 top-4 text-muted-foreground hover:text-foreground"
+            >
+              ✕
+            </button>
+            <h2 className="text-xl font-semibold mb-1">Apply to this request</h2>
+            <p className="text-sm text-muted-foreground mb-5">{requestTitle}</p>
+            <label className="block text-sm font-medium mb-2">
+              Cover note <span className="text-destructive">*</span>
+            </label>
+            <textarea
+              value={coverNote}
+              onChange={(e) => setCoverNote(e.target.value)}
+              maxLength={500}
+              rows={5}
+              className="w-full rounded-md border border-border px-3 py-2 text-sm resize-none"
+              placeholder="Introduce yourself and explain why you're a great fit…"
+            />
+            <p className="text-right text-xs text-muted-foreground mt-1 mb-5">{coverNote.length}/500</p>
+            <div className="flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={handleClose}
+                className="px-4 py-2 text-sm text-muted-foreground hover:text-foreground"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleSubmit}
+                disabled={isPending || !coverNote.trim()}
+                className="px-5 py-2 rounded-md bg-primary text-primary-foreground text-sm font-medium disabled:opacity-40"
+              >
+                {isPending ? 'Submitting…' : 'Submit Application'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  )
+}
