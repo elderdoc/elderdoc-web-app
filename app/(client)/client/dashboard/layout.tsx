@@ -1,17 +1,19 @@
 import { requireRole } from '@/domains/auth/session'
 import { db } from '@/services/db'
 import { notifications } from '@/db/schema'
-import { eq, and } from 'drizzle-orm'
+import { eq, and, count } from 'drizzle-orm'
 import { Sidebar } from './_components/sidebar'
 
 export default async function ClientDashboardLayout({ children }: { children: React.ReactNode }) {
   const session = await requireRole('client')
   const userId = session.user.id!
 
-  const unread = await db
-    .select({ id: notifications.id })
+  const [unreadRow] = await db
+    .select({ value: count() })
     .from(notifications)
     .where(and(eq(notifications.userId, userId), eq(notifications.read, false)))
+
+  const unreadCount = Number(unreadRow?.value ?? 0)
 
   const name = session.user.name ?? null
   const image = session.user.image ?? null
@@ -25,7 +27,7 @@ export default async function ClientDashboardLayout({ children }: { children: Re
         userName={name}
         userInitials={initials}
         userImage={image}
-        unreadCount={unread.length}
+        unreadCount={unreadCount}
       />
       <main className="flex-1 overflow-auto">{children}</main>
     </div>

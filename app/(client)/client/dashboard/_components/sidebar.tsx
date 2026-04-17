@@ -68,7 +68,7 @@ export function Sidebar({ userName, userInitials, userImage, unreadCount }: Side
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 min-w-0">
             {userImage ? (
-              <img src={userImage} alt="" className="h-8 w-8 rounded-full object-cover" />
+              <img src={userImage} alt={userName ?? 'User avatar'} className="h-8 w-8 rounded-full object-cover" />
             ) : (
               <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
                 {userInitials}
