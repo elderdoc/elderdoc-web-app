@@ -28,13 +28,14 @@ interface Props {
   triggerLabel?: string
 }
 
-export function CareRecipientModal({ onRecipientCreated, triggerLabel }: Props = {}) {
+export function CareRecipientModal({ onRecipientCreated, triggerLabel }: Props) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
   const [step, setStep] = useState(1)
   const [myselfSelected, setMyselfSelected] = useState(false)
   const [form, setForm] = useState<RecipientForm>(EMPTY)
   const [photoPreview, setPhotoPreview] = useState<string | null>(null)
+  const [photoError, setPhotoError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
 
   function reset() {
@@ -42,6 +43,7 @@ export function CareRecipientModal({ onRecipientCreated, triggerLabel }: Props =
     setMyselfSelected(false)
     setForm(EMPTY)
     setPhotoPreview(null)
+    setPhotoError(null)
   }
 
   function handleClose() {
@@ -50,11 +52,12 @@ export function CareRecipientModal({ onRecipientCreated, triggerLabel }: Props =
   }
 
   function handleRelationshipSelect(key: string) {
-    setForm((f) => ({ ...f, relationship: key }))
     if (key === 'myself') {
+      setForm((f) => ({ ...f, relationship: key, name: 'Myself' }))
       setMyselfSelected(true)
       setStep(4)
     } else {
+      setForm((f) => ({ ...f, relationship: key, name: f.name === 'Myself' ? '' : f.name }))
       setMyselfSelected(false)
     }
   }
@@ -81,13 +84,22 @@ export function CareRecipientModal({ onRecipientCreated, triggerLabel }: Props =
   async function handlePhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
-    const fd = new FormData()
-    fd.append('file', file)
-    const res = await fetch('/api/upload', { method: 'POST', body: fd })
-    const json = await res.json()
-    if (json.url) {
-      setForm((f) => ({ ...f, photoUrl: json.url }))
-      setPhotoPreview(json.url)
+    setPhotoError(null)
+    try {
+      const fd = new FormData()
+      fd.append('file', file)
+      const res = await fetch('/api/upload', { method: 'POST', body: fd })
+      if (!res.ok) {
+        setPhotoError('Upload failed. Please try again.')
+        return
+      }
+      const json = await res.json()
+      if (json.url) {
+        setForm((f) => ({ ...f, photoUrl: json.url }))
+        setPhotoPreview(json.url)
+      }
+    } catch {
+      setPhotoError('Upload failed. Please try again.')
     }
   }
 
@@ -141,6 +153,7 @@ export function CareRecipientModal({ onRecipientCreated, triggerLabel }: Props =
 
             <CareRecipientShell
               currentStep={step}
+              skippedSteps={myselfSelected ? [2, 3] : []}
               title={
                 step === 1 ? 'Who are you caring for?' :
                 step === 2 ? 'Basic information' :
@@ -195,6 +208,9 @@ export function CareRecipientModal({ onRecipientCreated, triggerLabel }: Props =
                         <input type="file" accept="image/*" className="sr-only" onChange={handlePhotoChange} />
                       </label>
                     </div>
+                    {photoError && (
+                      <p className="mt-1 text-xs text-destructive">{photoError}</p>
+                    )}
                   </div>
                   <div>
                     <label className="block text-sm font-medium mb-1">Name *</label>

@@ -4,6 +4,7 @@ const STEPS = ['Relationship', 'Basic Info', 'Health & Mobility', 'Notes']
 
 interface Props {
   currentStep: number
+  skippedSteps?: number[]
   title: string
   children: React.ReactNode
   onBack: () => void
@@ -14,7 +15,7 @@ interface Props {
 }
 
 export function CareRecipientShell({
-  currentStep, title, children, onBack, onNext, onSave, isSaving, nextDisabled,
+  currentStep, skippedSteps = [], title, children, onBack, onNext, onSave, isSaving, nextDisabled,
 }: Props) {
   return (
     <div className="flex flex-col h-full">
@@ -25,7 +26,7 @@ export function CareRecipientShell({
             key={i}
             className={[
               'flex-1 h-1 rounded-full transition-colors',
-              i + 1 <= currentStep ? 'bg-primary' : 'bg-muted',
+              i + 1 <= currentStep && !skippedSteps.includes(i + 1) ? 'bg-primary' : 'bg-muted',
             ].join(' ')}
           />
         ))}
