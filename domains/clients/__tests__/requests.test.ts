@@ -108,4 +108,25 @@ describe('createCareRequest', () => {
     const result = await createCareRequest(BASE)
     expect(result).toEqual({ id: 'new-id' })
   })
+
+  it('passes valid budgetAmount to the insert', async () => {
+    mockAuth.mockResolvedValue(SESSION as any)
+    await createCareRequest({ ...BASE, budgetType: 'hourly', budgetAmount: '25.00' })
+    const insertCall = mockChain.values.mock.calls[0][0]
+    expect(insertCall.budgetAmount).toBe('25.00')
+  })
+
+  it('coerces a non-numeric budgetAmount to undefined', async () => {
+    mockAuth.mockResolvedValue(SESSION as any)
+    await createCareRequest({ ...BASE, budgetAmount: 'not-a-number' })
+    const insertCall = mockChain.values.mock.calls[0][0]
+    expect(insertCall.budgetAmount).toBeUndefined()
+  })
+
+  it('coerces an empty budgetAmount to undefined', async () => {
+    mockAuth.mockResolvedValue(SESSION as any)
+    await createCareRequest({ ...BASE, budgetAmount: '' })
+    const insertCall = mockChain.values.mock.calls[0][0]
+    expect(insertCall.budgetAmount).toBeUndefined()
+  })
 })
