@@ -68,7 +68,7 @@ export async function createCareRequest(data: {
       genderPref:   data.genderPref,
       languagePref: data.languagePref,
       budgetType:   data.budgetType,
-      budgetAmount: data.budgetAmount?.trim() && !isNaN(Number(data.budgetAmount.trim())) ? data.budgetAmount.trim() : undefined,
+      budgetAmount: data.budgetAmount?.trim() && Number.isFinite(Number(data.budgetAmount.trim())) ? data.budgetAmount.trim() : undefined,
       title:        data.title,
       description:  data.description,
       status:       'active',

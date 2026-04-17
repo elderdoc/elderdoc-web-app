@@ -129,4 +129,11 @@ describe('createCareRequest', () => {
     const insertCall = mockChain.values.mock.calls[0][0]
     expect(insertCall.budgetAmount).toBeUndefined()
   })
+
+  it('coerces "Infinity" to undefined', async () => {
+    mockAuth.mockResolvedValue(SESSION as any)
+    await createCareRequest({ ...BASE, budgetAmount: 'Infinity' })
+    const insertCall = mockChain.values.mock.calls[0][0]
+    expect(insertCall.budgetAmount).toBeUndefined()
+  })
 })
