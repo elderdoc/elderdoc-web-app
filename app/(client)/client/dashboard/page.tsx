@@ -7,61 +7,72 @@ import Link from 'next/link'
 import { CareRecipientModal } from './_components/care-recipient-modal'
 import { CareRequestModal } from './_components/care-request-modal'
 
+type ActivityItem =
+  | { type: 'recipient'; name: string; createdAt: Date }
+  | { type: 'request'; careType: string; createdAt: Date }
+
+const STATUS_LABELS: Record<string, string> = {
+  draft:     'Draft',
+  active:    'Matching in progress…',
+  matched:   'Matched',
+  filled:    'Filled',
+  cancelled: 'Cancelled',
+}
+
+const STATUS_CLASSES: Record<string, string> = {
+  draft:     'bg-muted text-muted-foreground',
+  active:    'bg-blue-100 text-blue-700',
+  matched:   'bg-green-100 text-green-700',
+  filled:    'bg-primary/10 text-primary',
+  cancelled: 'bg-destructive/10 text-destructive',
+}
+
 export default async function ClientDashboard() {
   const session = await requireRole('client')
   const userId = session.user.id!
 
-  // Stat card queries
-  const [recipientCount] = await db
-    .select({ value: count() })
-    .from(careRecipients)
-    .where(eq(careRecipients.clientId, userId))
+  // Batch 1 — count queries (no dependencies)
+  const [
+    [recipientCount],
+    [activeRequestCount],
+    [pendingMatchCount],
+  ] = await Promise.all([
+    db.select({ value: count() }).from(careRecipients).where(eq(careRecipients.clientId, userId)),
+    db.select({ value: count() }).from(careRequests).where(and(eq(careRequests.clientId, userId), eq(careRequests.status, 'active'))),
+    db
+      .select({ value: count() })
+      .from(matches)
+      .innerJoin(careRequests, eq(matches.requestId, careRequests.id))
+      .where(and(eq(careRequests.clientId, userId), eq(matches.status, 'pending'))),
+  ])
 
-  const [activeRequestCount] = await db
-    .select({ value: count() })
-    .from(careRequests)
-    .where(and(eq(careRequests.clientId, userId), eq(careRequests.status, 'active')))
-
-  const [pendingMatchCount] = await db
-    .select({ value: count() })
-    .from(matches)
-    .innerJoin(careRequests, eq(matches.requestId, careRequests.id))
-    .where(and(eq(careRequests.clientId, userId), eq(matches.status, 'pending')))
-
-  // Recent requests (last 5)
-  const recentRequests = await db
-    .select({
-      id:           careRequests.id,
-      title:        careRequests.title,
-      careType:     careRequests.careType,
-      status:       careRequests.status,
-      createdAt:    careRequests.createdAt,
-      recipientName:careRecipients.name,
-    })
-    .from(careRequests)
-    .leftJoin(careRecipients, eq(careRequests.recipientId, careRecipients.id))
-    .where(eq(careRequests.clientId, userId))
-    .orderBy(desc(careRequests.createdAt))
-    .limit(5)
-
-  // Activity timeline data
-  const recentRecipientsRaw = await db
-    .select({ name: careRecipients.name, createdAt: careRecipients.createdAt })
-    .from(careRecipients)
-    .where(eq(careRecipients.clientId, userId))
-    .orderBy(desc(careRecipients.createdAt))
-    .limit(10)
-
-  const recentRequestsActivityRaw = await db
-    .select({ careType: careRequests.careType, createdAt: careRequests.createdAt })
-    .from(careRequests)
-    .where(eq(careRequests.clientId, userId))
-    .orderBy(desc(careRequests.createdAt))
-    .limit(10)
-
-  type ActivityItem =
-    | { type: 'recipient'; name: string; createdAt: Date }
-    | { type: 'request'; careType: string; createdAt: Date }
+  // Batch 2 — data queries (no dependencies)
+  const [recentRequests, recentRecipientsRaw, recentRequestsActivityRaw] = await Promise.all([
+    db
+      .select({
+        id:           careRequests.id,
+        title:        careRequests.title,
+        careType:     careRequests.careType,
+        status:       careRequests.status,
+        createdAt:    careRequests.createdAt,
+        recipientName:careRecipients.name,
+      })
+      .from(careRequests)
+      .leftJoin(careRecipients, eq(careRequests.recipientId, careRecipients.id))
+      .where(eq(careRequests.clientId, userId))
+      .orderBy(desc(careRequests.createdAt))
+      .limit(5),
+    db
+      .select({ name: careRecipients.name, createdAt: careRecipients.createdAt })
+      .from(careRecipients)
+      .where(eq(careRecipients.clientId, userId))
+      .orderBy(desc(careRecipients.createdAt)),
+    db
+      .select({ careType: careRequests.careType, createdAt: careRequests.createdAt })
+      .from(careRequests)
+      .where(eq(careRequests.clientId, userId))
+      .orderBy(desc(careRequests.createdAt)),
+  ])
 
   const activity: ActivityItem[] = [
     ...recentRecipientsRaw.map((r) => ({ type: 'recipient' as const, name: r.name, createdAt: r.createdAt })),
@@ -69,28 +80,6 @@ export default async function ClientDashboard() {
   ]
     .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
     .slice(0, 10)
-
-  // Recipients for the care request modal
-  const existingRecipients = await db
-    .select({ id: careRecipients.id, name: careRecipients.name, relationship: careRecipients.relationship, photoUrl: careRecipients.photoUrl })
-    .from(careRecipients)
-    .where(eq(careRecipients.clientId, userId))
-
-  const STATUS_LABELS: Record<string, string> = {
-    draft:     'Draft',
-    active:    'Matching in progress…',
-    matched:   'Matched',
-    filled:    'Filled',
-    cancelled: 'Cancelled',
-  }
-
-  const STATUS_CLASSES: Record<string, string> = {
-    draft:     'bg-muted text-muted-foreground',
-    active:    'bg-blue-100 text-blue-700',
-    matched:   'bg-green-100 text-green-700',
-    filled:    'bg-primary/10 text-primary',
-    cancelled: 'bg-destructive/10 text-destructive',
-  }
 
   return (
     <div className="p-8 space-y-8">
@@ -102,7 +91,7 @@ export default async function ClientDashboard() {
         </div>
         <div className="flex gap-3">
           <CareRecipientModal />
-          <CareRequestModal recipients={existingRecipients} />
+          <CareRequestModal recipients={[]} />
         </div>
       </div>
 
@@ -159,8 +148,8 @@ export default async function ClientDashboard() {
             <p className="text-sm text-muted-foreground">No activity yet.</p>
           ) : (
             <ol className="space-y-3">
-              {activity.map((item, i) => (
-                <li key={i} className="flex items-start gap-3 text-sm">
+              {activity.map((item) => (
+                <li key={`${item.type}-${item.createdAt.getTime()}`} className="flex items-start gap-3 text-sm">
                   <span className="mt-0.5 h-2 w-2 shrink-0 rounded-full bg-primary/60" />
                   <div>
                     <p>

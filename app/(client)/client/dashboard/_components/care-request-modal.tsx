@@ -1,3 +1,5 @@
+'use client'
+
 // Stub — full implementation in Task 9
 interface RecipientOption {
   id: string
