@@ -25,25 +25,36 @@ export default async function RequestsPage() {
   const session = await requireRole('client')
   const userId = session.user.id!
 
-  const requests = await db
-    .select({
-      id:           careRequests.id,
-      title:        careRequests.title,
-      careType:     careRequests.careType,
-      status:       careRequests.status,
-      createdAt:    careRequests.createdAt,
-      recipientName:careRecipients.name,
-    })
-    .from(careRequests)
-    .leftJoin(careRecipients, eq(careRequests.recipientId, careRecipients.id))
-    .where(eq(careRequests.clientId, userId))
-    .orderBy(desc(careRequests.createdAt))
+  const [requests, existingRecipients] = await Promise.all([
+    db
+      .select({
+        id:           careRequests.id,
+        title:        careRequests.title,
+        careType:     careRequests.careType,
+        status:       careRequests.status,
+        createdAt:    careRequests.createdAt,
+        recipientName:careRecipients.name,
+      })
+      .from(careRequests)
+      .leftJoin(careRecipients, eq(careRequests.recipientId, careRecipients.id))
+      .where(eq(careRequests.clientId, userId))
+      .orderBy(desc(careRequests.createdAt)),
+    db
+      .select({
+        id:           careRecipients.id,
+        name:         careRecipients.name,
+        relationship: careRecipients.relationship,
+        photoUrl:     careRecipients.photoUrl,
+      })
+      .from(careRecipients)
+      .where(eq(careRecipients.clientId, userId)),
+  ])
 
   return (
     <div className="p-8 space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Care Requests</h1>
-        <CareRequestModal recipients={[]} />
+        <CareRequestModal recipients={existingRecipients} />
       </div>
 
       {requests.length === 0 ? (
