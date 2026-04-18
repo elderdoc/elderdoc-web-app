@@ -5,7 +5,7 @@ import {
   caregiverLocations, caregiverCareTypes, caregiverCertifications,
   caregiverLanguages, users,
 } from '@/db/schema'
-import { eq, and } from 'drizzle-orm'
+import { eq, and, inArray } from 'drizzle-orm'
 
 export type RankedCandidate = {
   caregiverId: string
@@ -48,7 +48,6 @@ export async function matchCaregivers(requestId: string): Promise<RankedCandidat
   const candidates = await db
     .select({
       id:         caregiverProfiles.id,
-      userId:     caregiverProfiles.userId,
       headline:   caregiverProfiles.headline,
       hourlyMin:  caregiverProfiles.hourlyMin,
       hourlyMax:  caregiverProfiles.hourlyMax,
@@ -75,35 +74,28 @@ export async function matchCaregivers(requestId: string): Promise<RankedCandidat
 
   if (candidates.length === 0) return []
 
-  // 3. Fetch context per candidate (sequential — cert, lang, careType for each candidate)
+  // 3. Fetch context per candidate (3 parallel batch queries using inArray)
+  const ids = candidates.map((c) => c.id)
+
+  const [certRows, langRows, careTypeRows] = await Promise.all([
+    db.select({ caregiverId: caregiverCertifications.caregiverId, certification: caregiverCertifications.certification })
+      .from(caregiverCertifications)
+      .where(inArray(caregiverCertifications.caregiverId, ids)),
+    db.select({ caregiverId: caregiverLanguages.caregiverId, language: caregiverLanguages.language })
+      .from(caregiverLanguages)
+      .where(inArray(caregiverLanguages.caregiverId, ids)),
+    db.select({ caregiverId: caregiverCareTypes.caregiverId, careType: caregiverCareTypes.careType })
+      .from(caregiverCareTypes)
+      .where(inArray(caregiverCareTypes.caregiverId, ids)),
+  ])
+
   const certMap = new Map<string, string[]>()
   const langMap = new Map<string, string[]>()
   const typeMap = new Map<string, string[]>()
 
-  for (const candidate of candidates) {
-    const cid = candidate.id
-
-    const certs = await db
-      .select({ caregiverId: caregiverCertifications.caregiverId, certification: caregiverCertifications.certification })
-      .from(caregiverCertifications)
-      .where(eq(caregiverCertifications.caregiverId, cid))
-
-    for (const r of certs) certMap.set(r.caregiverId, [...(certMap.get(r.caregiverId) ?? []), r.certification])
-
-    const langs = await db
-      .select({ caregiverId: caregiverLanguages.caregiverId, language: caregiverLanguages.language })
-      .from(caregiverLanguages)
-      .where(eq(caregiverLanguages.caregiverId, cid))
-
-    for (const r of langs) langMap.set(r.caregiverId, [...(langMap.get(r.caregiverId) ?? []), r.language])
-
-    const careTypes = await db
-      .select({ caregiverId: caregiverCareTypes.caregiverId, careType: caregiverCareTypes.careType })
-      .from(caregiverCareTypes)
-      .where(eq(caregiverCareTypes.caregiverId, cid))
-
-    for (const r of careTypes) typeMap.set(r.caregiverId, [...(typeMap.get(r.caregiverId) ?? []), r.careType])
-  }
+  for (const r of certRows) certMap.set(r.caregiverId, [...(certMap.get(r.caregiverId) ?? []), r.certification])
+  for (const r of langRows) langMap.set(r.caregiverId, [...(langMap.get(r.caregiverId) ?? []), r.language])
+  for (const r of careTypeRows) typeMap.set(r.caregiverId, [...(typeMap.get(r.caregiverId) ?? []), r.careType])
 
   // 4. Build prompt
   const systemPrompt = `You are a care coordinator matching caregivers to a care request.

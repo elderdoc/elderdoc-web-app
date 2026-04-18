@@ -47,7 +47,6 @@ const REQUEST_ROW = {
 
 const CANDIDATE = {
   id: 'cg-1',
-  userId: 'u-1',
   headline: 'Experienced caregiver',
   hourlyMin: '18',
   hourlyMax: '25',
@@ -118,8 +117,10 @@ describe('matchCaregivers', () => {
     // request and candidates queries both call .where() before .limit()
     mockSelectChain.where.mockReturnValueOnce(mockSelectChain)
     mockSelectChain.where.mockReturnValueOnce(mockSelectChain)
-    // 7 candidates * 3 queries (cert/lang/careType) = 21 where calls
-    for (let i = 0; i < 21; i++) mockSelectChain.where.mockResolvedValueOnce([])
+    // 3 batch queries (cert/lang/careType) via Promise.all + inArray
+    mockSelectChain.where.mockResolvedValueOnce([])
+    mockSelectChain.where.mockResolvedValueOnce([])
+    mockSelectChain.where.mockResolvedValueOnce([])
 
     const rankings = candidates.map((c, i) => ({
       caregiverId: c.id, score: 70 - i, reason: 'Good.',
