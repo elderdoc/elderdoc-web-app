@@ -14,7 +14,6 @@ export async function searchCaregivers(params: {
 }): Promise<CaregiverPreview[]> {
   if (params.careTypes.length === 0) return []
 
-  // Find caregiver profile IDs with at least one matching care type
   const matchingRows = await db
     .select({ caregiverId: caregiverCareTypes.caregiverId })
     .from(caregiverCareTypes)
@@ -24,7 +23,6 @@ export async function searchCaregivers(params: {
 
   const candidateIds = [...new Set(matchingRows.map(r => r.caregiverId))]
 
-  // Narrow by state before fetching profiles (so limit applies after filtering)
   let filteredIds = candidateIds
   if (params.state) {
     const locationRows = await db
@@ -40,7 +38,6 @@ export async function searchCaregivers(params: {
     if (filteredIds.length === 0) return []
   }
 
-  // Fetch active profiles only (limit 12)
   const profiles = await db
     .select({
       id: caregiverProfiles.id,
@@ -48,6 +45,7 @@ export async function searchCaregivers(params: {
       headline: caregiverProfiles.headline,
       hourlyMin: caregiverProfiles.hourlyMin,
       hourlyMax: caregiverProfiles.hourlyMax,
+      experience: caregiverProfiles.experience,
     })
     .from(caregiverProfiles)
     .where(
@@ -86,20 +84,58 @@ export async function searchCaregivers(params: {
     careTypeMap.get(ct.caregiverId)!.push(ct.careType)
   }
 
-  return profiles.map(profile => {
+  const results = profiles.map(profile => {
     const user = userMap.get(profile.userId)
     const location = locationMap.get(profile.id)
+    const careTypes = careTypeMap.get(profile.id) ?? []
+
+    const matchingCount = careTypes.filter(ct => params.careTypes.includes(ct)).length
+    const expBonus =
+      profile.experience === '10+ years' ? 2 :
+      profile.experience === '5-10 years' ? 1 : 0
+    const rawScore = Math.min(matchingCount + expBonus, 5)
+    const matchScore = Math.max(rawScore, 1)
+
+    const matchReason = buildMatchReason(matchingCount, profile.experience, params.careTypes, careTypes)
 
     return {
       id: profile.id,
       name: user?.name ?? null,
       image: user?.image ?? null,
       headline: profile.headline,
-      careTypes: careTypeMap.get(profile.id) ?? [],
+      careTypes,
       city: location?.city ?? null,
       state: location?.state ?? null,
       hourlyMin: profile.hourlyMin,
       hourlyMax: profile.hourlyMax,
+      experience: profile.experience,
+      matchScore,
+      matchReason,
     }
   })
+
+  return results.sort((a, b) => b.matchScore - a.matchScore)
+}
+
+function buildMatchReason(
+  matchingCount: number,
+  experience: string | null,
+  requested: string[],
+  has: string[],
+): string {
+  const matched = has.filter(ct => requested.includes(ct))
+  const parts: string[] = []
+
+  if (matched.length > 0) {
+    const formatted = matched
+      .map(k => k.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()))
+      .join(', ')
+    parts.push(`Offers ${formatted}`)
+  }
+
+  if (experience === '10+ years') parts.push('10+ years of experience')
+  else if (experience === '5-10 years') parts.push('5–10 years of experience')
+  else if (experience) parts.push(`${experience} of experience`)
+
+  return parts.join(' · ') || 'Available in your area'
 }
