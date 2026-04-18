@@ -120,7 +120,7 @@ describe('getCaregiverPayments', () => {
 
 - [ ] **Step 2: Run tests to verify they fail**
 
-Run: `npx vitest run domains/payments/__tests__/queries.test.ts`
+Run: `bunx vitest run domains/payments/__tests__/queries.test.ts`
 Expected: FAIL — module not found
 
 - [ ] **Step 3: Write the implementation**
@@ -217,7 +217,7 @@ export async function getCaregiverPayments(caregiverId: string): Promise<Payment
 
 - [ ] **Step 4: Run tests to verify they pass**
 
-Run: `npx vitest run domains/payments/__tests__/queries.test.ts`
+Run: `bunx vitest run domains/payments/__tests__/queries.test.ts`
 Expected: 8 tests passing
 
 - [ ] **Step 5: Commit**
@@ -350,7 +350,7 @@ export async function setupStripeConnect(): Promise<{ url?: string; error?: stri
 
 - [ ] **Step 2: Verify TypeScript compiles**
 
-Run: `npx tsc --noEmit 2>&1 | grep domains/payments`
+Run: `bunx tsc --noEmit 2>&1 | grep domains/payments`
 Expected: no errors for payments files
 
 - [ ] **Step 3: Commit**
@@ -423,7 +423,7 @@ In the shift row render, add alongside existing content:
 
 - [ ] **Step 4: Verify TypeScript compiles**
 
-Run: `npx tsc --noEmit 2>&1 | grep -E "shifts|complete-shift"`
+Run: `bunx tsc --noEmit 2>&1 | grep -E "shifts|complete-shift"`
 Expected: no errors
 
 - [ ] **Step 5: Commit**
@@ -670,7 +670,7 @@ Read `app/(client)/client/dashboard/_components/sidebar.tsx` and add a Billing n
 
 - [ ] **Step 5: Verify TypeScript compiles**
 
-Run: `npx tsc --noEmit 2>&1 | grep billing`
+Run: `bunx tsc --noEmit 2>&1 | grep billing`
 Expected: no errors
 
 - [ ] **Step 6: Commit**
@@ -806,7 +806,7 @@ export default async function CaregiverPayoutsPage() {
 
 - [ ] **Step 3: Verify TypeScript compiles**
 
-Run: `npx tsc --noEmit 2>&1 | grep payouts`
+Run: `bunx tsc --noEmit 2>&1 | grep payouts`
 Expected: no errors
 
 - [ ] **Step 4: Commit**
@@ -824,17 +824,17 @@ git commit -m "feat: add caregiver payouts page with Stripe Connect setup"
 
 - [ ] **Step 1: Run full test suite**
 
-Run: `npx vitest run`
+Run: `bunx vitest run`
 Expected: all tests passing (pre-existing failures in lib/__tests__/rate-defaults.test.ts are acceptable)
 
 - [ ] **Step 2: Run TypeScript check**
 
-Run: `npx tsc --noEmit 2>&1 | grep -v "lib/__tests__/rate-defaults"`
+Run: `bunx tsc --noEmit 2>&1 | grep -v "lib/__tests__/rate-defaults"`
 Expected: no new errors
 
 - [ ] **Step 3: Run Next.js build**
 
-Run: `npx next build`
+Run: `bunx next build`
 Expected: successful build with no errors
 
 - [ ] **Step 4: Commit if any fixes were needed**

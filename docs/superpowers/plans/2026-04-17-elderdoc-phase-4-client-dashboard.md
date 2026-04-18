@@ -153,7 +153,7 @@ describe('createCareRequest', () => {
 
 ```bash
 cd /Users/ashcbrd/Desktop/Development/elderdoc/.worktrees/phase-1-foundation
-npx vitest run domains/clients/__tests__/requests.test.ts
+bunx vitest run domains/clients/__tests__/requests.test.ts
 ```
 
 Expected: FAIL — module not found
@@ -252,7 +252,7 @@ export async function createCareRequest(data: {
 - [ ] **Step 4: Run tests — verify they pass**
 
 ```bash
-npx vitest run domains/clients/__tests__/requests.test.ts
+bunx vitest run domains/clients/__tests__/requests.test.ts
 ```
 
 Expected: 7 tests pass
@@ -337,7 +337,7 @@ describe('POST /api/care-request/generate', () => {
 - [ ] **Step 2: Run tests — verify they fail**
 
 ```bash
-npx vitest run "app/api/care-request/generate/__tests__/route.test.ts"
+bunx vitest run "app/api/care-request/generate/__tests__/route.test.ts"
 ```
 
 Expected: FAIL — module not found
@@ -399,7 +399,7 @@ Be warm, specific, and professional.`,
 - [ ] **Step 4: Run tests — verify they pass**
 
 ```bash
-npx vitest run "app/api/care-request/generate/__tests__/route.test.ts"
+bunx vitest run "app/api/care-request/generate/__tests__/route.test.ts"
 ```
 
 Expected: 3 tests pass
@@ -554,7 +554,7 @@ export default async function ClientDashboardLayout({ children }: { children: Re
 - [ ] **Step 3: Verify TypeScript compiles**
 
 ```bash
-npx tsc --noEmit
+bunx tsc --noEmit
 ```
 
 Expected: no errors
@@ -792,7 +792,7 @@ Use this corrected version (no `db.raw`) in the actual file. Remove all `db.raw`
 - [ ] **Step 2: Verify TypeScript compiles**
 
 ```bash
-npx tsc --noEmit
+bunx tsc --noEmit
 ```
 
 Expected: no errors (modals don't exist yet — create empty stubs if needed for the build)
@@ -894,7 +894,7 @@ export default async function RecipientsPage() {
 - [ ] **Step 2: Verify TypeScript compiles**
 
 ```bash
-npx tsc --noEmit
+bunx tsc --noEmit
 ```
 
 - [ ] **Step 3: Commit**
@@ -1000,7 +1000,7 @@ export default async function RequestsPage() {
 - [ ] **Step 2: Verify TypeScript compiles**
 
 ```bash
-npx tsc --noEmit
+bunx tsc --noEmit
 ```
 
 - [ ] **Step 3: Commit**
@@ -1485,7 +1485,7 @@ export function CareRecipientModal({ onRecipientCreated, triggerLabel }: Props) 
 - [ ] **Step 3: Verify TypeScript compiles**
 
 ```bash
-npx tsc --noEmit
+bunx tsc --noEmit
 ```
 
 - [ ] **Step 4: Commit**
@@ -2066,7 +2066,7 @@ export function CareRequestModal({ recipients: initialRecipients }: Props) {
 - [ ] **Step 3: Verify TypeScript compiles**
 
 ```bash
-npx tsc --noEmit
+bunx tsc --noEmit
 ```
 
 Expected: no errors
@@ -2100,7 +2100,7 @@ npm install date-fns
 - [ ] **Step 2: Run full type check**
 
 ```bash
-npx tsc --noEmit
+bunx tsc --noEmit
 ```
 
 Expected: no errors
@@ -2108,7 +2108,7 @@ Expected: no errors
 - [ ] **Step 3: Run all tests**
 
 ```bash
-npx vitest run
+bunx vitest run
 ```
 
 Expected: all tests pass (existing Phase 3 tests + 7 new Server Action tests + 3 new route handler tests)

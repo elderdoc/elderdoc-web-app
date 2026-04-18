@@ -229,7 +229,7 @@ describe('matchCaregivers', () => {
 - [ ] **Step 2: Run tests to verify they fail**
 
 ```bash
-npx vitest run domains/matching/__tests__/match-caregivers.test.ts
+bunx vitest run domains/matching/__tests__/match-caregivers.test.ts
 ```
 
 Expected: FAIL — module not found
@@ -408,7 +408,7 @@ ${JSON.stringify(candidates.map((c) => ({
 - [ ] **Step 4: Run tests to verify they pass**
 
 ```bash
-npx vitest run domains/matching/__tests__/match-caregivers.test.ts
+bunx vitest run domains/matching/__tests__/match-caregivers.test.ts
 ```
 
 Expected: all tests pass (some may need mock adjustments for the parallel `inArray` queries — see note below)
@@ -526,7 +526,7 @@ describe('sendOffer', () => {
 - [ ] **Step 2: Run tests to verify they fail**
 
 ```bash
-npx vitest run domains/matching/__tests__/send-offer.test.ts
+bunx vitest run domains/matching/__tests__/send-offer.test.ts
 ```
 
 Expected: FAIL — module not found
@@ -565,7 +565,7 @@ export async function sendOffer(
 - [ ] **Step 4: Run tests to verify they pass**
 
 ```bash
-npx vitest run domains/matching/__tests__/send-offer.test.ts
+bunx vitest run domains/matching/__tests__/send-offer.test.ts
 ```
 
 Expected: 3 tests pass
@@ -610,7 +610,7 @@ export async function POST(req: Request): Promise<Response> {
 - [ ] **Step 2: Verify TypeScript compiles**
 
 ```bash
-npx tsc --noEmit
+bunx tsc --noEmit
 ```
 
 Expected: no errors
@@ -692,7 +692,7 @@ export function SendOfferButton({ requestId, caregiverId, score, reason }: Props
 - [ ] **Step 2: Verify TypeScript compiles**
 
 ```bash
-npx tsc --noEmit
+bunx tsc --noEmit
 ```
 
 Expected: no errors
@@ -920,7 +920,7 @@ Read the function signature and update `result?.id` or `result?.requestId` to ma
 - [ ] **Step 2: Verify TypeScript compiles**
 
 ```bash
-npx tsc --noEmit
+bunx tsc --noEmit
 ```
 
 Fix any type errors. Common issues:
@@ -941,7 +941,7 @@ git commit -m "feat: add step 7 AI matching results to care request modal"
 - [ ] **Step 1: Run full test suite**
 
 ```bash
-npx vitest run
+bunx vitest run
 ```
 
 Expected: all tests pass (no regressions)
@@ -949,7 +949,7 @@ Expected: all tests pass (no regressions)
 - [ ] **Step 2: Run TypeScript check**
 
 ```bash
-npx tsc --noEmit
+bunx tsc --noEmit
 ```
 
 Expected: no errors
@@ -957,7 +957,7 @@ Expected: no errors
 - [ ] **Step 3: Run production build**
 
 ```bash
-npm run build
+bun run build
 ```
 
 Expected: build succeeds with no errors

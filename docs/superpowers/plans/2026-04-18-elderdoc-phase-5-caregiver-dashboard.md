@@ -203,7 +203,7 @@ describe('declineOffer', () => {
 - [ ] **Step 2: Run tests — verify they fail**
 
 ```bash
-npx vitest run domains/caregivers/__tests__/actions.test.ts
+bunx vitest run domains/caregivers/__tests__/actions.test.ts
 ```
 
 Expected: FAIL — `actions` module not found.
@@ -283,7 +283,7 @@ export async function declineOffer(matchId: string): Promise<void> {
 - [ ] **Step 4: Run tests — verify they pass**
 
 ```bash
-npx vitest run domains/caregivers/__tests__/actions.test.ts
+bunx vitest run domains/caregivers/__tests__/actions.test.ts
 ```
 
 Expected: 7 tests pass.
@@ -446,7 +446,7 @@ export default async function CaregiverDashboardLayout({ children }: { children:
 - [ ] **Step 3: Verify TypeScript**
 
 ```bash
-npx tsc --noEmit 2>&1 | grep -v "rate-defaults"
+bunx tsc --noEmit 2>&1 | grep -v "rate-defaults"
 ```
 
 Expected: no errors (the rate-defaults error is pre-existing and unrelated).
@@ -611,7 +611,7 @@ export default async function CaregiverDashboard() {
 - [ ] **Step 2: Verify TypeScript**
 
 ```bash
-npx tsc --noEmit 2>&1 | grep -v "rate-defaults"
+bunx tsc --noEmit 2>&1 | grep -v "rate-defaults"
 ```
 
 Expected: no errors.
@@ -835,7 +835,7 @@ export default async function FindJobsPage() {
 - [ ] **Step 3: Verify TypeScript**
 
 ```bash
-npx tsc --noEmit 2>&1 | grep -v "rate-defaults"
+bunx tsc --noEmit 2>&1 | grep -v "rate-defaults"
 ```
 
 Expected: no errors.
@@ -1003,7 +1003,7 @@ export default async function OffersPage() {
 - [ ] **Step 3: Verify TypeScript**
 
 ```bash
-npx tsc --noEmit 2>&1 | grep -v "rate-defaults"
+bunx tsc --noEmit 2>&1 | grep -v "rate-defaults"
 ```
 
 Expected: no errors.
@@ -1116,7 +1116,7 @@ export default async function MyJobsPage() {
 - [ ] **Step 2: Verify TypeScript**
 
 ```bash
-npx tsc --noEmit 2>&1 | grep -v "rate-defaults"
+bunx tsc --noEmit 2>&1 | grep -v "rate-defaults"
 ```
 
 Expected: no errors.
@@ -1214,7 +1214,7 @@ export default async function ShiftsPage() {
 - [ ] **Step 2: Verify TypeScript**
 
 ```bash
-npx tsc --noEmit 2>&1 | grep -v "rate-defaults"
+bunx tsc --noEmit 2>&1 | grep -v "rate-defaults"
 ```
 
 Expected: no errors.
@@ -1296,7 +1296,7 @@ git commit -m "feat: update caregiver dashboard stub pages"
 - [ ] **Step 1: Run the full test suite**
 
 ```bash
-npx vitest run
+bunx vitest run
 ```
 
 Expected: all tests pass (previously 83 + 7 new = 90 total).
@@ -1304,7 +1304,7 @@ Expected: all tests pass (previously 83 + 7 new = 90 total).
 - [ ] **Step 2: Run full TypeScript check**
 
 ```bash
-npx tsc --noEmit 2>&1 | grep -v "rate-defaults"
+bunx tsc --noEmit 2>&1 | grep -v "rate-defaults"
 ```
 
 Expected: no errors.

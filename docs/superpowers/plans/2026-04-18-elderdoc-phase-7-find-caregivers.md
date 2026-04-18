@@ -245,7 +245,7 @@ describe('searchCaregivers', () => {
 
 ```bash
 cd /Users/ashcbrd/Desktop/Development/elderdoc
-npx vitest run domains/clients/__tests__/find-caregivers.test.ts
+bunx vitest run domains/clients/__tests__/find-caregivers.test.ts
 ```
 
 Expected: FAIL — `Cannot find module '../find-caregivers'`
@@ -497,7 +497,7 @@ export async function searchCaregivers(
 - [ ] **Step 1.4: Run tests to verify they pass**
 
 ```bash
-npx vitest run domains/clients/__tests__/find-caregivers.test.ts
+bunx vitest run domains/clients/__tests__/find-caregivers.test.ts
 ```
 
 Expected: All tests pass.
@@ -1219,7 +1219,7 @@ git commit -m "feat: implement find-caregivers page with matches + directory sec
 - [ ] **Step 5.1: Run the full test suite**
 
 ```bash
-npx vitest run
+bunx vitest run
 ```
 
 Expected: All tests pass (no regressions).
@@ -1227,7 +1227,7 @@ Expected: All tests pass (no regressions).
 - [ ] **Step 5.2: Run TypeScript check**
 
 ```bash
-npx tsc --noEmit
+bunx tsc --noEmit
 ```
 
 Expected: No type errors.
@@ -1235,7 +1235,7 @@ Expected: No type errors.
 - [ ] **Step 5.3: Run Next.js build**
 
 ```bash
-npx next build
+bunx next build
 ```
 
 Expected: Build completes successfully with no errors.

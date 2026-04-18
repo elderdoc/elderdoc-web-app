@@ -193,7 +193,7 @@ describe('getCarePlanByJob', () => {
 
 ```bash
 cd /Users/ashcbrd/Desktop/Development/elderdoc
-npx vitest run domains/clients/__tests__/care-plans.test.ts
+bunx vitest run domains/clients/__tests__/care-plans.test.ts
 ```
 
 Expected output: FAIL — `Cannot find module '../care-plans'`
@@ -283,7 +283,7 @@ export async function getCarePlanByJob(
 - [ ] **Step 1.4: Run tests and verify they pass**
 
 ```bash
-npx vitest run domains/clients/__tests__/care-plans.test.ts
+bunx vitest run domains/clients/__tests__/care-plans.test.ts
 ```
 
 Expected output:
@@ -372,7 +372,7 @@ export async function upsertCarePlan(
 - [ ] **Step 2.2: Verify TypeScript compiles**
 
 ```bash
-npx tsc --noEmit 2>&1 | head -20
+bunx tsc --noEmit 2>&1 | head -20
 ```
 
 Expected: no output (no errors).
@@ -459,7 +459,7 @@ export default async function CarePlansPage() {
 - [ ] **Step 3.2: Verify TypeScript**
 
 ```bash
-npx tsc --noEmit 2>&1 | head -20
+bunx tsc --noEmit 2>&1 | head -20
 ```
 
 Expected: no output.
@@ -1006,7 +1006,7 @@ export default async function CarePlanDetailPage({ params }: PageProps) {
 - [ ] **Step 4.3: Verify TypeScript**
 
 ```bash
-npx tsc --noEmit 2>&1 | head -20
+bunx tsc --noEmit 2>&1 | head -20
 ```
 
 Expected: no output.
@@ -1189,7 +1189,7 @@ export default async function CaregiverCarePlansPage() {
 - [ ] **Step 5.2: Verify TypeScript**
 
 ```bash
-npx tsc --noEmit 2>&1 | head -20
+bunx tsc --noEmit 2>&1 | head -20
 ```
 
 Expected: no output.
@@ -1474,7 +1474,7 @@ export function Calendar({ year, month, events, activeJobs, basePath, addShiftAc
 - [ ] **Step 6.2: Verify TypeScript**
 
 ```bash
-npx tsc --noEmit 2>&1 | head -20
+bunx tsc --noEmit 2>&1 | head -20
 ```
 
 Expected: no output.
@@ -1752,7 +1752,7 @@ export async function addCaregiverShift(
 - [ ] **Step 7.3: Verify TypeScript**
 
 ```bash
-npx tsc --noEmit 2>&1 | head -20
+bunx tsc --noEmit 2>&1 | head -20
 ```
 
 Expected: no output.
@@ -1914,7 +1914,7 @@ export default async function CaregiverCalendarPage({ searchParams }: PageProps)
 - [ ] **Step 8.3: Verify TypeScript**
 
 ```bash
-npx tsc --noEmit 2>&1 | head -20
+bunx tsc --noEmit 2>&1 | head -20
 ```
 
 Expected: no output.
@@ -1936,7 +1936,7 @@ git commit -m "feat: implement client and caregiver calendar pages"
 - [ ] **Step 9.1: Run all tests**
 
 ```bash
-npx vitest run
+bunx vitest run
 ```
 
 Expected output (all tests must pass):
@@ -1955,7 +1955,7 @@ If any test fails, fix the failure before proceeding.
 - [ ] **Step 9.2: TypeScript full check**
 
 ```bash
-npx tsc --noEmit
+bunx tsc --noEmit
 ```
 
 Expected: no output (zero errors).
@@ -1963,7 +1963,7 @@ Expected: no output (zero errors).
 - [ ] **Step 9.3: Next.js production build**
 
 ```bash
-npx next build
+bunx next build
 ```
 
 Expected: build completes without errors. The output should include all new routes:
@@ -1980,7 +1980,7 @@ Route (app)                                           Size     First Load JS
 If the build fails:
 1. Read the error message carefully.
 2. Check for missing imports, type errors, or invalid Server Action usage.
-3. Fix and re-run `npx tsc --noEmit` then `npx next build`.
+3. Fix and re-run `bunx tsc --noEmit` then `bunx next build`.
 
 - [ ] **Step 9.4: Final commit**
 
