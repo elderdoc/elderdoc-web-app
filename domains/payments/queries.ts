@@ -42,9 +42,9 @@ export async function getClientPayments(clientId: string): Promise<PaymentRow[]>
     careType: r.careType,
     caregiverName: r.caregiverName ?? null,
     clientName: null,
-    amount: r.amount,
+    amount: Number(r.amount),
     method: r.method,
-    status: r.status,
+    status: r.status ?? '',
     createdAt: r.createdAt,
   }))
 }
@@ -76,9 +76,9 @@ export async function getCaregiverPayments(caregiverId: string): Promise<Payment
     careType: r.careType,
     caregiverName: null,
     clientName: r.clientName ?? null,
-    amount: r.amount,
+    amount: Number(r.amount),
     method: r.method,
-    status: r.status,
+    status: r.status ?? '',
     createdAt: r.createdAt,
   }))
 }
