@@ -12,11 +12,12 @@ interface Props {
   isSubmitting?: boolean
   nextDisabled?: boolean
   submitDisabled?: boolean
+  hideActions?: boolean
 }
 
 export function CareRequestShell({
   currentStep, title, children, onBack, onNext, onSubmit,
-  isSubmitting, nextDisabled, submitDisabled,
+  isSubmitting, nextDisabled, submitDisabled, hideActions,
 }: Props) {
   return (
     <div className="flex flex-col h-full">
@@ -37,34 +38,36 @@ export function CareRequestShell({
 
       <div className="flex-1 overflow-y-auto">{children}</div>
 
-      <div className="flex justify-between pt-6 border-t border-border mt-6">
-        <button
-          type="button"
-          onClick={onBack}
-          className="px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground"
-        >
-          Back
-        </button>
-        {currentStep < STEPS.length ? (
+      {!hideActions && (
+        <div className="flex justify-between pt-6 border-t border-border mt-6">
           <button
             type="button"
-            onClick={onNext}
-            disabled={nextDisabled}
-            className="px-5 py-2 rounded-md bg-primary text-primary-foreground text-sm font-medium disabled:opacity-40"
+            onClick={onBack}
+            className="px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground"
           >
-            Next
+            Back
           </button>
-        ) : (
-          <button
-            type="button"
-            onClick={onSubmit}
-            disabled={isSubmitting || submitDisabled}
-            className="px-5 py-2 rounded-md bg-primary text-primary-foreground text-sm font-medium disabled:opacity-40"
-          >
-            {isSubmitting ? 'Submitting…' : 'Submit Request'}
-          </button>
-        )}
-      </div>
+          {currentStep < STEPS.length ? (
+            <button
+              type="button"
+              onClick={onNext}
+              disabled={nextDisabled}
+              className="px-5 py-2 rounded-md bg-primary text-primary-foreground text-sm font-medium disabled:opacity-40"
+            >
+              Next
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={onSubmit}
+              disabled={isSubmitting || submitDisabled}
+              className="px-5 py-2 rounded-md bg-primary text-primary-foreground text-sm font-medium disabled:opacity-40"
+            >
+              {isSubmitting ? 'Submitting…' : 'Submit Request'}
+            </button>
+          )}
+        </div>
+      )}
     </div>
   )
 }

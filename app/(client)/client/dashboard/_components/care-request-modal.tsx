@@ -9,6 +9,8 @@ import {
 } from '@/lib/constants'
 import { CareRequestShell } from './care-request-shell'
 import { CareRecipientModal } from './care-recipient-modal'
+import type { RankedCandidate } from '@/domains/matching/match-caregivers'
+import { SendOfferButton } from './send-offer-button'
 
 interface RecipientOption {
   id: string
@@ -63,11 +65,17 @@ export function CareRequestModal({ recipients: initialRecipients }: Props) {
   const [generated, setGenerated] = useState(false)
   const [isGenerating, setIsGenerating] = useState(false)
   const [isPending, startTransition] = useTransition()
+  const [matchingState, setMatchingState] = useState<'matching' | 'results' | 'error'>('matching')
+  const [candidates, setCandidates] = useState<RankedCandidate[]>([])
+  const [matchRequestId, setMatchRequestId] = useState<string | null>(null)
 
   function reset() {
     setStep(1)
     setForm(EMPTY)
     setGenerated(false)
+    setMatchingState('matching')
+    setCandidates([])
+    setMatchRequestId(null)
   }
 
   function handleClose() {
@@ -144,7 +152,7 @@ export function CareRequestModal({ recipients: initialRecipients }: Props) {
 
   function handleSubmit() {
     startTransition(async () => {
-      await createCareRequest({
+      const result = await createCareRequest({
         recipientId:   form.recipientId,
         careType:      form.careType,
         address:       form.address,
@@ -160,8 +168,30 @@ export function CareRequestModal({ recipients: initialRecipients }: Props) {
         title:         form.title,
         description:   form.description,
       })
+      const requestId = result?.id ?? null
+      setMatchRequestId(requestId)
+      setMatchingState('matching')
+      setStep(7)
       router.refresh()
-      handleClose()
+
+      if (!requestId) {
+        setMatchingState('error')
+        return
+      }
+
+      try {
+        const res = await fetch('/api/care-request/match', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ requestId }),
+        })
+        if (!res.ok) { setMatchingState('error'); return }
+        const data: RankedCandidate[] = await res.json()
+        setCandidates(data)
+        setMatchingState('results')
+      } catch {
+        setMatchingState('error')
+      }
     })
   }
 
@@ -203,7 +233,8 @@ export function CareRequestModal({ recipients: initialRecipients }: Props) {
                 step === 3 ? 'Where will care take place?' :
                 step === 4 ? 'Schedule' :
                 step === 5 ? 'Preferences' :
-                'Review & generate'
+                step === 6 ? 'Review & generate' :
+                'Your Top Matches'
               }
               onBack={handleBack}
               onNext={handleNext}
@@ -211,6 +242,7 @@ export function CareRequestModal({ recipients: initialRecipients }: Props) {
               isSubmitting={isPending}
               nextDisabled={!stepValid[step - 1]}
               submitDisabled={!stepValid[5]}
+              hideActions={step === 7}
             >
               {/* Step 1 — Care Type */}
               {step === 1 && (
@@ -477,6 +509,96 @@ export function CareRequestModal({ recipients: initialRecipients }: Props) {
                     />
                     <p className="text-right text-xs text-muted-foreground mt-1">{form.description.length}/500</p>
                   </div>
+                </div>
+              )}
+
+              {/* Step 7 — AI Matching */}
+              {step === 7 && (
+                <div className="space-y-4">
+                  {matchingState === 'matching' && (
+                    <div className="flex flex-col items-center gap-4 py-8">
+                      <div className="h-8 w-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+                      <p className="text-sm text-muted-foreground">Finding your best matches…</p>
+                    </div>
+                  )}
+
+                  {matchingState === 'error' && (
+                    <p className="text-sm text-muted-foreground py-8 text-center">
+                      Could not load matches right now. Your request is live — caregivers can still apply directly.
+                    </p>
+                  )}
+
+                  {matchingState === 'results' && candidates.length === 0 && (
+                    <p className="text-sm text-muted-foreground py-8 text-center">
+                      No matches found right now. Your request is live — caregivers can still apply directly.
+                    </p>
+                  )}
+
+                  {matchingState === 'results' && candidates.length > 0 && (
+                    <div className="space-y-3 overflow-y-auto max-h-[50vh] pr-1">
+                      {candidates.map((c) => {
+                        const initials = (c.name ?? '?').split(' ').map((p) => p[0]).slice(0, 2).join('').toUpperCase()
+                        const scoreBadge =
+                          c.score >= 80 ? { label: 'Strong match', cls: 'bg-green-100 text-green-700' } :
+                          c.score >= 60 ? { label: 'Good match',   cls: 'bg-blue-100 text-blue-700' } :
+                                          { label: 'Possible match', cls: 'bg-muted text-muted-foreground' }
+                        return (
+                          <div key={c.caregiverId} className="rounded-xl border border-border bg-card p-4">
+                            <div className="flex items-start gap-3">
+                              {c.image ? (
+                                <img src={c.image} alt="" className="h-12 w-12 rounded-full object-cover shrink-0" />
+                              ) : (
+                                <span className="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground shrink-0">
+                                  {initials}
+                                </span>
+                              )}
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <p className="font-medium text-sm">{c.name ?? 'Caregiver'}</p>
+                                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${scoreBadge.cls}`}>
+                                    {scoreBadge.label}
+                                  </span>
+                                </div>
+                                {(c.city || c.state) && (
+                                  <p className="text-xs text-muted-foreground">{[c.city, c.state].filter(Boolean).join(', ')}</p>
+                                )}
+                                {c.headline && (
+                                  <p className="text-xs text-muted-foreground mt-0.5">{c.headline}</p>
+                                )}
+                                {c.careTypes.length > 0 && (
+                                  <div className="flex flex-wrap gap-1 mt-1.5">
+                                    {c.careTypes.map((ct) => (
+                                      <span key={ct} className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
+                                        {ct.replace(/-/g, ' ')}
+                                      </span>
+                                    ))}
+                                  </div>
+                                )}
+                                {(c.hourlyMin || c.hourlyMax) && (
+                                  <p className="text-xs text-muted-foreground mt-1">
+                                    ${c.hourlyMin}–${c.hourlyMax}/hr
+                                  </p>
+                                )}
+                                {c.reason && (
+                                  <p className="text-xs italic text-muted-foreground mt-1.5">{c.reason}</p>
+                                )}
+                              </div>
+                            </div>
+                            <div className="mt-3 flex justify-end">
+                              {matchRequestId && (
+                                <SendOfferButton
+                                  requestId={matchRequestId}
+                                  caregiverId={c.caregiverId}
+                                  score={c.score}
+                                  reason={c.reason}
+                                />
+                              )}
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
                 </div>
               )}
             </CareRequestShell>
