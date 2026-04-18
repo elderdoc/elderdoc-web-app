@@ -89,16 +89,16 @@ describe('getCarePlanByJob', () => {
   })
 
   it('returns null when job exists but has no care plan', async () => {
-    mockSelectChain.offset.mockResolvedValueOnce([{ jobId: 'job-1' }])
-    mockSelectChain.where.mockResolvedValueOnce([])
+    mockSelectChain.offset.mockResolvedValueOnce([{ jobId: 'job-1' }])  // ownership found
+    mockSelectChain.offset.mockResolvedValueOnce([])                     // no plan
     const result = await getCarePlanByJob('job-1', 'client-1')
     expect(result).toBeNull()
   })
 
   it('returns care plan detail when job is owned and plan exists', async () => {
     const updatedAt = new Date('2026-04-01T00:00:00Z')
-    mockSelectChain.offset.mockResolvedValueOnce([{ jobId: 'job-1' }])
-    mockSelectChain.where.mockResolvedValueOnce([
+    mockSelectChain.offset.mockResolvedValueOnce([{ jobId: 'job-1' }])  // ownership found
+    mockSelectChain.offset.mockResolvedValueOnce([                       // plan found
       {
         id: 'plan-1',
         jobId: 'job-1',

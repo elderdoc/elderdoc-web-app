@@ -50,7 +50,7 @@ export async function getCarePlanByJob(
   const ownership = await db
     .select({ jobId: jobs.id })
     .from(jobs)
-    .innerJoin(users, and(eq(jobs.clientId, users.id), eq(jobs.id, jobId), eq(jobs.clientId, clientId)))
+    .where(and(eq(jobs.id, jobId), eq(jobs.clientId, clientId)))
     .limit(1)
     .offset(0)
 
@@ -69,6 +69,8 @@ export async function getCarePlanByJob(
     })
     .from(carePlans)
     .where(eq(carePlans.jobId, jobId))
+    .limit(1)
+    .offset(0)
 
   if (rows.length === 0) return null
   return rows[0] as CarePlanDetail
