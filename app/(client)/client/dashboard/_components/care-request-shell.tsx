@@ -33,7 +33,9 @@ export function CareRequestShell({
         ))}
       </div>
 
-      <p className="text-xs text-muted-foreground mb-1">Step {currentStep} of {STEPS.length}</p>
+      {currentStep <= STEPS.length && (
+        <p className="text-xs text-muted-foreground mb-1">Step {currentStep} of {STEPS.length}</p>
+      )}
       <h2 className="text-xl font-semibold mb-6">{title}</h2>
 
       <div className="flex-1 overflow-y-auto">{children}</div>
