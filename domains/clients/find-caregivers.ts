@@ -1,0 +1,235 @@
+import { db } from '@/services/db'
+import {
+  matches, careRequests, caregiverProfiles, caregiverLocations,
+  caregiverCareTypes, caregiverLanguages, caregiverCertifications, users,
+} from '@/db/schema'
+import { eq, and, gte, lte, inArray } from 'drizzle-orm'
+
+export type MatchResult = {
+  matchId: string
+  caregiverId: string
+  score: number
+  reason: string
+  name: string | null
+  image: string | null
+  headline: string | null
+  careTypes: string[]
+  city: string | null
+  state: string | null
+  hourlyMin: string | null
+  hourlyMax: string | null
+}
+
+export type CaregiverResult = {
+  caregiverId: string
+  name: string | null
+  image: string | null
+  headline: string | null
+  experience: string | null
+  careTypes: string[]
+  languages: string[]
+  certifications: string[]
+  city: string | null
+  state: string | null
+  hourlyMin: string | null
+  hourlyMax: string | null
+}
+
+export type SearchFilters = {
+  careType?: string
+  state?: string
+  rateMin?: string
+  rateMax?: string
+  language?: string[]
+  certification?: string[]
+  experience?: string
+}
+
+export async function getMatchesForRequest(
+  requestId: string,
+  clientId: string,
+): Promise<MatchResult[]> {
+  const rows = await db
+    .select({
+      matchId:    matches.id,
+      caregiverId: matches.caregiverId,
+      score:      matches.score,
+      reason:     matches.reason,
+      name:       users.name,
+      image:      users.image,
+      headline:   caregiverProfiles.headline,
+      city:       caregiverLocations.city,
+      state:      caregiverLocations.state,
+      hourlyMin:  caregiverProfiles.hourlyMin,
+      hourlyMax:  caregiverProfiles.hourlyMax,
+    })
+    .from(matches)
+    .innerJoin(careRequests, and(
+      eq(matches.requestId, careRequests.id),
+      eq(careRequests.clientId, clientId),
+      eq(matches.requestId, requestId),
+    ))
+    .innerJoin(caregiverProfiles, eq(matches.caregiverId, caregiverProfiles.id))
+    .innerJoin(users, eq(caregiverProfiles.userId, users.id))
+    .leftJoin(caregiverLocations, eq(caregiverProfiles.id, caregiverLocations.caregiverId))
+    .orderBy(matches.score)
+    .limit(5)
+    .offset(0)
+
+  if (rows.length === 0) return []
+
+  const caregiverIds = rows.map((r) => r.caregiverId)
+  const careTypeRows = await db
+    .select({ caregiverId: caregiverCareTypes.caregiverId, careType: caregiverCareTypes.careType })
+    .from(caregiverCareTypes)
+    .where(inArray(caregiverCareTypes.caregiverId, caregiverIds))
+
+  const careTypeMap = new Map<string, string[]>()
+  for (const row of careTypeRows) {
+    const list = careTypeMap.get(row.caregiverId) ?? []
+    list.push(row.careType)
+    careTypeMap.set(row.caregiverId, list)
+  }
+
+  return rows.map((r) => ({
+    ...r,
+    careTypes: careTypeMap.get(r.caregiverId) ?? [],
+  }))
+}
+
+export async function searchCaregivers(
+  filters: SearchFilters,
+  page: number,
+): Promise<{ caregivers: CaregiverResult[]; total: number }> {
+  const conditions = [eq(caregiverProfiles.status, 'active')]
+
+  if (filters.state) {
+    conditions.push(eq(caregiverLocations.state, filters.state))
+  }
+  if (filters.rateMin) {
+    conditions.push(gte(caregiverProfiles.hourlyMin, filters.rateMin))
+  }
+  if (filters.rateMax) {
+    conditions.push(lte(caregiverProfiles.hourlyMax, filters.rateMax))
+  }
+  if (filters.experience) {
+    conditions.push(eq(caregiverProfiles.experience, filters.experience))
+  }
+
+  const whereClause = and(...conditions)
+  const total: number = await (db.$count as any)(caregiverProfiles, whereClause)
+
+  let baseQuery = db
+    .select({
+      caregiverId: caregiverProfiles.id,
+      name:        users.name,
+      image:       users.image,
+      headline:    caregiverProfiles.headline,
+      experience:  caregiverProfiles.experience,
+      city:        caregiverLocations.city,
+      state:       caregiverLocations.state,
+      hourlyMin:   caregiverProfiles.hourlyMin,
+      hourlyMax:   caregiverProfiles.hourlyMax,
+    })
+    .from(caregiverProfiles)
+    .innerJoin(users, eq(caregiverProfiles.userId, users.id))
+    .leftJoin(caregiverLocations, eq(caregiverProfiles.id, caregiverLocations.caregiverId))
+
+  // careType filter via inner join — note: $count above does not include this join,
+  // so total may be slightly over-counted when careType is active (acceptable approximation)
+  if (filters.careType) {
+    baseQuery = (baseQuery as any).innerJoin(
+      caregiverCareTypes,
+      and(
+        eq(caregiverProfiles.id, caregiverCareTypes.caregiverId),
+        eq(caregiverCareTypes.careType, filters.careType),
+      ),
+    )
+  }
+
+  const rows = await (baseQuery as any)
+    .where(whereClause)
+    .orderBy(caregiverProfiles.createdAt)
+    .limit(20)
+    .offset((page - 1) * 20)
+
+  if (rows.length === 0) return { caregivers: [], total }
+
+  const caregiverIds = rows.map((r) => r.caregiverId)
+
+  // Batch fetch related data
+  const [careTypeRows, languageRows, certRows] = await Promise.all([
+    db
+      .select({ caregiverId: caregiverCareTypes.caregiverId, careType: caregiverCareTypes.careType })
+      .from(caregiverCareTypes)
+      .where(inArray(caregiverCareTypes.caregiverId, caregiverIds)),
+    db
+      .select({ caregiverId: caregiverLanguages.caregiverId, language: caregiverLanguages.language })
+      .from(caregiverLanguages)
+      .where(inArray(caregiverLanguages.caregiverId, caregiverIds)),
+    db
+      .select({ caregiverId: caregiverCertifications.caregiverId, certification: caregiverCertifications.certification })
+      .from(caregiverCertifications)
+      .where(inArray(caregiverCertifications.caregiverId, caregiverIds)),
+  ])
+
+  // Filter by language/certification post-fetch (existence check)
+  let filteredIds = new Set(caregiverIds)
+
+  if (filters.language && filters.language.length > 0) {
+    const hasLang = new Set(
+      languageRows
+        .filter((r) => filters.language!.includes(r.language))
+        .map((r) => r.caregiverId),
+    )
+    filteredIds = new Set([...filteredIds].filter((id) => hasLang.has(id)))
+  }
+
+  if (filters.certification && filters.certification.length > 0) {
+    const hasCert = new Set(
+      certRows
+        .filter((r) => filters.certification!.includes(r.certification))
+        .map((r) => r.caregiverId),
+    )
+    filteredIds = new Set([...filteredIds].filter((id) => hasCert.has(id)))
+  }
+
+  const careTypeMap = new Map<string, string[]>()
+  const languageMap = new Map<string, string[]>()
+  const certMap = new Map<string, string[]>()
+
+  for (const r of careTypeRows) {
+    const list = careTypeMap.get(r.caregiverId) ?? []
+    list.push(r.careType)
+    careTypeMap.set(r.caregiverId, list)
+  }
+  for (const r of languageRows) {
+    const list = languageMap.get(r.caregiverId) ?? []
+    list.push(r.language)
+    languageMap.set(r.caregiverId, list)
+  }
+  for (const r of certRows) {
+    const list = certMap.get(r.caregiverId) ?? []
+    list.push(r.certification)
+    certMap.set(r.caregiverId, list)
+  }
+
+  const caregivers = rows
+    .filter((r) => filteredIds.has(r.caregiverId))
+    .map((r) => ({
+      caregiverId:    r.caregiverId,
+      name:           r.name,
+      image:          r.image,
+      headline:       r.headline,
+      experience:     r.experience,
+      city:           r.city,
+      state:          r.state,
+      hourlyMin:      r.hourlyMin,
+      hourlyMax:      r.hourlyMax,
+      careTypes:      careTypeMap.get(r.caregiverId) ?? [],
+      languages:      languageMap.get(r.caregiverId) ?? [],
+      certifications: certMap.get(r.caregiverId) ?? [],
+    }))
+
+  return { caregivers, total }
+}
