@@ -4,7 +4,7 @@ export default function RoleSelectionPage() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-background px-6 py-16">
       {/* Back nav */}
-      <div className="absolute left-6 top-6">
+      <div className="absolute left-6 top-6 z-10">
         <Link
           href="/"
           className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"

@@ -42,10 +42,9 @@ function SignInInner() {
       if (result?.error) {
         setError('Invalid email or password')
       } else {
-        // Fetch session to get role for redirect
         const { getSession } = await import('next-auth/react')
         const session = await getSession()
-        router.push(roleRedirect((session?.user as any)?.role ?? null))
+        window.location.href = roleRedirect((session?.user as any)?.role ?? null)
       }
     })
   }
@@ -65,7 +64,8 @@ function SignInInner() {
         setError('Account created. Please sign in.')
         setTab('signin')
       } else {
-        router.push(role === 'caregiver' ? '/get-started/caregiver/step-1' : '/get-started/client/step-1')
+        // Hard navigate so the new session (with role) is picked up fresh
+        window.location.href = role === 'caregiver' ? '/get-started/caregiver/step-1' : '/get-started/client/step-1'
       }
     })
   }
