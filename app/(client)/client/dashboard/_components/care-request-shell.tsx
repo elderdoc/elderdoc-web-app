@@ -27,7 +27,7 @@ export function CareRequestShell({
             key={i}
             className={[
               'flex-1 h-1 rounded-full transition-colors',
-              i + 1 <= currentStep ? 'bg-primary' : 'bg-muted',
+              i + 1 <= Math.min(currentStep, STEPS.length) ? 'bg-primary' : 'bg-muted',
             ].join(' ')}
           />
         ))}

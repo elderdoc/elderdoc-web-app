@@ -60,6 +60,7 @@ describe('sendOffer', () => {
   it('inserts correct fields into matches', async () => {
     mockAuth.mockResolvedValue(SESSION as any)
     mockSelectChain.limit.mockResolvedValueOnce([{ id: 'req-1', clientId: 'user-1' }])
+    mockSelectChain.limit.mockResolvedValueOnce([]) // no duplicate
 
     await sendOffer('req-1', 'cg-1', 90, 'Great fit.')
 
@@ -73,5 +74,13 @@ describe('sendOffer', () => {
         status:      'pending',
       })
     )
+  })
+
+  it('returns without inserting when offer already exists', async () => {
+    mockAuth.mockResolvedValue(SESSION as any)
+    mockSelectChain.limit.mockResolvedValueOnce([{ id: 'req-1', clientId: 'user-1' }]) // ownership check
+    mockSelectChain.limit.mockResolvedValueOnce([{ id: 'existing-match-1' }]) // duplicate check
+    await sendOffer('req-1', 'cg-1', 90, 'Great fit.')
+    expect(mockDb.insert).not.toHaveBeenCalled()
   })
 })

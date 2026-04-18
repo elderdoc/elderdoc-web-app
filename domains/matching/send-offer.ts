@@ -22,5 +22,13 @@ export async function sendOffer(
 
   if (!request) throw new Error('Unauthorized')
 
-  await db.insert(matches).values({ requestId, caregiverId, score, reason, status: 'pending' })
+  const [existing] = await db
+    .select({ id: matches.id })
+    .from(matches)
+    .where(and(eq(matches.requestId, requestId), eq(matches.caregiverId, caregiverId)))
+    .limit(1)
+
+  if (existing) return
+
+  await db.insert(matches).values({ requestId, caregiverId, score: Math.round(score), reason, status: 'pending' })
 }
