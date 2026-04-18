@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState } from 'react'
 import { sendOffer } from '@/domains/matching/send-offer'
 
 interface Props {
@@ -15,7 +15,6 @@ export function SendOfferModal({ caregiverId, activeRequests, alreadyOffered }: 
   const [state, setState] = useState<State>(alreadyOffered ? 'sent' : 'idle')
   const [selectedRequestId, setSelectedRequestId] = useState<string>('')
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
-  const [isPending, startTransition] = useTransition()
 
   if (activeRequests.length === 0) {
     return (
@@ -42,19 +41,17 @@ export function SendOfferModal({ caregiverId, activeRequests, alreadyOffered }: 
     )
   }
 
-  function handleConfirm() {
+  async function handleConfirm() {
     if (!selectedRequestId) return
     setErrorMessage(null)
-    startTransition(async () => {
-      setState('pending')
-      try {
-        await sendOffer(selectedRequestId, caregiverId, 0, 'Manually selected')
-        setState('sent')
-      } catch (err) {
-        setErrorMessage(err instanceof Error ? err.message : 'Failed to send offer.')
-        setState('error')
-      }
-    })
+    setState('pending')
+    try {
+      await sendOffer(selectedRequestId, caregiverId, 0, 'Manually selected')
+      setState('sent')
+    } catch (err) {
+      setErrorMessage(err instanceof Error ? err.message : 'Failed to send offer.')
+      setState('error')
+    }
   }
 
   return (
@@ -68,9 +65,18 @@ export function SendOfferModal({ caregiverId, activeRequests, alreadyOffered }: 
       </button>
 
       {(state === 'open' || state === 'pending' || state === 'error') && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-background rounded-xl border border-border shadow-lg w-full max-w-md p-6 space-y-4">
-            <h2 className="text-base font-semibold">Send Offer</h2>
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+          onClick={() => { if (state !== 'pending') { setState('idle'); setErrorMessage(null) } }}
+        >
+          <div
+            className="bg-background rounded-xl border border-border shadow-lg w-full max-w-md p-6 space-y-4"
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="send-offer-title"
+          >
+            <h2 id="send-offer-title" className="text-base font-semibold">Send Offer</h2>
             <p className="text-sm text-muted-foreground">
               Select which care request to send this offer for:
             </p>
