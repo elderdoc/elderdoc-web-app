@@ -152,32 +152,35 @@ export function CareRequestModal({ recipients: initialRecipients }: Props) {
 
   function handleSubmit() {
     startTransition(async () => {
-      const result = await createCareRequest({
-        recipientId:   form.recipientId,
-        careType:      form.careType,
-        address:       form.address,
-        frequency:     form.frequency,
-        days:          form.days,
-        shifts:        form.shifts,
-        startDate:     form.startDate,
-        durationHours: form.durationHours,
-        genderPref:    form.genderPref || undefined,
-        languagePref:  form.languagePref,
-        budgetType:    form.budgetType || undefined,
-        budgetAmount:  form.budgetAmount || undefined,
-        title:         form.title,
-        description:   form.description,
-      })
-      const requestId = result?.id ?? null
+      let result: { id: string }
+      try {
+        result = await createCareRequest({
+          recipientId:   form.recipientId,
+          careType:      form.careType,
+          address:       form.address,
+          frequency:     form.frequency,
+          days:          form.days,
+          shifts:        form.shifts,
+          startDate:     form.startDate,
+          durationHours: form.durationHours,
+          genderPref:    form.genderPref || undefined,
+          languagePref:  form.languagePref,
+          budgetType:    form.budgetType || undefined,
+          budgetAmount:  form.budgetAmount || undefined,
+          title:         form.title,
+          description:   form.description,
+        })
+      } catch {
+        setMatchingState('error')
+        setStep(7)
+        return
+      }
+
+      const requestId = result.id
       setMatchRequestId(requestId)
       setMatchingState('matching')
       setStep(7)
       router.refresh()
-
-      if (!requestId) {
-        setMatchingState('error')
-        return
-      }
 
       try {
         const res = await fetch('/api/care-request/match', {
