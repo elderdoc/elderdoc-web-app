@@ -86,6 +86,9 @@ describe('matchCaregivers', () => {
   it('calls OpenAI with model gpt-4o and json_object format', async () => {
     mockSelectChain.limit.mockResolvedValueOnce([REQUEST_ROW])
     mockSelectChain.limit.mockResolvedValueOnce([CANDIDATE])
+    // request and candidates queries both call .where() before .limit()
+    mockSelectChain.where.mockReturnValueOnce(mockSelectChain)
+    mockSelectChain.where.mockReturnValueOnce(mockSelectChain)
     // cert, lang, careType queries return empty
     mockSelectChain.where.mockResolvedValueOnce([])
     mockSelectChain.where.mockResolvedValueOnce([])
@@ -112,6 +115,9 @@ describe('matchCaregivers', () => {
     }))
     mockSelectChain.limit.mockResolvedValueOnce([REQUEST_ROW])
     mockSelectChain.limit.mockResolvedValueOnce(candidates)
+    // request and candidates queries both call .where() before .limit()
+    mockSelectChain.where.mockReturnValueOnce(mockSelectChain)
+    mockSelectChain.where.mockReturnValueOnce(mockSelectChain)
     // 7 candidates * 3 queries (cert/lang/careType) = 21 where calls
     for (let i = 0; i < 21; i++) mockSelectChain.where.mockResolvedValueOnce([])
 
@@ -130,6 +136,9 @@ describe('matchCaregivers', () => {
   it('returns [] when OpenAI returns malformed JSON', async () => {
     mockSelectChain.limit.mockResolvedValueOnce([REQUEST_ROW])
     mockSelectChain.limit.mockResolvedValueOnce([CANDIDATE])
+    // request and candidates queries both call .where() before .limit()
+    mockSelectChain.where.mockReturnValueOnce(mockSelectChain)
+    mockSelectChain.where.mockReturnValueOnce(mockSelectChain)
     mockSelectChain.where.mockResolvedValueOnce([])
     mockSelectChain.where.mockResolvedValueOnce([])
     mockSelectChain.where.mockResolvedValueOnce([])
@@ -143,6 +152,9 @@ describe('matchCaregivers', () => {
   it('returns [] when OpenAI returns empty rankings array', async () => {
     mockSelectChain.limit.mockResolvedValueOnce([REQUEST_ROW])
     mockSelectChain.limit.mockResolvedValueOnce([CANDIDATE])
+    // request and candidates queries both call .where() before .limit()
+    mockSelectChain.where.mockReturnValueOnce(mockSelectChain)
+    mockSelectChain.where.mockReturnValueOnce(mockSelectChain)
     mockSelectChain.where.mockResolvedValueOnce([])
     mockSelectChain.where.mockResolvedValueOnce([])
     mockSelectChain.where.mockResolvedValueOnce([])
@@ -156,6 +168,9 @@ describe('matchCaregivers', () => {
   it('joins display data (name, image, headline, careTypes) onto returned candidates', async () => {
     mockSelectChain.limit.mockResolvedValueOnce([REQUEST_ROW])
     mockSelectChain.limit.mockResolvedValueOnce([CANDIDATE])
+    // request and candidates queries both call .where() before .limit()
+    mockSelectChain.where.mockReturnValueOnce(mockSelectChain)
+    mockSelectChain.where.mockReturnValueOnce(mockSelectChain)
     mockSelectChain.where.mockResolvedValueOnce([]) // certs
     mockSelectChain.where.mockResolvedValueOnce([]) // langs
     mockSelectChain.where.mockResolvedValueOnce([{ caregiverId: 'cg-1', careType: 'personal-care' }]) // careTypes

@@ -5,7 +5,7 @@ import {
   caregiverLocations, caregiverCareTypes, caregiverCertifications,
   caregiverLanguages, users,
 } from '@/db/schema'
-import { eq, and, sql } from 'drizzle-orm'
+import { eq, and } from 'drizzle-orm'
 
 export type RankedCandidate = {
   caregiverId: string
@@ -22,7 +22,7 @@ export type RankedCandidate = {
 }
 
 export async function matchCaregivers(requestId: string): Promise<RankedCandidate[]> {
-  // 1. Fetch request context — filter embedded in innerJoin to avoid consuming where mock slots
+  // 1. Fetch request context
   const [requestRow] = await db
     .select({
       careType:      careRequests.careType,
@@ -38,13 +38,13 @@ export async function matchCaregivers(requestId: string): Promise<RankedCandidat
       state:         careRequestLocations.state,
     })
     .from(careRequests)
-    .innerJoin(careRequests, eq(careRequests.id, sql.raw(`'${requestId}'`)))
     .leftJoin(careRequestLocations, eq(careRequestLocations.requestId, careRequests.id))
+    .where(eq(careRequests.id, requestId))
     .limit(1)
 
   if (!requestRow) return []
 
-  // 2. Pre-filter candidates — all filters in join conditions
+  // 2. Pre-filter candidates
   const candidates = await db
     .select({
       id:         caregiverProfiles.id,
@@ -59,18 +59,18 @@ export async function matchCaregivers(requestId: string): Promise<RankedCandidat
       state:      caregiverLocations.state,
     })
     .from(caregiverProfiles)
-    .innerJoin(users, and(
-      eq(users.id, caregiverProfiles.userId),
-      eq(caregiverProfiles.status, 'active'),
-    ))
+    .innerJoin(users, eq(users.id, caregiverProfiles.userId))
     .innerJoin(caregiverCareTypes, and(
       eq(caregiverCareTypes.caregiverId, caregiverProfiles.id),
       eq(caregiverCareTypes.careType, requestRow.careType),
     ))
-    .leftJoin(caregiverLocations, and(
-      eq(caregiverLocations.caregiverId, caregiverProfiles.id),
-      ...(requestRow.state ? [eq(caregiverLocations.state, requestRow.state)] : []),
-    ))
+    .leftJoin(caregiverLocations, eq(caregiverLocations.caregiverId, caregiverProfiles.id))
+    .where(
+      and(
+        eq(caregiverProfiles.status, 'active'),
+        ...(requestRow.state ? [eq(caregiverLocations.state, requestRow.state)] : []),
+      )
+    )
     .limit(20)
 
   if (candidates.length === 0) return []
