@@ -12,6 +12,7 @@ const NAV_LINKS = [
   { href: '/client/dashboard/find-caregivers',label: 'Find Caregivers' },
   { href: '/client/dashboard/care-plans',     label: 'Care Plans' },
   { href: '/client/dashboard/calendar',       label: 'Calendar' },
+  { href: '/client/dashboard/billing',        label: 'Billing' },
 ]
 
 interface SidebarProps {
