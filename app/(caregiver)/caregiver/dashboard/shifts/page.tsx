@@ -2,6 +2,7 @@ import { requireRole } from '@/domains/auth/session'
 import { db } from '@/services/db'
 import { caregiverProfiles, shifts, jobs, careRequests } from '@/db/schema'
 import { eq, and, asc } from 'drizzle-orm'
+import { CompleteShiftButton } from './_components/complete-shift-button'
 
 const SHIFT_STATUS_LABELS: Record<string, string> = {
   scheduled: 'Scheduled',
@@ -63,9 +64,14 @@ export default async function ShiftsPage() {
                   {shift.date} · {shift.startTime} – {shift.endTime}
                 </p>
               </div>
-              <span className={`shrink-0 text-xs px-2 py-0.5 rounded-full font-medium ${SHIFT_STATUS_CLASSES[shift.status ?? 'scheduled'] ?? ''}`}>
-                {SHIFT_STATUS_LABELS[shift.status ?? 'scheduled'] ?? shift.status}
-              </span>
+              <div className="flex items-center gap-2 shrink-0">
+                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${SHIFT_STATUS_CLASSES[shift.status ?? 'scheduled'] ?? ''}`}>
+                  {SHIFT_STATUS_LABELS[shift.status ?? 'scheduled'] ?? shift.status}
+                </span>
+                {shift.status !== 'completed' && (
+                  <CompleteShiftButton shiftId={shift.id} />
+                )}
+              </div>
             </div>
           ))}
         </div>
