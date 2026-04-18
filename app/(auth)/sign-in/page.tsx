@@ -9,12 +9,13 @@ import { useRouter, useSearchParams } from 'next/navigation'
 function SignInInner() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const callbackUrl = searchParams.get('callbackUrl') ?? '/'
+  const callbackUrl = searchParams.get('callbackUrl') ?? null
 
   const [tab, setTab] = useState<'signin' | 'register'>('signin')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [name, setName] = useState('')
+  const [role, setRole] = useState<'client' | 'caregiver' | ''>('')
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
 
@@ -22,8 +23,15 @@ function SignInInner() {
     'w-full rounded-[8px] border border-input bg-background px-3.5 py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary/20'
   const labelClass = 'block text-xs font-medium text-muted-foreground uppercase tracking-[0.06em] mb-1.5'
 
+  function roleRedirect(userRole: string | null) {
+    if (callbackUrl) return callbackUrl
+    if (userRole === 'client') return '/client/dashboard'
+    if (userRole === 'caregiver') return '/caregiver/dashboard'
+    return '/get-started'
+  }
+
   function handleGoogleSignIn() {
-    signIn('google', { callbackUrl })
+    signIn('google', { callbackUrl: callbackUrl ?? '/get-started' })
   }
 
   function handleSignIn(e: React.FormEvent) {
@@ -34,7 +42,10 @@ function SignInInner() {
       if (result?.error) {
         setError('Invalid email or password')
       } else {
-        router.push(callbackUrl)
+        // Fetch session to get role for redirect
+        const { getSession } = await import('next-auth/react')
+        const session = await getSession()
+        router.push(roleRedirect((session?.user as any)?.role ?? null))
       }
     })
   }
@@ -42,8 +53,9 @@ function SignInInner() {
   function handleRegister(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
+    if (!role) { setError('Please select your account type'); return }
     startTransition(async () => {
-      const result = await registerUser(email, password, name)
+      const result = await registerUser(email, password, name, role as 'client' | 'caregiver')
       if (result.error) {
         setError(result.error)
         return
@@ -53,7 +65,7 @@ function SignInInner() {
         setError('Account created. Please sign in.')
         setTab('signin')
       } else {
-        router.push(callbackUrl)
+        router.push(role === 'caregiver' ? '/get-started/caregiver/step-1' : '/get-started/client/step-1')
       }
     })
   }
@@ -74,9 +86,7 @@ function SignInInner() {
               type="button"
               onClick={() => { setTab('signin'); setError(null) }}
               className={`flex-1 rounded-[6px] py-1.5 text-sm font-medium transition-colors ${
-                tab === 'signin'
-                  ? 'bg-primary text-primary-foreground'
-                  : 'text-muted-foreground hover:text-foreground'
+                tab === 'signin' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
               }`}
             >
               Sign In
@@ -85,9 +95,7 @@ function SignInInner() {
               type="button"
               onClick={() => { setTab('register'); setError(null) }}
               className={`flex-1 rounded-[6px] py-1.5 text-sm font-medium transition-colors ${
-                tab === 'register'
-                  ? 'bg-primary text-primary-foreground'
-                  : 'text-muted-foreground hover:text-foreground'
+                tab === 'register' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
               }`}
             >
               Register
@@ -135,6 +143,26 @@ function SignInInner() {
             </form>
           ) : (
             <form onSubmit={handleRegister} className="space-y-4">
+              {/* Role selector */}
+              <div>
+                <label className={labelClass}>I am a</label>
+                <div className="grid grid-cols-2 gap-2">
+                  {(['client', 'caregiver'] as const).map(r => (
+                    <button
+                      key={r}
+                      type="button"
+                      onClick={() => setRole(r)}
+                      className={`rounded-[8px] border py-2.5 text-sm font-medium transition-colors capitalize ${
+                        role === r
+                          ? 'border-primary bg-primary/10 text-primary'
+                          : 'border-border text-muted-foreground hover:border-primary/50 hover:text-foreground'
+                      }`}
+                    >
+                      {r === 'client' ? '🏠 Client' : '🩺 Caregiver'}
+                    </button>
+                  ))}
+                </div>
+              </div>
               <div>
                 <label className={labelClass}>Full Name</label>
                 <input type="text" autoComplete="name" placeholder="Jane Smith"
