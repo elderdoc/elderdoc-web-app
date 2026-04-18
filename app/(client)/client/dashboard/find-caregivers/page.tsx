@@ -54,16 +54,17 @@ export default async function FindCaregiversPage({ searchParams }: PageProps) {
 
   const resolvedSearchParams = await searchParams
 
-  const activeRequests = await db
-    .select({ id: careRequests.id, title: careRequests.title, careType: careRequests.careType })
-    .from(careRequests)
-    .where(and(eq(careRequests.clientId, clientId), eq(careRequests.status, 'active')))
-
-  const existingMatches = await db
-    .select({ caregiverId: matches.caregiverId })
-    .from(matches)
-    .innerJoin(careRequests, eq(matches.requestId, careRequests.id))
-    .where(eq(careRequests.clientId, clientId))
+  const [activeRequests, existingMatches] = await Promise.all([
+    db
+      .select({ id: careRequests.id, title: careRequests.title, careType: careRequests.careType })
+      .from(careRequests)
+      .where(and(eq(careRequests.clientId, clientId), eq(careRequests.status, 'active'))),
+    db
+      .select({ caregiverId: matches.caregiverId })
+      .from(matches)
+      .innerJoin(careRequests, eq(matches.requestId, careRequests.id))
+      .where(eq(careRequests.clientId, clientId)),
+  ])
 
   const offeredSet = new Set(existingMatches.map((m) => m.caregiverId))
 
@@ -164,7 +165,7 @@ export default async function FindCaregiversPage({ searchParams }: PageProps) {
 
                   {(m.hourlyMin || m.hourlyMax) && (
                     <p className="text-xs text-muted-foreground">
-                      ${m.hourlyMin}–${m.hourlyMax}/hr
+                      ${m.hourlyMin ?? '?'}–${m.hourlyMax ?? '?'}/hr
                     </p>
                   )}
 

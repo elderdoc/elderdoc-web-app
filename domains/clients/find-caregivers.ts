@@ -116,6 +116,20 @@ export async function searchCaregivers(
     conditions.push(eq(caregiverProfiles.experience, filters.experience))
   }
 
+  if (filters.language && filters.language.length > 0) {
+    const langList = sql.join(filters.language.map((l) => sql`${l}`), sql`, `)
+    conditions.push(
+      sql`EXISTS (SELECT 1 FROM ${caregiverLanguages} WHERE ${caregiverLanguages.caregiverId} = ${caregiverProfiles.id} AND ${caregiverLanguages.language} IN (${langList}))`
+    )
+  }
+
+  if (filters.certification && filters.certification.length > 0) {
+    const certList = sql.join(filters.certification.map((c) => sql`${c}`), sql`, `)
+    conditions.push(
+      sql`EXISTS (SELECT 1 FROM ${caregiverCertifications} WHERE ${caregiverCertifications.caregiverId} = ${caregiverProfiles.id} AND ${caregiverCertifications.certification} IN (${certList}))`
+    )
+  }
+
   const whereClause = and(...conditions)
 
   // Build both count and main queries — careType filter via INNER JOIN on both so total is accurate
@@ -184,27 +198,6 @@ export async function searchCaregivers(
       .where(inArray(caregiverCertifications.caregiverId, caregiverIds)),
   ])
 
-  // Filter by language/certification post-fetch (existence check)
-  let filteredIds = new Set(caregiverIds)
-
-  if (filters.language && filters.language.length > 0) {
-    const hasLang = new Set(
-      languageRows
-        .filter((r) => filters.language!.includes(r.language))
-        .map((r) => r.caregiverId),
-    )
-    filteredIds = new Set([...filteredIds].filter((id) => hasLang.has(id)))
-  }
-
-  if (filters.certification && filters.certification.length > 0) {
-    const hasCert = new Set(
-      certRows
-        .filter((r) => filters.certification!.includes(r.certification))
-        .map((r) => r.caregiverId),
-    )
-    filteredIds = new Set([...filteredIds].filter((id) => hasCert.has(id)))
-  }
-
   const careTypeMap = new Map<string, string[]>()
   const languageMap = new Map<string, string[]>()
   const certMap = new Map<string, string[]>()
@@ -225,9 +218,7 @@ export async function searchCaregivers(
     certMap.set(r.caregiverId, list)
   }
 
-  const caregivers = rows
-    .filter((r) => filteredIds.has(r.caregiverId))
-    .map((r) => ({
+  const caregivers = rows.map((r) => ({
       caregiverId:    r.caregiverId,
       name:           r.name,
       image:          r.image,
