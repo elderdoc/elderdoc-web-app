@@ -20,6 +20,28 @@ function spArr(val: string | string[] | undefined): string[] | undefined {
   return Array.isArray(val) ? val : [val]
 }
 
+function buildPageUrl(
+  base: {
+    requestId?: string; careType?: string; state?: string
+    rateMin?: string; rateMax?: string; experience?: string
+    language?: string[]; certification?: string[]
+  },
+  targetPage: number,
+): string {
+  const params = new URLSearchParams()
+  if (base.requestId)    params.set('requestId', base.requestId)
+  if (base.careType)     params.set('careType', base.careType)
+  if (base.state)        params.set('state', base.state)
+  if (base.rateMin)      params.set('rateMin', base.rateMin)
+  if (base.rateMax)      params.set('rateMax', base.rateMax)
+  if (base.experience)   params.set('experience', base.experience)
+  for (const lang of base.language ?? []) params.append('language', lang)
+  for (const cert of base.certification ?? []) params.append('certification', cert)
+  params.set('page', String(targetPage))
+  const qs = params.toString()
+  return `/client/dashboard/find-caregivers${qs ? `?${qs}` : ''}`
+}
+
 function scoreBadge(score: number) {
   if (score >= 80) return { label: 'Strong match', classes: 'bg-green-100 text-green-700' }
   if (score >= 60) return { label: 'Good match',   classes: 'bg-blue-100 text-blue-700' }
@@ -238,14 +260,7 @@ export default async function FindCaregiversPage({ searchParams }: PageProps) {
           <div className="flex items-center justify-center gap-2 mt-6">
             {page > 1 && (
               <a
-                href={`/client/dashboard/find-caregivers?${new URLSearchParams({
-                  ...(careType ? { careType } : {}),
-                  ...(state ? { state } : {}),
-                  ...(rateMin ? { rateMin } : {}),
-                  ...(rateMax ? { rateMax } : {}),
-                  ...(experience ? { experience } : {}),
-                  page: String(page - 1),
-                }).toString()}`}
+                href={buildPageUrl({ requestId, careType, state, rateMin, rateMax, experience, language, certification }, page - 1)}
                 className="px-3 py-1.5 rounded-md border border-border text-sm hover:bg-muted"
               >
                 ← Prev
@@ -256,14 +271,7 @@ export default async function FindCaregiversPage({ searchParams }: PageProps) {
             </span>
             {page < totalPages && (
               <a
-                href={`/client/dashboard/find-caregivers?${new URLSearchParams({
-                  ...(careType ? { careType } : {}),
-                  ...(state ? { state } : {}),
-                  ...(rateMin ? { rateMin } : {}),
-                  ...(rateMax ? { rateMax } : {}),
-                  ...(experience ? { experience } : {}),
-                  page: String(page + 1),
-                }).toString()}`}
+                href={buildPageUrl({ requestId, careType, state, rateMin, rateMax, experience, language, certification }, page + 1)}
                 className="px-3 py-1.5 rounded-md border border-border text-sm hover:bg-muted"
               >
                 Next →
