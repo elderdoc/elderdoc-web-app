@@ -16,13 +16,14 @@ function Step3Inner() {
     address2: '',
     city: '',
     state: '',
+    zip: '',
   })
 
   function set(field: keyof typeof form, value: string) {
     setForm(prev => ({ ...prev, [field]: value }))
   }
 
-  const isValid = form.address1.trim() && form.city.trim() && form.state
+  const isValid = form.address1.trim() && form.city.trim() && form.state && form.zip.trim()
 
   function handleContinue() {
     if (!isValid) return
@@ -33,6 +34,7 @@ function Step3Inner() {
       address2: form.address2,
       city: form.city,
       state: form.state,
+      zip: form.zip,
     })
     router.push(`/get-started/client/step-4?${params.toString()}`)
   }
@@ -97,14 +99,27 @@ function Step3Inner() {
           </div>
         </div>
 
-        <div>
-          <label className={labelClass}>Country</label>
-          <input
-            type="text"
-            value="United States"
-            disabled
-            className={`${inputClass} cursor-not-allowed opacity-50`}
-          />
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className={labelClass}>ZIP Code</label>
+            <input
+              type="text"
+              placeholder="90210"
+              maxLength={10}
+              value={form.zip}
+              onChange={e => set('zip', e.target.value.replace(/[^\d-]/g, ''))}
+              className={inputClass}
+            />
+          </div>
+          <div>
+            <label className={labelClass}>Country</label>
+            <input
+              type="text"
+              value="United States"
+              disabled
+              className={`${inputClass} cursor-not-allowed opacity-50`}
+            />
+          </div>
         </div>
       </div>
 
