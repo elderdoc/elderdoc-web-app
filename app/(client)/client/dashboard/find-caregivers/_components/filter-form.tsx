@@ -1,6 +1,6 @@
 'use client'
 
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { useCallback, useRef } from 'react'
 import { CARE_TYPES, CERTIFICATIONS, LANGUAGES, US_STATES } from '@/lib/constants'
 
@@ -25,7 +25,6 @@ const EXPERIENCE_OPTIONS = [
 
 export function FilterForm({ activeRequests, currentFilters }: Props) {
   const router = useRouter()
-  const searchParams = useSearchParams()
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const buildParams = useCallback(
