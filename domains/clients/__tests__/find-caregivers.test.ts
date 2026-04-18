@@ -11,7 +11,6 @@ const { mockSelectChain, mockDb } = vi.hoisted(() => {
     offset:    vi.fn(),
   }
 
-  // Each method returns the chain so calls can be chained
   mockSelectChain.from.mockReturnValue(mockSelectChain)
   mockSelectChain.innerJoin.mockReturnValue(mockSelectChain)
   mockSelectChain.leftJoin.mockReturnValue(mockSelectChain)
@@ -48,32 +47,29 @@ beforeEach(() => {
 
 describe('getMatchesForRequest', () => {
   it('returns [] when no matches exist for requestId', async () => {
-    mockSelectChain.offset.mockResolvedValueOnce([])
+    mockSelectChain.offset.mockResolvedValueOnce([])  // query terminates at .offset(0)
     const result = await getMatchesForRequest('req-1', 'client-1')
     expect(result).toEqual([])
   })
 
-  it('returns matches sorted by score descending', async () => {
+  it('joins careTypes onto match rows and orders by score descending', async () => {
     mockSelectChain.offset.mockResolvedValueOnce([
       { matchId: 'm1', caregiverId: 'cg1', score: 72, reason: 'Good', name: 'Alice', image: null, headline: null, city: 'Austin', state: 'Texas', hourlyMin: '20', hourlyMax: '30' },
       { matchId: 'm2', caregiverId: 'cg2', score: 90, reason: 'Great', name: 'Bob', image: null, headline: null, city: 'Dallas', state: 'Texas', hourlyMin: '25', hourlyMax: '35' },
     ])
-    // Simulate second SELECT for careTypes (inArray)
     mockSelectChain.where.mockResolvedValueOnce([
       { caregiverId: 'cg1', careType: 'personal-care' },
       { caregiverId: 'cg2', careType: 'dementia-care' },
     ])
     const result = await getMatchesForRequest('req-1', 'client-1')
-    // Results come back in DB order (ORDER BY score DESC is in the query)
     expect(result[0].caregiverId).toBe('cg1')
     expect(result[0].careTypes).toEqual(['personal-care'])
     expect(result[1].caregiverId).toBe('cg2')
     expect(result[1].careTypes).toEqual(['dementia-care'])
+    expect(mockSelectChain.orderBy).toHaveBeenCalledOnce()
   })
 
   it('returns [] when clientId does not own the requestId', async () => {
-    // The query JOINs careRequests with WHERE clientId = clientId,
-    // so a wrong clientId yields 0 rows.
     mockSelectChain.offset.mockResolvedValueOnce([])
     const result = await getMatchesForRequest('req-1', 'wrong-client')
     expect(result).toEqual([])
@@ -81,18 +77,26 @@ describe('getMatchesForRequest', () => {
 })
 
 // ── searchCaregivers ──────────────────────────────────────────────────────────
+//
+// Mock queue per test (in order of consumption):
+//   1. where → [{ count: N }]  (count query terminates with .where())
+//   2. where → chain           (main query .where(whereClause) returns chain)
+//   3. offset → rows           (main query terminates with .offset())
+//   4. where → [...]           (careTypes batch — only if rows non-empty)
+//   5. where → [...]           (languages batch)
+//   6. where → [...]           (certifications batch)
 
 describe('searchCaregivers', () => {
   it('returns all active caregivers when no filters applied', async () => {
-    mockDb.$count.mockResolvedValueOnce(2)
-    mockSelectChain.where.mockReturnValueOnce(mockSelectChain) // main query .where(whereClause)
+    mockSelectChain.where.mockResolvedValueOnce([{ count: 2 }])    // count query
+    mockSelectChain.where.mockReturnValueOnce(mockSelectChain)      // main query → chain
     mockSelectChain.offset.mockResolvedValueOnce([
       { caregiverId: 'cg1', name: 'Alice', image: null, headline: null, experience: '3 years', city: 'Austin', state: 'Texas', hourlyMin: '20', hourlyMax: '30' },
       { caregiverId: 'cg2', name: 'Bob',   image: null, headline: null, experience: '5 years', city: 'Dallas', state: 'Texas', hourlyMin: '25', hourlyMax: '35' },
     ])
-    mockSelectChain.where.mockResolvedValueOnce([]) // careTypes batch
-    mockSelectChain.where.mockResolvedValueOnce([]) // languages batch
-    mockSelectChain.where.mockResolvedValueOnce([]) // certifications batch
+    mockSelectChain.where.mockResolvedValueOnce([])                 // careTypes batch
+    mockSelectChain.where.mockResolvedValueOnce([])                 // languages batch
+    mockSelectChain.where.mockResolvedValueOnce([])                 // certifications batch
 
     const result = await searchCaregivers({}, 1)
     expect(result.total).toBe(2)
@@ -100,8 +104,8 @@ describe('searchCaregivers', () => {
   })
 
   it('filters by careType', async () => {
-    mockDb.$count.mockResolvedValueOnce(1)
-    mockSelectChain.where.mockReturnValueOnce(mockSelectChain) // main query .where(whereClause)
+    mockSelectChain.where.mockResolvedValueOnce([{ count: 1 }])
+    mockSelectChain.where.mockReturnValueOnce(mockSelectChain)
     mockSelectChain.offset.mockResolvedValueOnce([
       { caregiverId: 'cg1', name: 'Alice', image: null, headline: null, experience: null, city: null, state: null, hourlyMin: null, hourlyMax: null },
     ])
@@ -115,8 +119,8 @@ describe('searchCaregivers', () => {
   })
 
   it('filters by state', async () => {
-    mockDb.$count.mockResolvedValueOnce(1)
-    mockSelectChain.where.mockReturnValueOnce(mockSelectChain) // main query .where(whereClause)
+    mockSelectChain.where.mockResolvedValueOnce([{ count: 1 }])
+    mockSelectChain.where.mockReturnValueOnce(mockSelectChain)
     mockSelectChain.offset.mockResolvedValueOnce([
       { caregiverId: 'cg1', name: 'Alice', image: null, headline: null, experience: null, city: 'Austin', state: 'Texas', hourlyMin: null, hourlyMax: null },
     ])
@@ -130,8 +134,8 @@ describe('searchCaregivers', () => {
   })
 
   it('filters by rateMin and rateMax', async () => {
-    mockDb.$count.mockResolvedValueOnce(1)
-    mockSelectChain.where.mockReturnValueOnce(mockSelectChain) // main query .where(whereClause)
+    mockSelectChain.where.mockResolvedValueOnce([{ count: 1 }])
+    mockSelectChain.where.mockReturnValueOnce(mockSelectChain)
     mockSelectChain.offset.mockResolvedValueOnce([
       { caregiverId: 'cg1', name: 'Alice', image: null, headline: null, experience: null, city: null, state: null, hourlyMin: '20', hourlyMax: '30' },
     ])
@@ -144,8 +148,8 @@ describe('searchCaregivers', () => {
   })
 
   it('filters by language (multi-value)', async () => {
-    mockDb.$count.mockResolvedValueOnce(1)
-    mockSelectChain.where.mockReturnValueOnce(mockSelectChain) // main query .where(whereClause)
+    mockSelectChain.where.mockResolvedValueOnce([{ count: 1 }])
+    mockSelectChain.where.mockReturnValueOnce(mockSelectChain)
     mockSelectChain.offset.mockResolvedValueOnce([
       { caregiverId: 'cg1', name: 'Alice', image: null, headline: null, experience: null, city: null, state: null, hourlyMin: null, hourlyMax: null },
     ])
@@ -159,8 +163,8 @@ describe('searchCaregivers', () => {
   })
 
   it('filters by certification (multi-value)', async () => {
-    mockDb.$count.mockResolvedValueOnce(1)
-    mockSelectChain.where.mockReturnValueOnce(mockSelectChain) // main query .where(whereClause)
+    mockSelectChain.where.mockResolvedValueOnce([{ count: 1 }])
+    mockSelectChain.where.mockReturnValueOnce(mockSelectChain)
     mockSelectChain.offset.mockResolvedValueOnce([
       { caregiverId: 'cg1', name: 'Alice', image: null, headline: null, experience: null, city: null, state: null, hourlyMin: null, hourlyMax: null },
     ])
@@ -174,8 +178,8 @@ describe('searchCaregivers', () => {
   })
 
   it('filters by experience', async () => {
-    mockDb.$count.mockResolvedValueOnce(1)
-    mockSelectChain.where.mockReturnValueOnce(mockSelectChain) // main query .where(whereClause)
+    mockSelectChain.where.mockResolvedValueOnce([{ count: 1 }])
+    mockSelectChain.where.mockReturnValueOnce(mockSelectChain)
     mockSelectChain.offset.mockResolvedValueOnce([
       { caregiverId: 'cg1', name: 'Alice', image: null, headline: null, experience: '3 years', city: null, state: null, hourlyMin: null, hourlyMax: null },
     ])
@@ -188,8 +192,8 @@ describe('searchCaregivers', () => {
   })
 
   it('respects page offset (limit 20)', async () => {
-    mockDb.$count.mockResolvedValueOnce(25)
-    mockSelectChain.where.mockReturnValueOnce(mockSelectChain) // main query .where(whereClause)
+    mockSelectChain.where.mockResolvedValueOnce([{ count: 25 }])
+    mockSelectChain.where.mockReturnValueOnce(mockSelectChain)
     mockSelectChain.offset.mockResolvedValueOnce([])
 
     const result = await searchCaregivers({}, 2)
@@ -199,8 +203,8 @@ describe('searchCaregivers', () => {
   })
 
   it('returns correct total count', async () => {
-    mockDb.$count.mockResolvedValueOnce(42)
-    mockSelectChain.where.mockReturnValueOnce(mockSelectChain) // main query .where(whereClause)
+    mockSelectChain.where.mockResolvedValueOnce([{ count: 42 }])
+    mockSelectChain.where.mockReturnValueOnce(mockSelectChain)
     mockSelectChain.offset.mockResolvedValueOnce([])
 
     const result = await searchCaregivers({}, 1)

@@ -3,7 +3,7 @@ import {
   matches, careRequests, caregiverProfiles, caregiverLocations,
   caregiverCareTypes, caregiverLanguages, caregiverCertifications, users,
 } from '@/db/schema'
-import { eq, and, gte, lte, inArray } from 'drizzle-orm'
+import { eq, and, gte, lte, inArray, desc, sql } from 'drizzle-orm'
 
 export type MatchResult = {
   matchId: string
@@ -72,7 +72,7 @@ export async function getMatchesForRequest(
     .innerJoin(caregiverProfiles, eq(matches.caregiverId, caregiverProfiles.id))
     .innerJoin(users, eq(caregiverProfiles.userId, users.id))
     .leftJoin(caregiverLocations, eq(caregiverProfiles.id, caregiverLocations.caregiverId))
-    .orderBy(matches.score)
+    .orderBy(desc(matches.score))
     .limit(5)
     .offset(0)
 
@@ -117,9 +117,14 @@ export async function searchCaregivers(
   }
 
   const whereClause = and(...conditions)
-  const total: number = await (db.$count as any)(caregiverProfiles, whereClause)
 
-  let baseQuery = db
+  // Build both count and main queries — careType filter via INNER JOIN on both so total is accurate
+  let countQuery: any = db
+    .select({ count: sql<number>`count(distinct ${caregiverProfiles.id})` })
+    .from(caregiverProfiles)
+    .leftJoin(caregiverLocations, eq(caregiverProfiles.id, caregiverLocations.caregiverId))
+
+  let baseQuery: any = db
     .select({
       caregiverId: caregiverProfiles.id,
       name:        users.name,
@@ -135,19 +140,19 @@ export async function searchCaregivers(
     .innerJoin(users, eq(caregiverProfiles.userId, users.id))
     .leftJoin(caregiverLocations, eq(caregiverProfiles.id, caregiverLocations.caregiverId))
 
-  // careType filter via inner join — note: $count above does not include this join,
-  // so total may be slightly over-counted when careType is active (acceptable approximation)
   if (filters.careType) {
-    baseQuery = (baseQuery as any).innerJoin(
-      caregiverCareTypes,
-      and(
-        eq(caregiverProfiles.id, caregiverCareTypes.caregiverId),
-        eq(caregiverCareTypes.careType, filters.careType),
-      ),
+    const careTypeJoin = and(
+      eq(caregiverProfiles.id, caregiverCareTypes.caregiverId),
+      eq(caregiverCareTypes.careType, filters.careType),
     )
+    countQuery = countQuery.innerJoin(caregiverCareTypes, careTypeJoin)
+    baseQuery  = baseQuery.innerJoin(caregiverCareTypes, careTypeJoin)
   }
 
-  const rows = await (baseQuery as any)
+  const [{ count }] = await countQuery.where(whereClause)
+  const total = Number(count)
+
+  const rows = await baseQuery
     .where(whereClause)
     .orderBy(caregiverProfiles.createdAt)
     .limit(20)
