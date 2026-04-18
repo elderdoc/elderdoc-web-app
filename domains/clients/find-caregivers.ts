@@ -152,7 +152,13 @@ export async function searchCaregivers(
   const [{ count }] = await countQuery.where(whereClause)
   const total = Number(count)
 
-  const rows = await baseQuery
+  type SearchRow = {
+    caregiverId: string; name: string | null; image: string | null
+    headline: string | null; experience: string | null
+    city: string | null; state: string | null
+    hourlyMin: string | null; hourlyMax: string | null
+  }
+  const rows: SearchRow[] = await baseQuery
     .where(whereClause)
     .orderBy(caregiverProfiles.createdAt)
     .limit(20)
