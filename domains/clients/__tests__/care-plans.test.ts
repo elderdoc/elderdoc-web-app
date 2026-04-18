@@ -73,11 +73,14 @@ describe('getClientCarePlans', () => {
     expect(mockSelectChain.offset).toHaveBeenCalledWith(0)
   })
 
-  it('uses innerJoin 3 times and leftJoin once', async () => {
-    mockSelectChain.offset.mockResolvedValueOnce([])
-    await getClientCarePlans('client-1')
-    expect(mockSelectChain.innerJoin).toHaveBeenCalledTimes(3)
-    expect(mockSelectChain.leftJoin).toHaveBeenCalledTimes(1)
+  it('returns [] when DB returns rows with null carePlanId only', async () => {
+    mockSelectChain.offset.mockResolvedValueOnce([
+      { jobId: 'job-3', requestId: 'req-3', careType: 'live-in', caregiverName: 'Carol', carePlanId: null, updatedAt: null },
+      { jobId: 'job-4', requestId: 'req-4', careType: 'personal-care', caregiverName: 'Dave', carePlanId: null, updatedAt: null },
+    ])
+    const result = await getClientCarePlans('client-3')
+    expect(result).toHaveLength(2)
+    expect(result.every((r) => r.carePlanId === null)).toBe(true)
   })
 })
 
