@@ -237,7 +237,7 @@ export default async function FindCaregiversPage({ searchParams }: PageProps) {
 
                 {(cg.hourlyMin || cg.hourlyMax) && (
                   <p className="text-xs text-muted-foreground">
-                    ${cg.hourlyMin}–${cg.hourlyMax}/hr
+                    ${cg.hourlyMin ?? '?'}–${cg.hourlyMax ?? '?'}/hr
                   </p>
                 )}
 
