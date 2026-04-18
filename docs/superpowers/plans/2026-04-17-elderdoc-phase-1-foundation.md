@@ -6,7 +6,7 @@
 
 **Architecture:** Domain-modular Next.js 16 App Router monolith. All business logic lives in `domains/`, all external service calls go through `services/`. Client and caregiver have separate URL prefixes (`/client/*`, `/caregiver/*`). NextAuth v5 JWT + Google SSO handles auth; Drizzle + PostgreSQL owns all data.
 
-**Tech Stack:** Next.js 16 · React 19 · TypeScript · Bun · Drizzle ORM · PostgreSQL 16 · NextAuth v5 · shadcn/ui · Tailwind v4 · Vitest · Docker Compose · Redis · MinIO · Zod
+**Tech Stack:** Next.js 16 · React 19 · TypeScript · Bun · Drizzle ORM · PostgreSQL 16 · NextAuth v5 · shadcn/ui (base-nova style, @base-ui/react primitives) · Tailwind v4 · Vitest · Docker Compose · Redis · MinIO · Zod
 
 > **⚠ IMPORTANT:** This project uses Next.js 16 which has breaking changes from earlier versions. Before touching any Next.js API, read the relevant file in `node_modules/next/dist/docs/`. Key files: `01-app/01-getting-started/07-mutating-data.md` (Server Actions), `01-app/02-guides/authentication.md`, `01-app/03-api-reference/03-file-conventions/route-groups.md`.
 
@@ -121,7 +121,7 @@ bunx shadcn@latest init
 ```
 
 When prompted:
-- Style: Default
+- Style: base-nova (uses @base-ui/react primitives — modern, maintained, preferred over Radix for this project)
 - Base color: Neutral
 - CSS variables: Yes
 
