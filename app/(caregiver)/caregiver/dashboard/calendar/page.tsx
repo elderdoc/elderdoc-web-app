@@ -2,7 +2,7 @@ import { requireRole } from '@/domains/auth/session'
 import { db } from '@/services/db'
 import { caregiverProfiles } from '@/db/schema'
 import { eq } from 'drizzle-orm'
-import { getCaregiverCalendarShifts, getCaregiverActiveJobs, addCaregiverShift } from '@/domains/caregivers/calendar'
+import { getCaregiverCalendarShifts, getCaregiverActiveJobs } from '@/domains/caregivers/calendar'
 import { Calendar } from '@/components/calendar'
 import type { CalendarEvent, ActiveJob } from '@/components/calendar'
 
@@ -24,7 +24,7 @@ export default async function CaregiverCalendarPage({ searchParams }: PageProps)
 
   if (!profile) {
     return (
-      <div className="p-8 text-muted-foreground text-sm">
+      <div className="p-4 lg:p-8 text-muted-foreground text-sm">
         Complete your profile to use the calendar.
       </div>
     )
@@ -41,10 +41,13 @@ export default async function CaregiverCalendarPage({ searchParams }: PageProps)
   ])
 
   const events: CalendarEvent[] = rawShifts.map((s) => ({
-    date:   s.date,
-    label:  s.label,
-    status: s.status,
-    jobId:  s.jobId,
+    id:        s.id,
+    date:      s.date,
+    label:     s.label,
+    status:    s.status,
+    jobId:     s.jobId,
+    startTime: s.startTime,
+    endTime:   s.endTime,
   }))
 
   const activeJobs: ActiveJob[] = rawJobs.map((j) => ({
@@ -53,9 +56,9 @@ export default async function CaregiverCalendarPage({ searchParams }: PageProps)
   }))
 
   return (
-    <div className="p-8">
+    <div className="p-4 lg:p-8">
       <h1 className="text-2xl font-semibold mb-1">Calendar</h1>
-      <p className="text-sm text-muted-foreground mb-8">View and log your shifts.</p>
+      <p className="text-sm text-muted-foreground mb-8">View your scheduled shifts.</p>
 
       <Calendar
         year={year}
@@ -63,7 +66,6 @@ export default async function CaregiverCalendarPage({ searchParams }: PageProps)
         events={events}
         activeJobs={activeJobs}
         basePath="/caregiver/dashboard/calendar"
-        addShiftAction={addCaregiverShift}
       />
     </div>
   )

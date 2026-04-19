@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createCareRequest } from '@/domains/clients/requests'
 import {
-  CARE_TYPES, CARE_FREQUENCIES, DAYS_OF_WEEK, SHIFTS, CARE_DURATIONS,
+  CARE_TYPES, CARE_FREQUENCIES, DAYS_OF_WEEK,
   GENDER_PREFERENCES, LANGUAGES, BUDGET_TYPES,
 } from '@/lib/constants'
 import { StateSelect } from '@/components/state-select'
@@ -60,9 +60,11 @@ const STEP_TITLES = [
 interface Props {
   initialRecipients: RecipientOption[]
   initialRecipientId?: string
+  avgHourlyMin: number | null
+  avgHourlyMax: number | null
 }
 
-export function NewRequestForm({ initialRecipients, initialRecipientId }: Props) {
+export function NewRequestForm({ initialRecipients, initialRecipientId, avgHourlyMin, avgHourlyMax }: Props) {
   const router = useRouter()
   const [step, setStep] = useState(1)
   const preselected = initialRecipientId
@@ -181,7 +183,7 @@ export function NewRequestForm({ initialRecipients, initialRecipientId }: Props)
     form.careType.length > 0,
     form.recipientId.length > 0,
     form.address.address1.trim().length > 0 && form.address.city.trim().length > 0 && form.address.state.length > 0,
-    form.frequency.length > 0 && form.days.length > 0 && form.shifts.length > 0 && form.startDate.length > 0 && form.durationHours > 0,
+    form.frequency.length > 0 && form.days.length > 0 && form.shifts.length > 0 && form.startDate.length > 0,
     form.genderPref.length > 0,
     form.title.trim().length > 0 && form.description.trim().length > 0,
   ]
@@ -343,40 +345,46 @@ export function NewRequestForm({ initialRecipients, initialRecipientId }: Props)
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium mb-3">Time of Day *</label>
-            <div className="grid grid-cols-2 gap-2">
-              {SHIFTS.map((s) => (
-                <button key={s.key} type="button"
-                  onClick={() => toggleMulti('shifts', s.key)}
-                  className={['rounded-xl border-2 px-4 py-3 text-sm text-left transition-colors', form.shifts.includes(s.key) ? 'border-primary bg-primary/5 text-primary' : 'border-border hover:border-primary/50'].join(' ')}>
-                  <p className="font-medium">{s.label}</p>
-                  <p className="text-xs text-muted-foreground">{s.time}</p>
-                </button>
-              ))}
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-1">Start Date *</label>
-              <DatePicker
-                value={form.startDate}
-                onChange={(val) => setForm((f) => ({ ...f, startDate: val }))}
-                placeholder="Select start date"
-                disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-3">Duration *</label>
-              <div className="flex flex-wrap gap-2">
-                {CARE_DURATIONS.map((d) => (
-                  <button key={d.key} type="button"
-                    onClick={() => setForm((f) => ({ ...f, durationHours: d.hours }))}
-                    className={['rounded-xl border-2 px-3 py-2 text-sm font-medium transition-colors', form.durationHours === d.hours ? 'border-primary bg-primary/5 text-primary' : 'border-border hover:border-primary/50'].join(' ')}>
-                    {d.label}
-                  </button>
-                ))}
+            <label className="block text-sm font-medium mb-3">Shift Time *</label>
+            <div className="flex items-center gap-3">
+              <div className="flex-1">
+                <label className="block text-xs text-muted-foreground mb-1">From</label>
+                <input
+                  type="time"
+                  value={form.shifts[0]?.split('–')[0]?.trim() ?? ''}
+                  onChange={(e) => {
+                    const to = form.shifts[0]?.split('–')[1]?.trim() ?? ''
+                    const val = e.target.value ? `${e.target.value}–${to}` : ''
+                    setForm((f) => ({ ...f, shifts: val ? [val] : [] }))
+                  }}
+                  className="w-full rounded-lg border border-border px-3 py-3 text-sm focus:border-primary focus:outline-none"
+                />
+              </div>
+              <span className="text-muted-foreground mt-5">–</span>
+              <div className="flex-1">
+                <label className="block text-xs text-muted-foreground mb-1">To</label>
+                <input
+                  type="time"
+                  value={form.shifts[0]?.split('–')[1]?.trim() ?? ''}
+                  onChange={(e) => {
+                    const from = form.shifts[0]?.split('–')[0]?.trim() ?? ''
+                    const val = e.target.value ? `${from}–${e.target.value}` : ''
+                    setForm((f) => ({ ...f, shifts: val ? [val] : [] }))
+                  }}
+                  className="w-full rounded-lg border border-border px-3 py-3 text-sm focus:border-primary focus:outline-none"
+                />
               </div>
             </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Start Date *</label>
+            <DatePicker
+              value={form.startDate}
+              onChange={(val) => setForm((f) => ({ ...f, startDate: val }))}
+              placeholder="Select start date"
+              disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+              upward
+            />
           </div>
         </div>
       )}
@@ -420,14 +428,34 @@ export function NewRequestForm({ initialRecipients, initialRecipientId }: Props)
               ))}
             </div>
             {form.budgetType && (
-              <div className="mt-3">
-                <label className="block text-sm font-medium mb-1">Budget Amount</label>
+              <div className="mt-3 space-y-2">
+                <label className="block text-sm font-medium mb-1">
+                  {form.budgetType === 'hourly' ? 'Hourly Rate' : 'Weekly Amount'}
+                </label>
+                {form.budgetType === 'hourly' && avgHourlyMin !== null && avgHourlyMax !== null && (
+                  <p className="text-xs text-muted-foreground">
+                    Average caregiver rate: <span className="font-medium text-foreground">${avgHourlyMin}–${avgHourlyMax}/hr</span>
+                  </p>
+                )}
                 <div className="relative">
                   <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">$</span>
                   <input type="number" min="0" value={form.budgetAmount}
                     onChange={(e) => setForm((f) => ({ ...f, budgetAmount: e.target.value }))}
                     className="w-full rounded-lg border border-border pl-8 pr-4 py-3 text-sm focus:border-primary focus:outline-none" />
                 </div>
+                {form.budgetType === 'hourly' && avgHourlyMin !== null && avgHourlyMax !== null && form.budgetAmount && (
+                  (() => {
+                    const amt = Number(form.budgetAmount)
+                    if (amt > 0 && (amt < avgHourlyMin || amt > avgHourlyMax)) {
+                      return (
+                        <p className="text-xs text-amber-600 dark:text-amber-400">
+                          This rate is outside the average range and may result in fewer matches.
+                        </p>
+                      )
+                    }
+                    return null
+                  })()
+                )}
               </div>
             )}
           </div>

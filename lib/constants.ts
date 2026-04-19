@@ -142,10 +142,8 @@ export const CARE_DURATIONS = [
 ] as const
 
 export const BUDGET_TYPES = [
-  { key: 'hourly',      label: 'Hourly rate' },
-  { key: 'per-visit',   label: 'Fixed per visit' },
-  { key: 'monthly',     label: 'Fixed monthly' },
-  { key: 'bi-weekly',   label: 'Fixed bi-weekly' },
+  { key: 'hourly',  label: 'Hourly rate' },
+  { key: 'weekly',  label: 'Fixed weekly' },
 ] as const
 
 export const US_STATES = [

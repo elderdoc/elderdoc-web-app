@@ -12,9 +12,10 @@ interface DatePickerProps {
   placeholder?: string
   className?: string
   disabled?: (date: Date) => boolean
+  upward?: boolean
 }
 
-export function DatePicker({ value, onChange, placeholder = 'Pick a date', className, disabled }: DatePickerProps) {
+export function DatePicker({ value, onChange, placeholder = 'Pick a date', className, disabled, upward }: DatePickerProps) {
   const [open, setOpen] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
 
@@ -49,7 +50,7 @@ export function DatePicker({ value, onChange, placeholder = 'Pick a date', class
       </button>
 
       {open && (
-        <div className="absolute z-50 mt-1 rounded-lg border border-border bg-background shadow-lg">
+        <div className={cn('absolute z-50 rounded-lg border border-border bg-background shadow-lg', upward ? 'bottom-full mb-1' : 'mt-1')}>
           <Calendar
             mode="single"
             selected={isValidDate ? selected : undefined}

@@ -1,7 +1,7 @@
 import { requireRole } from '@/domains/auth/session'
 import { db } from '@/services/db'
-import { careRecipients } from '@/db/schema'
-import { eq } from 'drizzle-orm'
+import { careRecipients, caregiverProfiles } from '@/db/schema'
+import { eq, isNotNull, avg } from 'drizzle-orm'
 import { NewRequestForm } from './_components/new-request-form'
 
 interface PageProps {
@@ -13,15 +13,34 @@ export default async function NewRequestPage({ searchParams }: PageProps) {
   const userId = session.user.id!
   const { recipientId } = await searchParams
 
-  const recipients = await db
-    .select({
-      id:           careRecipients.id,
-      name:         careRecipients.name,
-      relationship: careRecipients.relationship,
-      photoUrl:     careRecipients.photoUrl,
-    })
-    .from(careRecipients)
-    .where(eq(careRecipients.clientId, userId))
+  const [recipients, rateRow] = await Promise.all([
+    db
+      .select({
+        id:           careRecipients.id,
+        name:         careRecipients.name,
+        relationship: careRecipients.relationship,
+        photoUrl:     careRecipients.photoUrl,
+      })
+      .from(careRecipients)
+      .where(eq(careRecipients.clientId, userId)),
+    db
+      .select({
+        avgMin: avg(caregiverProfiles.hourlyMin),
+        avgMax: avg(caregiverProfiles.hourlyMax),
+      })
+      .from(caregiverProfiles)
+      .where(isNotNull(caregiverProfiles.hourlyMin)),
+  ])
 
-  return <NewRequestForm initialRecipients={recipients} initialRecipientId={recipientId} />
+  const avgHourlyMin = rateRow[0]?.avgMin ? Math.round(Number(rateRow[0].avgMin)) : null
+  const avgHourlyMax = rateRow[0]?.avgMax ? Math.round(Number(rateRow[0].avgMax)) : null
+
+  return (
+    <NewRequestForm
+      initialRecipients={recipients}
+      initialRecipientId={recipientId}
+      avgHourlyMin={avgHourlyMin}
+      avgHourlyMax={avgHourlyMax}
+    />
+  )
 }

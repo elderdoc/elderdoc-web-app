@@ -32,14 +32,14 @@ export async function getClientCalendarShifts(
 
   const rows = await db
     .select({
-      id:           shifts.id,
-      date:         shifts.date,
-      startTime:    shifts.startTime,
-      endTime:      shifts.endTime,
-      status:       shifts.status,
-      careType:     careRequests.careType,
+      id:            shifts.id,
+      date:          shifts.date,
+      startTime:     shifts.startTime,
+      endTime:       shifts.endTime,
+      status:        shifts.status,
+      careType:      careRequests.careType,
       caregiverName: users.name,
-      jobId:        jobs.id,
+      jobId:         jobs.id,
     })
     .from(shifts)
     .innerJoin(jobs, eq(shifts.jobId, jobs.id))
@@ -70,8 +70,8 @@ export async function getClientCalendarShifts(
 export async function getClientActiveJobs(clientId: string): Promise<ClientActiveJob[]> {
   const rows = await db
     .select({
-      jobId:        jobs.id,
-      careType:     careRequests.careType,
+      jobId:         jobs.id,
+      careType:      careRequests.careType,
       caregiverName: users.name,
     })
     .from(jobs)
@@ -110,4 +110,58 @@ export async function addClientShift(
 
   revalidatePath('/client/dashboard/calendar')
   return {}
+}
+
+export async function editClientShift(
+  shiftId: string,
+  date: string,
+  startTime: string,
+  endTime: string,
+): Promise<{ error?: string }> {
+  const session = await auth()
+  if (!session?.user?.id) return { error: 'Not authenticated' }
+
+  const [row] = await db
+    .select({ id: shifts.id, status: shifts.status })
+    .from(shifts)
+    .innerJoin(jobs, eq(shifts.jobId, jobs.id))
+    .where(and(eq(shifts.id, shiftId), eq(jobs.clientId, session.user.id)))
+    .limit(1)
+
+  if (!row) return { error: 'Shift not found' }
+  if (row.status === 'cancelled') return { error: 'Cannot edit a cancelled shift' }
+  if (row.status === 'completed') return { error: 'Cannot edit a completed shift' }
+
+  await db.update(shifts).set({ date, startTime, endTime }).where(eq(shifts.id, shiftId))
+
+  revalidatePath('/client/dashboard/calendar')
+  return {}
+}
+
+export async function cancelClientShift(
+  shiftId: string,
+): Promise<{ error?: string; lateCancellation?: boolean }> {
+  const session = await auth()
+  if (!session?.user?.id) return { error: 'Not authenticated' }
+
+  const [row] = await db
+    .select({ id: shifts.id, date: shifts.date, startTime: shifts.startTime, status: shifts.status })
+    .from(shifts)
+    .innerJoin(jobs, eq(shifts.jobId, jobs.id))
+    .where(and(eq(shifts.id, shiftId), eq(jobs.clientId, session.user.id)))
+    .limit(1)
+
+  if (!row) return { error: 'Shift not found' }
+  if (row.status === 'cancelled') return { error: 'Shift already cancelled' }
+  if (row.status === 'completed') return { error: 'Cannot cancel a completed shift' }
+
+  const shiftStart = new Date(`${row.date}T${row.startTime}`)
+  const now = new Date()
+  const hoursUntilShift = (shiftStart.getTime() - now.getTime()) / (1000 * 60 * 60)
+  const lateCancellation = hoursUntilShift <= 4
+
+  await db.update(shifts).set({ status: 'cancelled' }).where(eq(shifts.id, shiftId))
+
+  revalidatePath('/client/dashboard/calendar')
+  return { lateCancellation }
 }

@@ -6,7 +6,7 @@ import { updateCaregiverProfile } from '@/domains/caregivers/profile'
 import { formatUSPhone } from '@/lib/phone'
 import {
   CARE_TYPES, CERTIFICATIONS, LANGUAGES, WORK_TYPES,
-  DAYS_OF_WEEK, SHIFTS, START_AVAILABILITY, TRAVEL_DISTANCES,
+  DAYS_OF_WEEK, START_AVAILABILITY, TRAVEL_DISTANCES,
   EDUCATION_OPTIONS,
 } from '@/lib/constants'
 
@@ -264,14 +264,35 @@ export function CaregiverProfileForm({ profile: p }: { profile: Profile }) {
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium mb-2">Shifts</label>
-            <div className="flex flex-wrap gap-2">
-              {SHIFTS.map(s => (
-                <button key={s.key} type="button" onClick={() => toggleArr('shifts', s.key)}
-                  className={['rounded-xl border-2 px-4 py-2 text-sm font-medium transition-colors',
-                    form.shifts.includes(s.key) ? 'border-primary bg-primary/5 text-primary' : 'border-border hover:border-primary/50',
-                  ].join(' ')}>{s.label}</button>
-              ))}
+            <label className="block text-sm font-medium mb-2">Shift Availability</label>
+            <div className="flex items-center gap-3">
+              <div className="flex-1">
+                <label className="block text-xs text-muted-foreground mb-1">From</label>
+                <input
+                  type="time"
+                  value={form.shifts[0]?.split('–')[0]?.trim() ?? ''}
+                  onChange={(e) => {
+                    const to = form.shifts[0]?.split('–')[1]?.trim() ?? ''
+                    const val = e.target.value ? `${e.target.value}–${to}` : ''
+                    setForm(f => ({ ...f, shifts: val ? [val] : [] }))
+                  }}
+                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                />
+              </div>
+              <span className="text-muted-foreground mt-5">–</span>
+              <div className="flex-1">
+                <label className="block text-xs text-muted-foreground mb-1">To</label>
+                <input
+                  type="time"
+                  value={form.shifts[0]?.split('–')[1]?.trim() ?? ''}
+                  onChange={(e) => {
+                    const from = form.shifts[0]?.split('–')[0]?.trim() ?? ''
+                    const val = e.target.value ? `${from}–${e.target.value}` : ''
+                    setForm(f => ({ ...f, shifts: val ? [val] : [] }))
+                  }}
+                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                />
+              </div>
             </div>
           </div>
           <div>
