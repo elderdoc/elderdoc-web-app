@@ -67,7 +67,7 @@ export default async function CaregiverPayoutsPage() {
                     {row.status}
                   </span>
                   {row.status === 'pending' && row.method === 'cash' && (
-                    <ConfirmCashButton paymentId={row.paymentId} />
+                    <ConfirmCashButton paymentId={row.paymentId} amount={(row.amount / 100).toFixed(2)} />
                   )}
                 </div>
               </div>
