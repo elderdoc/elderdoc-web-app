@@ -100,7 +100,7 @@ export default async function FindCaregiversPage({ searchParams }: PageProps) {
   const totalPages = Math.ceil(total / 20)
 
   return (
-    <div className="p-8 space-y-10">
+    <div className="p-4 lg:p-8 space-y-10">
       <div>
         <h1 className="text-2xl font-semibold mb-1">Find Caregivers</h1>
         <p className="text-sm text-muted-foreground">

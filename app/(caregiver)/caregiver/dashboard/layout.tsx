@@ -42,7 +42,7 @@ export default async function CaregiverDashboardLayout({ children }: { children:
         unreadCount={unreadCount}
         unreadMessageCount={unreadMessageCount}
       />
-      <main className="flex-1 overflow-auto">{children}</main>
+      <main className="flex-1 overflow-auto pt-14 lg:pt-0">{children}</main>
     </div>
   )
 }

@@ -37,7 +37,7 @@ export default async function ClientMessagesPage() {
   const unreadByJob = Object.fromEntries(unreadRows.map(r => [r.jobId, Number(r.value)]))
 
   return (
-    <div className="p-8">
+    <div className="p-4 lg:p-8">
       <h1 className="text-2xl font-semibold mb-1">Messages</h1>
       <p className="text-sm text-muted-foreground mb-8">Chat with your caregivers.</p>
 

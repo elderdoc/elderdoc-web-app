@@ -16,7 +16,7 @@ export default async function ShiftsPage() {
   })
 
   if (!profile) {
-    return <div className="p-8 text-muted-foreground text-sm">Complete your profile to view shifts.</div>
+    return <div className="p-4 lg:p-8 text-muted-foreground text-sm">Complete your profile to view shifts.</div>
   }
 
   const upcomingShifts = await db
@@ -36,7 +36,7 @@ export default async function ShiftsPage() {
     .orderBy(asc(shifts.date))
 
   return (
-    <div className="p-8">
+    <div className="p-4 lg:p-8">
       <h1 className="text-2xl font-semibold mb-1">Shifts</h1>
       <p className="text-sm text-muted-foreground mb-8">Your upcoming scheduled shifts.</p>
 

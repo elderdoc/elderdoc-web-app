@@ -18,7 +18,7 @@ export default async function CaregiverCarePlansPage() {
 
   if (!profile) {
     return (
-      <div className="p-8 text-muted-foreground text-sm">
+      <div className="p-4 lg:p-8 text-muted-foreground text-sm">
         Complete your profile to view care plans.
       </div>
     )
@@ -47,7 +47,7 @@ export default async function CaregiverCarePlansPage() {
     .offset(0)
 
   return (
-    <div className="p-8">
+    <div className="p-4 lg:p-8">
       <h1 className="text-2xl font-semibold mb-1">Care Plans</h1>
       <p className="text-sm text-muted-foreground mb-8">
         Care instructions for each of your care recipients.

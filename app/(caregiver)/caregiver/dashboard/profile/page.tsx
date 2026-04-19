@@ -50,7 +50,7 @@ export default async function CaregiverProfilePage() {
   const startAvail   = workPrefs.find(w => w.startAvailability)?.startAvailability ?? ''
 
   return (
-    <div className="p-8">
+    <div className="p-4 lg:p-8">
       <h1 className="text-2xl font-semibold mb-8">My Profile</h1>
       <CaregiverProfileForm
         profile={{

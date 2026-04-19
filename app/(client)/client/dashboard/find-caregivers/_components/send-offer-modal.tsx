@@ -76,7 +76,7 @@ export function SendOfferModal({ caregiverId, activeRequests, alreadyOffered }: 
           onClick={() => { if (state !== 'pending') { setState('idle'); setErrorMessage(null) } }}
         >
           <div
-            className="bg-background rounded-xl border border-border shadow-lg w-full max-w-md p-6 space-y-4 max-h-[90vh] overflow-y-auto"
+            className="bg-background rounded-xl border border-border shadow-lg w-full max-w-md mx-4 p-6 space-y-4 max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
             role="dialog"
             aria-modal="true"

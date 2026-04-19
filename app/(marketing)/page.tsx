@@ -22,7 +22,7 @@ export default function LandingPage() {
           <p className="text-xs font-medium uppercase tracking-[0.12em] text-primary">
             ElderDoc
           </p>
-          <h1 className="mt-4 text-[52px] font-semibold leading-[1.1] tracking-[-0.03em] text-foreground sm:text-[64px]">
+          <h1 className="mt-4 text-[36px] font-semibold leading-[1.1] tracking-[-0.03em] text-foreground sm:text-[52px] lg:text-[64px]">
             Care for your loved ones.{' '}
             <span className="text-primary">Intelligently matched.</span>
           </h1>

@@ -15,7 +15,7 @@ export default async function ClientProfilePage() {
     .limit(1)
 
   return (
-    <div className="p-8">
+    <div className="p-4 lg:p-8">
       <h1 className="text-2xl font-semibold mb-8">My Profile</h1>
       <ClientProfileForm user={user} />
     </div>

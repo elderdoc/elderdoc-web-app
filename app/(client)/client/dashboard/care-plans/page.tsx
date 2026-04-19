@@ -9,7 +9,7 @@ export default async function CarePlansPage() {
   const rows = await getClientCarePlans(clientId)
 
   return (
-    <div className="p-8">
+    <div className="p-4 lg:p-8">
       <h1 className="text-2xl font-semibold mb-1">Care Plans</h1>
       <p className="text-sm text-muted-foreground mb-8">
         Care instructions for each of your care recipients. You can add a care plan for any recipient — caregivers you hire will automatically see it.

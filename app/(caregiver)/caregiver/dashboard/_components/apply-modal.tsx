@@ -61,7 +61,7 @@ export function ApplyModal({ requestId, requestTitle }: Props) {
 
       {open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="relative w-full max-w-md rounded-xl bg-background p-8 shadow-xl max-h-[90vh] overflow-y-auto">
+          <div className="relative w-full max-w-md mx-4 rounded-xl bg-background p-6 sm:p-8 shadow-xl max-h-[90vh] overflow-y-auto">
             <button
               type="button"
               onClick={handleClose}

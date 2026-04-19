@@ -91,7 +91,7 @@ export default async function CaregiverDashboard() {
 
   if (!profile) {
     return (
-      <div className="p-8">
+      <div className="p-4 lg:p-8">
         <h1 className="text-2xl font-semibold">Complete your profile to get started.</h1>
         <Link href="/get-started/caregiver/step-1" className="mt-4 inline-block text-primary underline text-sm">
           Start onboarding →
@@ -152,14 +152,14 @@ export default async function CaregiverDashboard() {
   ]
 
   return (
-    <div className="p-8">
+    <div className="p-4 lg:p-8">
       <h1 className="text-2xl font-semibold mb-1">
         Welcome back{session.user.name ? `, ${session.user.name.split(' ')[0]}` : ''}
       </h1>
       <p className="text-muted-foreground text-sm mb-8">Here&apos;s what&apos;s happening with your care work.</p>
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-4 mb-10">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-10">
         {stats.map((stat) => (
           <Link
             key={stat.label}

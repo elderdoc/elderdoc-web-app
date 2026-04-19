@@ -142,7 +142,7 @@ export function CareRecipientModal({ onRecipientCreated, triggerLabel }: Props) 
 
       {open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="relative w-full max-w-lg rounded-xl bg-background p-8 shadow-xl max-h-[90vh] flex flex-col overflow-y-auto">
+          <div className="relative w-full max-w-lg mx-4 rounded-xl bg-background p-6 sm:p-8 shadow-xl max-h-[90vh] flex flex-col overflow-y-auto">
             <button
               type="button"
               onClick={handleClose}

@@ -27,7 +27,7 @@ export default async function ClientBillingPage() {
   ])
 
   return (
-    <div className="p-8">
+    <div className="p-4 lg:p-8">
       <h1 className="text-2xl font-semibold mb-1">Billing</h1>
       <p className="text-sm text-muted-foreground mb-8">Record and view payments for your care services.</p>
       <BillingClient

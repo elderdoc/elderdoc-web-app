@@ -29,12 +29,12 @@ export default async function RequestsPage() {
     .orderBy(desc(careRequests.createdAt))
 
   return (
-    <div className="p-8 space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="p-4 lg:p-8 space-y-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-2xl font-semibold">Care Requests</h1>
         <Link
           href="/client/dashboard/requests/new"
-          className="px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm font-medium whitespace-nowrap"
+          className="self-start px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm font-medium whitespace-nowrap"
         >
           + Care Request
         </Link>

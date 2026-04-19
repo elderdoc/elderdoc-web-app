@@ -16,7 +16,7 @@ export default async function MyJobsPage() {
   })
 
   if (!profile) {
-    return <div className="p-8 text-muted-foreground text-sm">Complete your profile to view your jobs.</div>
+    return <div className="p-4 lg:p-8 text-muted-foreground text-sm">Complete your profile to view your jobs.</div>
   }
 
   const myJobs = await db
@@ -35,7 +35,7 @@ export default async function MyJobsPage() {
     .orderBy(desc(jobs.createdAt))
 
   return (
-    <div className="p-8">
+    <div className="p-4 lg:p-8">
       <h1 className="text-2xl font-semibold mb-1">My Jobs</h1>
       <p className="text-sm text-muted-foreground mb-8">Your accepted care positions.</p>
 

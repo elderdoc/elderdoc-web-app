@@ -73,9 +73,9 @@ export default async function ClientDashboard() {
     .slice(0, 10)
 
   return (
-    <div className="p-8 space-y-8">
+    <div className="p-4 lg:p-8 space-y-8">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold">Dashboard</h1>
           <p className="text-sm text-muted-foreground mt-1">Welcome back, {session.user.name?.split(' ')[0]}</p>
@@ -97,7 +97,7 @@ export default async function ClientDashboard() {
       </div>
 
       {/* Stats Row */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {[
           { label: 'Care Recipients', value: recipientCount.value },
           { label: 'Active Requests', value: activeRequestCount.value },
@@ -110,7 +110,7 @@ export default async function ClientDashboard() {
         ))}
       </div>
 
-      <div className="grid grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Recent Requests */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">

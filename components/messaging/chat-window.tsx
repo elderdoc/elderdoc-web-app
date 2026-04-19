@@ -63,7 +63,7 @@ export function ChatWindow({ jobId, otherPartyName }: Props) {
   }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-8rem)] rounded-xl border border-border bg-card overflow-hidden">
+    <div className="flex flex-col h-[calc(100vh-12rem)] lg:h-[calc(100vh-8rem)] rounded-xl border border-border bg-card overflow-hidden">
       {/* Header */}
       <div className="px-5 py-4 border-b border-border">
         <p className="font-semibold text-sm">{otherPartyName}</p>

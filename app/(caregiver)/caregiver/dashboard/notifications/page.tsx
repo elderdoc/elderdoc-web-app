@@ -26,7 +26,7 @@ export default async function NotificationsPage() {
   }
 
   return (
-    <div className="p-8">
+    <div className="p-4 lg:p-8">
       <h1 className="text-2xl font-semibold mb-1">Notifications</h1>
       <p className="text-sm text-muted-foreground mb-8">Your recent activity and updates.</p>
 

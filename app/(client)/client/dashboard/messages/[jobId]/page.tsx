@@ -26,7 +26,7 @@ export default async function ClientMessagePage({ params }: PageProps) {
   if (!job) notFound()
 
   return (
-    <div className="p-8">
+    <div className="p-4 lg:p-8">
       <Link
         href="/client/dashboard/requests"
         className="text-xs text-muted-foreground hover:text-foreground mb-6 inline-flex items-center gap-1"

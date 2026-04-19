@@ -221,7 +221,7 @@ export function CareRequestModal({ recipients: initialRecipients }: Props) {
 
       {open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="relative w-full max-w-2xl rounded-xl bg-background shadow-xl max-h-[90vh] flex flex-col overflow-y-auto">
+          <div className="relative w-full max-w-2xl mx-4 rounded-xl bg-background shadow-xl max-h-[90vh] flex flex-col overflow-y-auto">
             <button
               type="button"
               onClick={handleClose}

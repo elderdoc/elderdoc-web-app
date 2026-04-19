@@ -19,7 +19,7 @@ export default async function FindJobsPage() {
   })
 
   if (!profile) {
-    return <div className="p-8 text-muted-foreground text-sm">Complete your profile to browse jobs.</div>
+    return <div className="p-4 lg:p-8 text-muted-foreground text-sm">Complete your profile to browse jobs.</div>
   }
 
   const [appliedRows, matchedRows] = await Promise.all([
@@ -69,7 +69,7 @@ export default async function FindJobsPage() {
     .orderBy(careRequests.createdAt)
 
   return (
-    <div className="p-8">
+    <div className="p-4 lg:p-8">
       <h1 className="text-2xl font-semibold mb-1">Find Jobs</h1>
       <p className="text-sm text-muted-foreground mb-8">Browse open care requests and apply.</p>
 
@@ -85,7 +85,7 @@ export default async function FindJobsPage() {
             return (
               <div
                 key={req.id}
-                className="rounded-xl border border-border bg-card p-5 flex items-start justify-between gap-4 hover:border-primary/40 hover:shadow-sm transition-all"
+                className="rounded-xl border border-border bg-card p-5 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between hover:border-primary/40 hover:shadow-sm transition-all"
               >
                 <div className="min-w-0 space-y-2">
                   <div>

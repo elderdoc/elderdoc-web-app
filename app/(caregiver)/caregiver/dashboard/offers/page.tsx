@@ -16,7 +16,7 @@ export default async function OffersPage() {
   })
 
   if (!profile) {
-    return <div className="p-8 text-muted-foreground text-sm">Complete your profile to view offers.</div>
+    return <div className="p-4 lg:p-8 text-muted-foreground text-sm">Complete your profile to view offers.</div>
   }
 
   const offers = await db
@@ -37,7 +37,7 @@ export default async function OffersPage() {
     .orderBy(desc(matches.createdAt))
 
   return (
-    <div className="p-8">
+    <div className="p-4 lg:p-8">
       <h1 className="text-2xl font-semibold mb-1">Offers</h1>
       <p className="text-sm text-muted-foreground mb-8">Intelligently matched care requests waiting for your response.</p>
 
