@@ -31,7 +31,7 @@ export async function recordCashPayment(
     jobId,
     amount: String(amount),
     method: 'cash',
-    status: 'completed',
+    status: 'pending',
   })
 
   revalidatePath('/client/dashboard/billing')
@@ -74,6 +74,34 @@ export async function initiateStripePayment(
         : undefined
 
   return { clientSecret }
+}
+
+export async function confirmCashPayment(
+  paymentId: string,
+): Promise<{ error?: string }> {
+  const session = await auth()
+  if (!session?.user?.id) return { error: 'Not authenticated' }
+
+  const profile = await db.query.caregiverProfiles.findFirst({
+    where: eq(caregiverProfiles.userId, session.user.id),
+  })
+  if (!profile) return { error: 'Profile not found' }
+
+  // Verify this payment belongs to a job this caregiver owns
+  const [row] = await db
+    .select({ id: payments.id })
+    .from(payments)
+    .innerJoin(jobs, eq(payments.jobId, jobs.id))
+    .where(and(eq(payments.id, paymentId), eq(jobs.caregiverId, profile.id), eq(payments.method, 'cash'), eq(payments.status, 'pending')))
+    .limit(1)
+
+  if (!row) return { error: 'Not found' }
+
+  await db.update(payments).set({ status: 'completed' }).where(eq(payments.id, paymentId))
+
+  revalidatePath('/caregiver/dashboard/payouts')
+  revalidatePath('/client/dashboard/billing')
+  return {}
 }
 
 export async function completeShift(

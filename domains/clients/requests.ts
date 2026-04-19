@@ -3,6 +3,7 @@
 import { auth } from '@/auth'
 import { db } from '@/services/db'
 import { careRecipients, careRequests, careRequestLocations } from '@/db/schema'
+import { eq, and } from 'drizzle-orm'
 
 export async function createCareRecipient(data: {
   relationship: string
@@ -86,4 +87,68 @@ export async function createCareRequest(data: {
   })
 
   return { id: result.id }
+}
+
+export async function updateCareRecipient(id: string, data: {
+  relationship?: string
+  name: string
+  dob?: string
+  phone?: string
+  gender?: string
+  photoUrl?: string
+  conditions: string[]
+  mobilityLevel?: string
+  notes?: string
+  address?: { address1?: string; address2?: string; city?: string; state?: string }
+}): Promise<void> {
+  const session = await auth()
+  if (!session?.user?.id) throw new Error('Unauthorized')
+
+  await db.update(careRecipients)
+    .set({
+      relationship:  data.relationship,
+      name:          data.name,
+      dob:           data.dob,
+      phone:         data.phone,
+      gender:        data.gender,
+      photoUrl:      data.photoUrl,
+      conditions:    data.conditions,
+      mobilityLevel: data.mobilityLevel,
+      notes:         data.notes,
+      address:       data.address,
+    })
+    .where(and(eq(careRecipients.id, id), eq(careRecipients.clientId, session.user.id)))
+}
+
+export async function updateCareRequest(id: string, data: {
+  title?: string
+  description?: string
+  frequency?: string
+  days?: string[]
+  shifts?: string[]
+  startDate?: string
+  durationHours?: number
+  genderPref?: string
+  languagePref?: string[]
+  budgetType?: string
+  budgetAmount?: string
+}): Promise<void> {
+  const session = await auth()
+  if (!session?.user?.id) throw new Error('Unauthorized')
+
+  await db.update(careRequests)
+    .set({
+      title:         data.title,
+      description:   data.description,
+      frequency:     data.frequency,
+      days:          data.days,
+      shifts:        data.shifts,
+      startDate:     data.startDate,
+      durationHours: data.durationHours,
+      genderPref:    data.genderPref,
+      languagePref:  data.languagePref,
+      budgetType:    data.budgetType,
+      budgetAmount:  data.budgetAmount?.trim() && Number.isFinite(Number(data.budgetAmount.trim())) ? data.budgetAmount.trim() : undefined,
+    })
+    .where(and(eq(careRequests.id, id), eq(careRequests.clientId, session.user.id)))
 }

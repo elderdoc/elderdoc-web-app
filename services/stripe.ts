@@ -13,7 +13,7 @@ const MOCK_MODE = !process.env.STRIPE_SECRET_KEY
 
 export async function createPaymentIntent(amount: number, jobId: string) {
   if (MOCK_MODE) return { id: `mock_pi_${jobId}`, clientSecret: 'mock_secret', status: 'requires_payment_method' }
-  return getStripe().paymentIntents.create({ amount: Math.round(amount * 100), currency: 'usd', metadata: { jobId } })
+  return getStripe().paymentIntents.create({ amount, currency: 'usd', metadata: { jobId } })
 }
 
 export async function capturePaymentIntent(intentId: string) {

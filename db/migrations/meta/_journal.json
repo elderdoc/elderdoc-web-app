@@ -36,6 +36,20 @@
       "when": 1776451494612,
       "tag": "0004_bent_jackal",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1776536095054,
+      "tag": "0005_hard_chimera",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1745049600000,
+      "tag": "0006_care_plans_recipient",
+      "breakpoints": true
     }
   ]
 }

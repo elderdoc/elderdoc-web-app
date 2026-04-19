@@ -2,19 +2,10 @@ import { requireRole } from '@/domains/auth/session'
 import { db } from '@/services/db'
 import { caregiverProfiles, shifts, jobs, careRequests } from '@/db/schema'
 import { eq, and, asc } from 'drizzle-orm'
-import { CompleteShiftButton } from './_components/complete-shift-button'
+import { CARE_TYPES } from '@/lib/constants'
+import { ShiftCard } from './_components/shift-card'
 
-const SHIFT_STATUS_LABELS: Record<string, string> = {
-  scheduled: 'Scheduled',
-  completed: 'Completed',
-  cancelled: 'Cancelled',
-}
-
-const SHIFT_STATUS_CLASSES: Record<string, string> = {
-  scheduled: 'bg-blue-100 text-blue-700',
-  completed: 'bg-muted text-muted-foreground',
-  cancelled: 'bg-destructive/10 text-destructive',
-}
+const CARE_TYPE_LABELS = Object.fromEntries(CARE_TYPES.map((ct) => [ct.key, ct.label]))
 
 export default async function ShiftsPage() {
   const session = await requireRole('caregiver')
@@ -45,7 +36,7 @@ export default async function ShiftsPage() {
     .orderBy(asc(shifts.date))
 
   return (
-    <div className="p-8 max-w-4xl">
+    <div className="p-8">
       <h1 className="text-2xl font-semibold mb-1">Shifts</h1>
       <p className="text-sm text-muted-foreground mb-8">Your upcoming scheduled shifts.</p>
 
@@ -54,25 +45,13 @@ export default async function ShiftsPage() {
       ) : (
         <div className="space-y-3">
           {upcomingShifts.map((shift) => (
-            <div
+            <ShiftCard
               key={shift.id}
-              className="rounded-xl border border-border bg-card p-5 flex items-center justify-between gap-4"
-            >
-              <div className="min-w-0">
-                <p className="font-medium text-sm mb-1">{shift.title ?? shift.careType}</p>
-                <p className="text-xs text-muted-foreground">
-                  {shift.date} · {shift.startTime} – {shift.endTime}
-                </p>
-              </div>
-              <div className="flex items-center gap-2 shrink-0">
-                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${SHIFT_STATUS_CLASSES[shift.status ?? 'scheduled'] ?? ''}`}>
-                  {SHIFT_STATUS_LABELS[shift.status ?? 'scheduled'] ?? shift.status}
-                </span>
-                {shift.status !== 'completed' && (
-                  <CompleteShiftButton shiftId={shift.id} />
-                )}
-              </div>
-            </div>
+              shift={{
+                ...shift,
+                careTypeLabel: CARE_TYPE_LABELS[shift.careType] ?? shift.careType,
+              }}
+            />
           ))}
         </div>
       )}

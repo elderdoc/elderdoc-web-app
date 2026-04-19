@@ -5,8 +5,10 @@ import { useRouter } from 'next/navigation'
 import { createCareRequest } from '@/domains/clients/requests'
 import {
   CARE_TYPES, CARE_FREQUENCIES, DAYS_OF_WEEK, SHIFTS, CARE_DURATIONS,
-  GENDER_PREFERENCES, LANGUAGES, BUDGET_TYPES, US_STATES,
+  GENDER_PREFERENCES, LANGUAGES, BUDGET_TYPES,
 } from '@/lib/constants'
+import { StateSelect } from '@/components/state-select'
+import { DatePicker } from '@/components/date-picker'
 import { CareRequestShell } from './care-request-shell'
 import { CareRecipientModal } from './care-recipient-modal'
 import type { RankedCandidate } from '@/domains/matching/match-caregivers'
@@ -212,18 +214,18 @@ export function CareRequestModal({ recipients: initialRecipients }: Props) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm font-medium"
+        className="px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm font-medium whitespace-nowrap"
       >
         + Care Request
       </button>
 
       {open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="relative w-full max-w-2xl rounded-xl bg-background p-8 shadow-xl max-h-[90vh] flex flex-col">
+          <div className="relative w-full max-w-2xl rounded-xl bg-background shadow-xl max-h-[90vh] flex flex-col overflow-y-auto">
             <button
               type="button"
               onClick={handleClose}
-              className="absolute right-4 top-4 text-muted-foreground hover:text-foreground"
+              className="absolute right-5 top-5 z-10 text-muted-foreground hover:text-foreground"
             >
               ✕
             </button>
@@ -341,14 +343,10 @@ export function CareRequestModal({ recipients: initialRecipients }: Props) {
                     </div>
                     <div>
                       <label className="block text-sm font-medium mb-1">State *</label>
-                      <select
+                      <StateSelect
                         value={form.address.state}
-                        onChange={(e) => setForm((f) => ({ ...f, address: { ...f.address, state: e.target.value } }))}
-                        className="w-full rounded-md border border-border px-3 py-2 text-sm"
-                      >
-                        <option value="">Select state</option>
-                        {US_STATES.map((s) => <option key={s} value={s}>{s}</option>)}
-                      </select>
+                        onChange={(val) => setForm((f) => ({ ...f, address: { ...f.address, state: val } }))}
+                      />
                     </div>
                   </div>
                   <div>
@@ -401,9 +399,12 @@ export function CareRequestModal({ recipients: initialRecipients }: Props) {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium mb-1">Start Date *</label>
-                      <input type="date" value={form.startDate}
-                        onChange={(e) => setForm((f) => ({ ...f, startDate: e.target.value }))}
-                        className="w-full rounded-md border border-border px-3 py-2 text-sm" />
+                      <DatePicker
+                        value={form.startDate}
+                        onChange={(val) => setForm((f) => ({ ...f, startDate: val }))}
+                        placeholder="Select start date"
+                        disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+                      />
                     </div>
                     <div>
                       <label className="block text-sm font-medium mb-3">Duration *</label>
@@ -474,7 +475,7 @@ export function CareRequestModal({ recipients: initialRecipients }: Props) {
                 </div>
               )}
 
-              {/* Step 6 — AI Generation */}
+              {/* Step 6 — Description */}
               {step === 6 && (
                 <div className="space-y-5">
                   <div className="flex justify-center">
@@ -484,7 +485,7 @@ export function CareRequestModal({ recipients: initialRecipients }: Props) {
                       disabled={isGenerating}
                       className="px-6 py-3 rounded-md bg-primary text-primary-foreground text-sm font-semibold disabled:opacity-40"
                     >
-                      {isGenerating ? 'Generating…' : generated ? 'Regenerate' : 'Generate with AI'}
+                      {isGenerating ? 'Generating…' : generated ? 'Regenerate suggestion' : 'Suggest a description'}
                     </button>
                   </div>
 
@@ -515,7 +516,7 @@ export function CareRequestModal({ recipients: initialRecipients }: Props) {
                 </div>
               )}
 
-              {/* Step 7 — AI Matching */}
+              {/* Step 7 — Matching */}
               {step === 7 && (
                 <div className="space-y-4">
                   {matchingState === 'matching' && (
@@ -538,8 +539,8 @@ export function CareRequestModal({ recipients: initialRecipients }: Props) {
                   )}
 
                   {matchingState === 'results' && candidates.length > 0 && (
-                    <div className="space-y-3 overflow-y-auto max-h-[50vh] pr-1">
-                      {candidates.map((c) => {
+                    <div className="space-y-3">
+                      {candidates.map((c, idx) => {
                         const initials = (c.name ?? '?').split(' ').map((p) => p[0]).slice(0, 2).join('').toUpperCase()
                         const scoreBadge =
                           c.score >= 80 ? { label: 'Strong match', cls: 'bg-green-100 text-green-700' } :
@@ -548,18 +549,29 @@ export function CareRequestModal({ recipients: initialRecipients }: Props) {
                         return (
                           <div key={c.caregiverId} className="rounded-xl border border-border bg-card p-4">
                             <div className="flex items-start gap-3">
-                              {c.image ? (
-                                <img src={c.image} alt="" className="h-12 w-12 rounded-full object-cover shrink-0" />
-                              ) : (
-                                <span className="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground shrink-0">
-                                  {initials}
-                                </span>
-                              )}
+                              {/* Rank badge */}
+                              <div className="flex flex-col items-center gap-2 shrink-0">
+                                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
+                                  {idx + 1}
+                                </div>
+                                {c.image ? (
+                                  <img src={c.image} alt="" className="h-12 w-12 rounded-full object-cover" />
+                                ) : (
+                                  <span className="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground">
+                                    {initials}
+                                  </span>
+                                )}
+                              </div>
                               <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2 flex-wrap">
-                                  <p className="font-medium text-sm">{c.name ?? 'Caregiver'}</p>
-                                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${scoreBadge.cls}`}>
-                                    {scoreBadge.label}
+                                <div className="flex items-center justify-between gap-2 flex-wrap mb-0.5">
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <p className="font-semibold text-sm">{c.name ?? 'Caregiver'}</p>
+                                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${scoreBadge.cls}`}>
+                                      {scoreBadge.label}
+                                    </span>
+                                  </div>
+                                  <span className="text-xs font-semibold text-primary shrink-0">
+                                    {c.score}% match
                                   </span>
                                 </div>
                                 {(c.city || c.state) && (

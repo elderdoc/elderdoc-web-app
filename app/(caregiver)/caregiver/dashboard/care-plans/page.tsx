@@ -1,7 +1,12 @@
 import { requireRole } from '@/domains/auth/session'
 import { db } from '@/services/db'
-import { jobs, careRequests, caregiverProfiles, carePlans, users } from '@/db/schema'
+import { jobs, careRequests, caregiverProfiles, carePlans, users, careRecipients } from '@/db/schema'
 import { eq, and, desc } from 'drizzle-orm'
+import { CARE_TYPES } from '@/lib/constants'
+
+const CARE_TYPE_LABELS: Record<string, string> = Object.fromEntries(
+  CARE_TYPES.map((c) => [c.key, c.label])
+)
 
 export default async function CaregiverCarePlansPage() {
   const session = await requireRole('caregiver')
@@ -23,7 +28,7 @@ export default async function CaregiverCarePlansPage() {
     .select({
       jobId:               jobs.id,
       careType:            careRequests.careType,
-      clientName:          users.name,
+      recipientName:       careRecipients.name,
       carePlanId:          carePlans.id,
       dailySchedule:       carePlans.dailySchedule,
       medications:         carePlans.medications,
@@ -34,18 +39,18 @@ export default async function CaregiverCarePlansPage() {
     })
     .from(jobs)
     .innerJoin(careRequests, eq(jobs.requestId, careRequests.id))
-    .innerJoin(users, eq(jobs.clientId, users.id))
-    .leftJoin(carePlans, eq(carePlans.jobId, jobs.id))
+    .leftJoin(careRecipients, eq(careRequests.recipientId, careRecipients.id))
+    .leftJoin(carePlans, eq(carePlans.recipientId, careRequests.recipientId))
     .where(and(eq(jobs.caregiverId, profile.id), eq(jobs.status, 'active')))
     .orderBy(desc(jobs.createdAt))
     .limit(50)
     .offset(0)
 
   return (
-    <div className="p-8 max-w-4xl">
+    <div className="p-8">
       <h1 className="text-2xl font-semibold mb-1">Care Plans</h1>
       <p className="text-sm text-muted-foreground mb-8">
-        Care instructions from your active clients.
+        Care instructions for each of your care recipients.
       </p>
 
       {rows.length === 0 ? (
@@ -56,8 +61,8 @@ export default async function CaregiverCarePlansPage() {
             <div key={row.jobId} className="rounded-xl border border-border bg-card p-5">
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <p className="font-semibold text-sm">{row.careType}</p>
-                  <p className="text-xs text-muted-foreground">Client: {row.clientName ?? 'Unknown'}</p>
+                  <p className="font-semibold text-sm">{row.recipientName ?? 'Care Recipient'}</p>
+                  <p className="text-xs text-muted-foreground">{CARE_TYPE_LABELS[row.careType] ?? row.careType}</p>
                 </div>
                 {row.updatedAt && (
                   <p className="text-xs text-muted-foreground">

@@ -13,9 +13,10 @@ interface ActiveJob {
 interface Props {
   paymentRows: PaymentRow[]
   activeJobs: ActiveJob[]
+  stripePublishableKey: string
 }
 
-export function BillingClient({ paymentRows, activeJobs }: Props) {
+export function BillingClient({ paymentRows, activeJobs, stripePublishableKey }: Props) {
   const [modalJobId, setModalJobId] = useState<string | null>(null)
   const modalJob = activeJobs.find((j) => j.jobId === modalJobId)
 
@@ -25,13 +26,19 @@ export function BillingClient({ paymentRows, activeJobs }: Props) {
         <RecordPaymentModal
           jobId={modalJob.jobId}
           jobLabel={`${modalJob.careType} — ${modalJob.caregiverName ?? 'Caregiver'}`}
+          stripePublishableKey={stripePublishableKey}
           onClose={() => setModalJobId(null)}
         />
       )}
 
-      {activeJobs.length > 0 && (
-        <div className="mb-8">
-          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-3">Active Jobs</p>
+      <div className="mb-8">
+        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-3">Active Jobs</p>
+        {activeJobs.length === 0 ? (
+          <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border py-10 text-center">
+            <p className="text-sm text-muted-foreground">No active jobs yet.</p>
+            <p className="text-xs text-muted-foreground mt-1">Payments can be recorded once a caregiver is hired.</p>
+          </div>
+        ) : (
           <div className="space-y-2">
             {activeJobs.map((job) => (
               <div key={job.jobId} className="flex items-center justify-between rounded-lg border border-border bg-card px-4 py-3">
@@ -48,8 +55,8 @@ export function BillingClient({ paymentRows, activeJobs }: Props) {
               </div>
             ))}
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       <div>
         <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-3">Payment History</p>

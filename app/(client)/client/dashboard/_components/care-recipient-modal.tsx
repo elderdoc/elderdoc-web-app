@@ -4,6 +4,7 @@ import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { createCareRecipient } from '@/domains/clients/requests'
 import { RELATIONSHIPS, CONDITIONS, MOBILITY_LEVELS, GENDER_OPTIONS } from '@/lib/constants'
+import { formatUSPhone } from '@/lib/phone'
 import { CareRecipientShell } from './care-recipient-shell'
 
 interface RecipientForm {
@@ -134,14 +135,14 @@ export function CareRecipientModal({ onRecipientCreated, triggerLabel }: Props) 
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm font-medium"
+        className="px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm font-medium whitespace-nowrap"
       >
         {triggerLabel ?? '+ Add Recipient'}
       </button>
 
       {open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="relative w-full max-w-lg rounded-xl bg-background p-8 shadow-xl max-h-[90vh] flex flex-col">
+          <div className="relative w-full max-w-lg rounded-xl bg-background p-8 shadow-xl max-h-[90vh] flex flex-col overflow-y-auto">
             <button
               type="button"
               onClick={handleClose}
@@ -237,7 +238,7 @@ export function CareRecipientModal({ onRecipientCreated, triggerLabel }: Props) 
                     <input
                       type="tel"
                       value={form.phone}
-                      onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
+                      onChange={(e) => setForm((f) => ({ ...f, phone: formatUSPhone(e.target.value) }))}
                       className="w-full rounded-md border border-border px-3 py-2 text-sm"
                       placeholder="(555) 000-0000"
                     />

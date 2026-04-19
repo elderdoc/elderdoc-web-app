@@ -3,7 +3,7 @@
 import { useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { StepShell } from '../_components/step-shell'
-import { US_STATES } from '@/lib/constants'
+import { StateSelect } from '@/components/state-select'
 
 function Step3Inner() {
   const router = useRouter()
@@ -86,16 +86,7 @@ function Step3Inner() {
           </div>
           <div>
             <label className={labelClass}>State</label>
-            <select
-              value={form.state}
-              onChange={e => set('state', e.target.value)}
-              className={inputClass}
-            >
-              <option value="">Select state</option>
-              {US_STATES.map(state => (
-                <option key={state} value={state}>{state}</option>
-              ))}
-            </select>
+            <StateSelect value={form.state} onChange={v => set('state', v)} />
           </div>
         </div>
 

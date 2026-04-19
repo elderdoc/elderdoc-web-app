@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation'
 import { useCallback, useRef } from 'react'
 import { CARE_TYPES, CERTIFICATIONS, LANGUAGES, US_STATES } from '@/lib/constants'
+import { SelectField } from '@/components/select-field'
 
 interface Props {
   activeRequests: { id: string; title: string | null; careType: string }[]
@@ -20,8 +21,15 @@ interface Props {
 }
 
 const EXPERIENCE_OPTIONS = [
-  '1 year', '2 years', '3 years', '5 years', '10+ years',
+  { value: '1 year', label: '1 year' },
+  { value: '2 years', label: '2 years' },
+  { value: '3 years', label: '3 years' },
+  { value: '5 years', label: '5 years' },
+  { value: '10+ years', label: '10+ years' },
 ]
+
+const CARE_TYPE_OPTIONS = CARE_TYPES.map((ct) => ({ value: ct.key, label: ct.label }))
+const STATE_OPTIONS = US_STATES.map((s) => ({ value: s, label: s }))
 
 export function FilterForm({ activeRequests, currentFilters }: Props) {
   const router = useRouter()
@@ -86,6 +94,11 @@ export function FilterForm({ activeRequests, currentFilters }: Props) {
     push({ [key]: next.length > 0 ? next : undefined })
   }
 
+  const requestOptions = activeRequests.map((r) => ({
+    value: r.id,
+    label: r.title ?? r.careType,
+  }))
+
   return (
     <div className="space-y-8">
       {/* Your Matches — request selector */}
@@ -95,21 +108,16 @@ export function FilterForm({ activeRequests, currentFilters }: Props) {
         </h2>
         {activeRequests.length === 0 ? (
           <p className="text-sm text-muted-foreground">
-            Create a care request to see your AI matches.
+            Create a care request to see your matched caregivers.
           </p>
         ) : (
-          <select
+          <SelectField
+            options={requestOptions}
             value={currentFilters.requestId ?? ''}
-            onChange={(e) => handleRequestChange(e.target.value)}
-            className="w-full max-w-xs rounded-md border border-input bg-background px-3 py-2 text-sm"
-          >
-            <option value="">Select a care request…</option>
-            {activeRequests.map((r) => (
-              <option key={r.id} value={r.id}>
-                {r.title ?? r.careType}
-              </option>
-            ))}
-          </select>
+            onChange={(val) => handleRequestChange(val)}
+            placeholder="Select a care request…"
+            className="max-w-xs"
+          />
         )}
       </section>
 
@@ -123,46 +131,34 @@ export function FilterForm({ activeRequests, currentFilters }: Props) {
           {/* Care Type */}
           <div>
             <label className="block text-xs font-medium mb-1">Care Type</label>
-            <select
+            <SelectField
+              options={[{ value: '', label: 'Any' }, ...CARE_TYPE_OPTIONS]}
               value={currentFilters.careType ?? ''}
-              onChange={(e) => push({ careType: e.target.value || undefined })}
-              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-            >
-              <option value="">Any</option>
-              {CARE_TYPES.map((ct) => (
-                <option key={ct.key} value={ct.key}>{ct.label}</option>
-              ))}
-            </select>
+              onChange={(val) => push({ careType: val || undefined })}
+              placeholder="Any"
+            />
           </div>
 
           {/* State */}
           <div>
             <label className="block text-xs font-medium mb-1">State</label>
-            <select
+            <SelectField
+              options={[{ value: '', label: 'Any' }, ...STATE_OPTIONS]}
               value={currentFilters.state ?? ''}
-              onChange={(e) => push({ state: e.target.value || undefined })}
-              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-            >
-              <option value="">Any</option>
-              {US_STATES.map((s) => (
-                <option key={s} value={s}>{s}</option>
-              ))}
-            </select>
+              onChange={(val) => push({ state: val || undefined })}
+              placeholder="Any"
+            />
           </div>
 
           {/* Experience */}
           <div>
             <label className="block text-xs font-medium mb-1">Experience</label>
-            <select
+            <SelectField
+              options={[{ value: '', label: 'Any' }, ...EXPERIENCE_OPTIONS]}
               value={currentFilters.experience ?? ''}
-              onChange={(e) => push({ experience: e.target.value || undefined })}
-              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-            >
-              <option value="">Any</option>
-              {EXPERIENCE_OPTIONS.map((e) => (
-                <option key={e} value={e}>{e}</option>
-              ))}
-            </select>
+              onChange={(val) => push({ experience: val || undefined })}
+              placeholder="Any"
+            />
           </div>
 
           {/* Rate Min */}

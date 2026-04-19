@@ -3,8 +3,9 @@
 import { useState, useTransition } from 'react'
 import { SelectableCard } from '@/components/selectable-card'
 import { CaregiverStepShell } from '../../_components/caregiver-step-shell'
-import { TRAVEL_DISTANCES, US_STATES } from '@/lib/constants'
+import { TRAVEL_DISTANCES } from '@/lib/constants'
 import { saveCaregiverStep4 } from '@/domains/caregivers/onboarding'
+import { StateSelect } from '@/components/state-select'
 
 const labelClass = 'block text-xs font-medium uppercase tracking-[0.08em] text-muted-foreground mb-1.5'
 const inputClass =
@@ -118,16 +119,7 @@ export function Step4Form({
             </div>
             <div>
               <label className={labelClass}>State</label>
-              <select
-                value={form.state}
-                onChange={e => setField('state', e.target.value)}
-                className={inputClass}
-              >
-                <option value="">Select state</option>
-                {US_STATES.map(s => (
-                  <option key={s} value={s}>{s}</option>
-                ))}
-              </select>
+              <StateSelect value={form.state} onChange={v => setField('state', v)} />
             </div>
           </div>
           <div>

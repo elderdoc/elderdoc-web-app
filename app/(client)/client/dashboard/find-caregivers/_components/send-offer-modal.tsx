@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { sendOffer } from '@/domains/matching/send-offer'
+import { SelectField } from '@/components/select-field'
 
 interface Props {
   caregiverId: string
@@ -22,7 +23,7 @@ export function SendOfferModal({ caregiverId, activeRequests, alreadyOffered }: 
         type="button"
         disabled
         title="Create a care request first."
-        className="px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm font-medium opacity-40 cursor-not-allowed"
+        className="px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm font-medium opacity-40 cursor-not-allowed whitespace-nowrap"
       >
         Send Offer
       </button>
@@ -34,7 +35,7 @@ export function SendOfferModal({ caregiverId, activeRequests, alreadyOffered }: 
       <button
         type="button"
         disabled
-        className="px-4 py-2 rounded-md bg-green-600 text-white text-sm font-medium opacity-90 cursor-not-allowed"
+        className="px-4 py-2 rounded-md bg-green-600 text-white text-sm font-medium opacity-90 cursor-not-allowed whitespace-nowrap"
       >
         Offer Sent ✓
       </button>
@@ -54,12 +55,17 @@ export function SendOfferModal({ caregiverId, activeRequests, alreadyOffered }: 
     }
   }
 
+  const requestOptions = activeRequests.map((r) => ({
+    value: r.id,
+    label: r.title ?? r.careType,
+  }))
+
   return (
     <>
       <button
         type="button"
         onClick={() => setState('open')}
-        className="px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm font-medium"
+        className="px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm font-medium whitespace-nowrap"
       >
         Send Offer
       </button>
@@ -70,7 +76,7 @@ export function SendOfferModal({ caregiverId, activeRequests, alreadyOffered }: 
           onClick={() => { if (state !== 'pending') { setState('idle'); setErrorMessage(null) } }}
         >
           <div
-            className="bg-background rounded-xl border border-border shadow-lg w-full max-w-md p-6 space-y-4"
+            className="bg-background rounded-xl border border-border shadow-lg w-full max-w-md p-6 space-y-4 max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
             role="dialog"
             aria-modal="true"
@@ -81,18 +87,12 @@ export function SendOfferModal({ caregiverId, activeRequests, alreadyOffered }: 
               Select which care request to send this offer for:
             </p>
 
-            <select
+            <SelectField
+              options={requestOptions}
               value={selectedRequestId}
-              onChange={(e) => setSelectedRequestId(e.target.value)}
-              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-            >
-              <option value="">Choose a request…</option>
-              {activeRequests.map((r) => (
-                <option key={r.id} value={r.id}>
-                  {r.title ?? r.careType}
-                </option>
-              ))}
-            </select>
+              onChange={setSelectedRequestId}
+              placeholder="Choose a request…"
+            />
 
             {errorMessage && (
               <p className="text-xs text-destructive">{errorMessage}</p>

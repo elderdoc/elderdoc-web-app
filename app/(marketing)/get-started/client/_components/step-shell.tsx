@@ -3,22 +3,32 @@
 import Link from 'next/link'
 import { StepProgress } from '@/components/step-progress'
 
-const CLIENT_STEPS = [
+const CLIENT_STEPS_4 = [
   { label: 'Who needs care' },
   { label: 'Type of care' },
   { label: 'Location' },
   { label: 'Preview' },
 ]
 
+const CLIENT_STEPS_5 = [
+  { label: 'Who needs care' },
+  { label: 'Type of care' },
+  { label: 'Location' },
+  { label: 'Preview' },
+  { label: 'Post Request' },
+]
+
 interface StepShellProps {
   currentStep: number
+  totalSteps?: 4 | 5
   title: string
   subtitle?: string
   children: React.ReactNode
   backHref: string
 }
 
-export function StepShell({ currentStep, title, subtitle, children, backHref }: StepShellProps) {
+export function StepShell({ currentStep, totalSteps = 4, title, subtitle, children, backHref }: StepShellProps) {
+  const CLIENT_STEPS = totalSteps === 5 ? CLIENT_STEPS_5 : CLIENT_STEPS_4
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <header className="sticky top-0 z-10 border-b border-border bg-background/80 backdrop-blur-sm">

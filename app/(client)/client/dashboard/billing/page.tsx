@@ -27,10 +27,14 @@ export default async function ClientBillingPage() {
   ])
 
   return (
-    <div className="p-8 max-w-4xl">
+    <div className="p-8">
       <h1 className="text-2xl font-semibold mb-1">Billing</h1>
       <p className="text-sm text-muted-foreground mb-8">Record and view payments for your care services.</p>
-      <BillingClient paymentRows={paymentRows} activeJobs={activeJobs} />
+      <BillingClient
+        paymentRows={paymentRows}
+        activeJobs={activeJobs}
+        stripePublishableKey={process.env.STRIPE_PUBLISHABLE_KEY ?? ''}
+      />
     </div>
   )
 }

@@ -24,7 +24,7 @@ export default function LandingPage() {
           </p>
           <h1 className="mt-4 text-[52px] font-semibold leading-[1.1] tracking-[-0.03em] text-foreground sm:text-[64px]">
             Care for your loved ones.{' '}
-            <span className="text-primary">Matched by AI.</span>
+            <span className="text-primary">Intelligently matched.</span>
           </h1>
           <p className="mt-6 text-lg leading-relaxed text-muted-foreground">
             Find verified, compassionate caregivers for elderly care —
@@ -54,8 +54,8 @@ export default function LandingPage() {
                 body: 'Every caregiver is background-checked and credentialed before joining the platform.',
               },
               {
-                title: 'AI-Matched for You',
-                body: 'Our AI scores compatibility across care type, availability, location, and preferences.',
+                title: 'Intelligently Matched',
+                body: 'We score compatibility across care type, availability, location, and preferences to surface your best options.',
               },
               {
                 title: 'Real Families, Real Care',

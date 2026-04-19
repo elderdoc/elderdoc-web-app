@@ -6,6 +6,7 @@ import { getMatchesForRequest, searchCaregivers } from '@/domains/clients/find-c
 import { FilterForm } from './_components/filter-form'
 import { SendOfferModal } from './_components/send-offer-modal'
 import { CARE_TYPES } from '@/lib/constants'
+import Link from 'next/link'
 
 interface PageProps {
   searchParams: Promise<Record<string, string | string[] | undefined>>
@@ -99,11 +100,11 @@ export default async function FindCaregiversPage({ searchParams }: PageProps) {
   const totalPages = Math.ceil(total / 20)
 
   return (
-    <div className="p-8 max-w-5xl space-y-10">
+    <div className="p-8 space-y-10">
       <div>
         <h1 className="text-2xl font-semibold mb-1">Find Caregivers</h1>
         <p className="text-sm text-muted-foreground">
-          Browse your AI-ranked matches and the full caregiver directory.
+          Browse your intelligently matched caregivers and the full directory.
         </p>
       </div>
 
@@ -117,18 +118,18 @@ export default async function FindCaregiversPage({ searchParams }: PageProps) {
 
         {activeRequests.length === 0 ? (
           <p className="text-sm text-muted-foreground">
-            Create a care request to see your AI matches.
+            Create a care request to see your matched caregivers.
           </p>
         ) : !requestId ? (
           <p className="text-sm text-muted-foreground">
-            Select a care request above to see your AI-ranked matches.
+            Select a care request above to see your matched caregivers.
           </p>
         ) : myMatches.length === 0 ? (
           <p className="text-sm text-muted-foreground">
             No matches yet. Matches appear after you submit a care request.
           </p>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {myMatches.map((m) => {
               const badge = scoreBadge(m.score)
               return (
@@ -169,15 +170,23 @@ export default async function FindCaregiversPage({ searchParams }: PageProps) {
                     </p>
                   )}
 
-                  <div className="flex items-center justify-between gap-2">
-                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${badge.classes}`}>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className={`whitespace-nowrap text-xs px-2 py-0.5 rounded-full font-medium ${badge.classes}`}>
                       {badge.label}
                     </span>
-                    <SendOfferModal
-                      caregiverId={m.caregiverId}
-                      activeRequests={activeRequests}
-                      alreadyOffered={offeredSet.has(m.caregiverId)}
-                    />
+                    <div className="flex items-center gap-2 ml-auto">
+                      <Link
+                        href={`/client/dashboard/find-caregivers/${m.caregiverId}`}
+                        className="whitespace-nowrap px-3 py-1.5 rounded-md border border-border text-xs font-medium hover:bg-muted transition-colors"
+                      >
+                        View Profile
+                      </Link>
+                      <SendOfferModal
+                        caregiverId={m.caregiverId}
+                        activeRequests={activeRequests}
+                        alreadyOffered={offeredSet.has(m.caregiverId)}
+                      />
+                    </div>
                   </div>
 
                   {m.reason && (
@@ -202,7 +211,7 @@ export default async function FindCaregiversPage({ searchParams }: PageProps) {
         {caregivers.length === 0 ? (
           <p className="text-sm text-muted-foreground">No caregivers match the current filters.</p>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {caregivers.map((cg) => (
               <div key={cg.caregiverId} className="rounded-xl border border-border bg-card p-5 space-y-3">
                 <div className="flex items-center gap-3">
@@ -245,7 +254,13 @@ export default async function FindCaregiversPage({ searchParams }: PageProps) {
                   <p className="text-xs text-muted-foreground">{cg.experience} experience</p>
                 )}
 
-                <div className="flex justify-end">
+                <div className="flex items-center justify-end gap-2 flex-wrap">
+                  <Link
+                    href={`/client/dashboard/find-caregivers/${cg.caregiverId}`}
+                    className="whitespace-nowrap px-3 py-1.5 rounded-md border border-border text-xs font-medium hover:bg-muted transition-colors"
+                  >
+                    View Profile
+                  </Link>
                   <SendOfferModal
                     caregiverId={cg.caregiverId}
                     activeRequests={activeRequests}

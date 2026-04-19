@@ -10,7 +10,7 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: 'ElderDoc — Trusted Elderly Care',
-  description: 'Find trusted caregivers for your loved ones, matched by AI.',
+  description: 'Find trusted caregivers for your loved ones, intelligently matched to your needs.',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

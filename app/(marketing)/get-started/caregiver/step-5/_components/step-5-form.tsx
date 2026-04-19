@@ -5,6 +5,7 @@ import { SelectableCard } from '@/components/selectable-card'
 import { CaregiverStepShell } from '../../_components/caregiver-step-shell'
 import { HEADLINE_TEMPLATES } from '@/lib/constants'
 import { saveCaregiverStep5 } from '@/domains/caregivers/onboarding'
+import { formatUSPhone } from '@/lib/phone'
 
 const labelClass = 'block text-xs font-medium uppercase tracking-[0.08em] text-muted-foreground mb-1.5'
 const inputClass =
@@ -135,7 +136,7 @@ export function Step5Form({
           <input
             type="tel"
             value={phone}
-            onChange={e => setPhone(e.target.value)}
+            onChange={e => setPhone(formatUSPhone(e.target.value))}
             placeholder="(555) 123-4567"
             className={inputClass}
           />

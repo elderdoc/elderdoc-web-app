@@ -161,7 +161,8 @@ export const shifts = pgTable('shifts', {
 
 export const carePlans = pgTable('care_plans', {
   id:                  uuid('id').defaultRandom().primaryKey(),
-  jobId:               uuid('job_id').notNull().unique().references(() => jobs.id, { onDelete: 'cascade' }),
+  recipientId:         uuid('recipient_id').notNull().unique().references(() => careRecipients.id, { onDelete: 'cascade' }),
+  jobId:               uuid('job_id').references(() => jobs.id, { onDelete: 'set null' }),
   dailySchedule:       jsonb('daily_schedule').$type<Array<{ time: string; activity: string }>>(),
   medications:         jsonb('medications').$type<Array<{
     name: string; dosage: string; frequency: string; notes?: string
@@ -179,6 +180,7 @@ export const messages = pgTable('messages', {
   jobId:     uuid('job_id').notNull().references(() => jobs.id, { onDelete: 'cascade' }),
   senderId:  uuid('sender_id').notNull().references(() => users.id),
   body:      text('body').notNull(),
+  read:      boolean('read').notNull().default(false),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 })
 
@@ -262,7 +264,8 @@ export const shiftsRelations = relations(shifts, ({ one }) => ({
 }))
 
 export const carePlansRelations = relations(carePlans, ({ one }) => ({
-  job: one(jobs, { fields: [carePlans.jobId], references: [jobs.id] }),
+  recipient: one(careRecipients, { fields: [carePlans.recipientId], references: [careRecipients.id] }),
+  job:       one(jobs, { fields: [carePlans.jobId], references: [jobs.id] }),
 }))
 
 export const messagesRelations = relations(messages, ({ one }) => ({

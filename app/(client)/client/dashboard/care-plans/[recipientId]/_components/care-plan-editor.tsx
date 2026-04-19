@@ -2,16 +2,17 @@
 
 import { useState, useTransition } from 'react'
 import { upsertCarePlan } from '@/domains/clients/care-plan-actions'
+import { formatUSPhone } from '@/lib/phone'
 import type { CarePlanDetail } from '@/domains/clients/care-plans'
 
 type Props = {
-  jobId: string
+  recipientId: string
   carePlan: CarePlanDetail | null
 }
 
 type Section = 'dailySchedule' | 'medications' | 'dietaryRestrictions' | 'emergencyContacts' | 'specialInstructions'
 
-export function CarePlanEditor({ jobId, carePlan }: Props) {
+export function CarePlanEditor({ recipientId, carePlan }: Props) {
   const [editing, setEditing] = useState<Section | null>(null)
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
@@ -42,7 +43,7 @@ export function CarePlanEditor({ jobId, carePlan }: Props) {
       if (section === 'emergencyContacts')    data.emergencyContacts = emergencyContacts
       if (section === 'specialInstructions')  data.specialInstructions = specialInstructions
 
-      const result = await upsertCarePlan(jobId, data)
+      const result = await upsertCarePlan(recipientId, data)
       if (result.error) {
         setError(result.error)
       } else {
@@ -139,7 +140,7 @@ export function CarePlanEditor({ jobId, carePlan }: Props) {
           <ul className="space-y-1">
             {dailySchedule.map((item, i) => (
               <li key={i} className="text-sm flex gap-4">
-                <span className="font-mono text-muted-foreground w-14 shrink-0">{item.time}</span>
+                <span className="font-mono text-muted-foreground whitespace-nowrap shrink-0 w-20">{item.time}</span>
                 <span>{item.activity}</span>
               </li>
             ))}
@@ -378,7 +379,7 @@ export function CarePlanEditor({ jobId, carePlan }: Props) {
                     value={contact.phone}
                     onChange={(e) => {
                       const next = [...emergencyContacts]
-                      next[i] = { ...next[i], phone: e.target.value }
+                      next[i] = { ...next[i], phone: formatUSPhone(e.target.value) }
                       setEmergencyContacts(next)
                     }}
                     className="h-8 flex-1 rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"

@@ -4,28 +4,12 @@ import { careRecipients, careRequests, matches } from '@/db/schema'
 import { eq, and, desc, count } from 'drizzle-orm'
 import { formatDistanceToNow } from 'date-fns'
 import Link from 'next/link'
-import { CareRecipientModal } from './_components/care-recipient-modal'
-import { CareRequestModal } from './_components/care-request-modal'
+
+import { CareRequestCard } from './_components/care-request-card'
 
 type ActivityItem =
   | { type: 'recipient'; name: string; createdAt: Date }
   | { type: 'request'; careType: string; createdAt: Date }
-
-const STATUS_LABELS: Record<string, string> = {
-  draft:     'Draft',
-  active:    'Matching in progress…',
-  matched:   'Matched',
-  filled:    'Filled',
-  cancelled: 'Cancelled',
-}
-
-const STATUS_CLASSES: Record<string, string> = {
-  draft:     'bg-muted text-muted-foreground',
-  active:    'bg-blue-100 text-blue-700',
-  matched:   'bg-green-100 text-green-700',
-  filled:    'bg-primary/10 text-primary',
-  cancelled: 'bg-destructive/10 text-destructive',
-}
 
 export default async function ClientDashboard() {
   const session = await requireRole('client')
@@ -50,12 +34,17 @@ export default async function ClientDashboard() {
     // Data queries
     db
       .select({
-        id:           careRequests.id,
-        title:        careRequests.title,
-        careType:     careRequests.careType,
-        status:       careRequests.status,
-        createdAt:    careRequests.createdAt,
-        recipientName:careRecipients.name,
+        id:            careRequests.id,
+        title:         careRequests.title,
+        careType:      careRequests.careType,
+        status:        careRequests.status,
+        frequency:     careRequests.frequency,
+        budgetType:    careRequests.budgetType,
+        budgetAmount:  careRequests.budgetAmount,
+        durationHours: careRequests.durationHours,
+        shifts:        careRequests.shifts,
+        createdAt:     careRequests.createdAt,
+        recipientName: careRecipients.name,
       })
       .from(careRequests)
       .leftJoin(careRecipients, eq(careRequests.recipientId, careRecipients.id))
@@ -92,8 +81,18 @@ export default async function ClientDashboard() {
           <p className="text-sm text-muted-foreground mt-1">Welcome back, {session.user.name?.split(' ')[0]}</p>
         </div>
         <div className="flex gap-3">
-          <CareRecipientModal />
-          <CareRequestModal recipients={[]} />
+          <Link
+            href="/client/dashboard/recipients/new"
+            className="px-4 py-2 rounded-md border border-border text-sm font-medium hover:bg-muted transition-colors"
+          >
+            + Recipient
+          </Link>
+          <Link
+            href="/client/dashboard/requests/new"
+            className="px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm font-medium whitespace-nowrap"
+          >
+            + Care Request
+          </Link>
         </div>
       </div>
 
@@ -125,19 +124,7 @@ export default async function ClientDashboard() {
           ) : (
             <div className="space-y-2">
               {recentRequests.map((req) => (
-                <div key={req.id} className="rounded-lg border border-border bg-card p-4 space-y-1">
-                  <div className="flex items-start justify-between gap-2">
-                    <span className="text-sm font-medium truncate">{req.title ?? '(Untitled)'}</span>
-                    <span className={['shrink-0 rounded-full px-2 py-0.5 text-xs font-medium', STATUS_CLASSES[req.status ?? 'draft']].join(' ')}>
-                      {STATUS_LABELS[req.status ?? 'draft']}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <span className="rounded bg-muted px-1.5 py-0.5">{req.careType}</span>
-                    {req.recipientName && <span>for {req.recipientName}</span>}
-                    <span>· {formatDistanceToNow(req.createdAt, { addSuffix: true })}</span>
-                  </div>
-                </div>
+                <CareRequestCard key={req.id} req={req} />
               ))}
             </div>
           )}
