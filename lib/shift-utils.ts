@@ -6,8 +6,8 @@ export function calculateShiftHours(startTime: string, endTime: string): number 
   const hours = Math.floor(minutes / 60)
   const mins = minutes % 60
 
-  // For fractional minutes, ceil to nearest 15-minute increment, but max at 15 for the fractional part
-  const fractionalHours = mins > 0 ? 0.25 : 0
+  // For fractional minutes, ceil to nearest 15-minute increment
+  const fractionalHours = mins > 0 ? Math.ceil(mins / 15) * 0.25 : 0
 
   return hours + fractionalHours
 }
