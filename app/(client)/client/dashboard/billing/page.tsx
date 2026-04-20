@@ -45,7 +45,6 @@ export default async function ClientBillingPage() {
         paymentRows={paymentRows}
         activeJobs={activeJobs}
         savedCard={savedCard}
-        stripePublishableKey={process.env.STRIPE_PUBLISHABLE_KEY ?? ''}
       />
     </div>
   )

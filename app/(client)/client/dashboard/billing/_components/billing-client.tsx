@@ -13,10 +13,10 @@ interface ActiveJob {
 interface Props {
   paymentRows: PaymentRow[]
   activeJobs: ActiveJob[]
-  stripePublishableKey: string
+  savedCard: { brand: string; last4: string } | null
 }
 
-export function BillingClient({ paymentRows, activeJobs, stripePublishableKey }: Props) {
+export function BillingClient({ paymentRows, activeJobs, savedCard }: Props) {
   const [modalJobId, setModalJobId] = useState<string | null>(null)
   const modalJob = activeJobs.find((j) => j.jobId === modalJobId)
 
@@ -26,7 +26,7 @@ export function BillingClient({ paymentRows, activeJobs, stripePublishableKey }:
         <RecordPaymentModal
           jobId={modalJob.jobId}
           jobLabel={`${modalJob.careType} — ${modalJob.caregiverName ?? 'Caregiver'}`}
-          stripePublishableKey={stripePublishableKey}
+          savedCard={savedCard}
           onClose={() => setModalJobId(null)}
         />
       )}
