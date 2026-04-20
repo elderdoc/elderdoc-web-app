@@ -2,8 +2,9 @@
 
 import { auth } from '@/auth'
 import { db } from '@/services/db'
-import { payments, jobs, shifts, caregiverProfiles, users, disputes } from '@/db/schema'
+import { payments, jobs, shifts, caregiverProfiles, users, disputes, notifications } from '@/db/schema'
 import { eq, and } from 'drizzle-orm'
+import { calculateShiftHours } from '@/lib/shift-utils'
 import { revalidatePath } from 'next/cache'
 import {
   createPaymentIntent,
@@ -137,7 +138,13 @@ export async function completeShift(shiftId: string) {
   if (!profile) return { error: 'Caregiver profile not found' }
 
   const existing = await db
-    .select({ id: shifts.id })
+    .select({
+      id: shifts.id,
+      date: shifts.date,
+      startTime: shifts.startTime,
+      endTime: shifts.endTime,
+      clientId: jobs.clientId,
+    })
     .from(shifts)
     .innerJoin(jobs, eq(shifts.jobId, jobs.id))
     .where(and(eq(shifts.id, shiftId), eq(jobs.caregiverId, profile.id)))
@@ -145,10 +152,30 @@ export async function completeShift(shiftId: string) {
     .offset(0)
   if (existing.length === 0) return { error: 'Not found' }
 
-  await db
-    .update(shifts)
-    .set({ status: 'completed' })
-    .where(eq(shifts.id, shiftId))
+  const { date, startTime, endTime, clientId } = existing[0]
+
+  await db.update(shifts).set({ status: 'completed' }).where(eq(shifts.id, shiftId))
+
+  const caregiverUser = await db
+    .select({ name: users.name })
+    .from(users)
+    .where(eq(users.id, session.user.id))
+    .limit(1)
+    .offset(0)
+  const caregiverName = caregiverUser[0]?.name ?? 'Your caregiver'
+  const hours = calculateShiftHours(startTime, endTime)
+
+  await db.insert(notifications).values({
+    userId: clientId,
+    type: 'shift_completed',
+    payload: {
+      shiftId,
+      caregiverName,
+      hours,
+      date,
+      message: `${caregiverName} completed a ${hours}h shift on ${date}. You'll be charged Sunday for this week's total.`,
+    },
+  })
 
   revalidatePath('/caregiver/dashboard/shifts')
   return {}
