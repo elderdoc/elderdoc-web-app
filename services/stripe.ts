@@ -125,6 +125,33 @@ export async function createAndPayInvoice(
   }
 }
 
+export interface StripeChargeDetails {
+  chargeId: string
+  receiptUrl: string | null
+  amount: number
+  currency: string
+  last4: string | null
+  brand: string | null
+}
+
+export async function getPaymentIntentCharge(paymentIntentId: string): Promise<StripeChargeDetails | null> {
+  if (MOCK_MODE || paymentIntentId.startsWith('mock_')) {
+    return { chargeId: `mock_ch_${paymentIntentId}`, receiptUrl: null, amount: 0, currency: 'usd', last4: '4242', brand: 'visa' }
+  }
+  const pi = await getStripe().paymentIntents.retrieve(paymentIntentId, { expand: ['latest_charge'] })
+  const charge = pi.latest_charge
+  if (!charge || typeof charge === 'string') return null
+  const c = charge as Stripe.Charge
+  return {
+    chargeId: c.id,
+    receiptUrl: c.receipt_url ?? null,
+    amount: c.amount,
+    currency: c.currency,
+    last4: (c.payment_method_details?.card?.last4) ?? null,
+    brand: (c.payment_method_details?.card?.brand) ?? null,
+  }
+}
+
 export async function getInvoicePdfUrl(invoiceId: string): Promise<{ pdfUrl: string | null; hostedUrl: string | null }> {
   if (MOCK_MODE || invoiceId.startsWith('mock_in_')) return { pdfUrl: null, hostedUrl: null }
   const invoice = await getStripe().invoices.retrieve(invoiceId)

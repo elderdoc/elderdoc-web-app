@@ -2,118 +2,139 @@
 
 import { auth } from '@/auth'
 import { db } from '@/services/db'
-import { payments, jobs, shifts, caregiverProfiles } from '@/db/schema'
+import { payments, jobs, shifts, caregiverProfiles, users } from '@/db/schema'
 import { eq, and } from 'drizzle-orm'
 import { revalidatePath } from 'next/cache'
 import {
   createPaymentIntent,
   createConnectAccount,
   createConnectAccountLink,
+  getPaymentIntentCharge,
+  createStripeCustomer,
+  createSetupIntent as stripeCreateSetupIntent,
+  savePaymentMethodToCustomer,
+  getDefaultPaymentMethod,
+  createAndPayInvoice,
+  type StripeChargeDetails,
+  type SavedCard,
 } from '@/services/stripe'
 
-export async function recordCashPayment(
-  jobId: string,
-  amount: number,
-): Promise<{ error?: string }> {
-  const session = await auth()
-  if (!session?.user?.id) return { error: 'Not authenticated' }
-
-  const existing = await db
-    .select({ id: jobs.id })
-    .from(jobs)
-    .where(and(eq(jobs.id, jobId), eq(jobs.clientId, session.user.id)))
+async function getOrCreateStripeCustomer(userId: string): Promise<string> {
+  const userRow = await db
+    .select({ stripeCustomerId: users.stripeCustomerId, email: users.email, name: users.name })
+    .from(users)
+    .where(eq(users.id, userId))
     .limit(1)
     .offset(0)
 
-  if (existing.length === 0) return { error: 'Not found' }
+  if (!userRow[0]) throw new Error('User not found')
+  if (userRow[0].stripeCustomerId) return userRow[0].stripeCustomerId
 
-  await db.insert(payments).values({
-    jobId,
-    amount: String(amount),
-    method: 'cash',
-    status: 'pending',
-  })
-
-  revalidatePath('/client/dashboard/billing')
-  return {}
+  const customer = await createStripeCustomer(userRow[0].email ?? '', userRow[0].name ?? '')
+  await db.update(users).set({ stripeCustomerId: customer.id }).where(eq(users.id, userId))
+  return customer.id
 }
 
-export async function initiateStripePayment(
-  jobId: string,
-  amount: number,
-): Promise<{ clientSecret?: string; error?: string }> {
+export async function initiateStripePayment(jobId: string, amount: number) {
   const session = await auth()
   if (!session?.user?.id) return { error: 'Not authenticated' }
 
-  const existing = await db
-    .select({ id: jobs.id })
-    .from(jobs)
-    .where(and(eq(jobs.id, jobId), eq(jobs.clientId, session.user.id)))
-    .limit(1)
-    .offset(0)
-
-  if (existing.length === 0) return { error: 'Not found' }
-
   const intent = await createPaymentIntent(amount, jobId)
-
-  await db.insert(payments).values({
-    jobId,
-    amount: String(amount),
-    method: 'stripe',
-    status: 'pending',
-    stripePaymentIntentId: intent.id,
-  })
-
-  revalidatePath('/client/dashboard/billing')
-
   const clientSecret =
     'clientSecret' in intent && intent.clientSecret != null
       ? intent.clientSecret
       : 'client_secret' in intent && (intent as { client_secret?: string | null }).client_secret != null
         ? (intent as { client_secret?: string | null }).client_secret ?? undefined
         : undefined
-
   return { clientSecret }
 }
 
-export async function confirmCashPayment(
-  paymentId: string,
+export async function createPaymentSetupIntent(): Promise<{ clientSecret?: string; error?: string }> {
+  const session = await auth()
+  if (!session?.user?.id) return { error: 'Not authenticated' }
+  const customerId = await getOrCreateStripeCustomer(session.user.id)
+  const intent = await stripeCreateSetupIntent(customerId)
+  return { clientSecret: intent.client_secret ?? undefined }
+}
+
+export async function saveDefaultPaymentMethod(
+  paymentMethodId: string,
 ): Promise<{ error?: string }> {
   const session = await auth()
   if (!session?.user?.id) return { error: 'Not authenticated' }
-
-  const profile = await db.query.caregiverProfiles.findFirst({
-    where: eq(caregiverProfiles.userId, session.user.id),
-  })
-  if (!profile) return { error: 'Profile not found' }
-
-  // Verify this payment belongs to a job this caregiver owns
-  const [row] = await db
-    .select({ id: payments.id })
-    .from(payments)
-    .innerJoin(jobs, eq(payments.jobId, jobs.id))
-    .where(and(eq(payments.id, paymentId), eq(jobs.caregiverId, profile.id), eq(payments.method, 'cash'), eq(payments.status, 'pending')))
-    .limit(1)
-
-  if (!row) return { error: 'Not found' }
-
-  await db.update(payments).set({ status: 'completed' }).where(eq(payments.id, paymentId))
-
-  revalidatePath('/caregiver/dashboard/payouts')
+  const customerId = await getOrCreateStripeCustomer(session.user.id)
+  await savePaymentMethodToCustomer(customerId, paymentMethodId)
   revalidatePath('/client/dashboard/billing')
   return {}
 }
 
-export async function completeShift(
-  shiftId: string,
-): Promise<{ error?: string }> {
+export async function getSavedCard(): Promise<{ card?: SavedCard; error?: string }> {
+  const session = await auth()
+  if (!session?.user?.id) return { error: 'Not authenticated' }
+  const userRow = await db
+    .select({ stripeCustomerId: users.stripeCustomerId })
+    .from(users)
+    .where(eq(users.id, session.user.id))
+    .limit(1)
+    .offset(0)
+  if (!userRow[0]?.stripeCustomerId) return { card: undefined }
+  const card = await getDefaultPaymentMethod(userRow[0].stripeCustomerId)
+  return { card: card ?? undefined }
+}
+
+export async function recordInvoicePayment(
+  jobId: string,
+  subtotalCents: number,
+  feeCents: number,
+): Promise<{ invoiceId?: string; error?: string }> {
+  const session = await auth()
+  if (!session?.user?.id) return { error: 'Not authenticated' }
+
+  const existing = await db
+    .select({ id: jobs.id })
+    .from(jobs)
+    .where(and(eq(jobs.id, jobId), eq(jobs.clientId, session.user.id)))
+    .limit(1)
+    .offset(0)
+  if (existing.length === 0) return { error: 'Job not found' }
+
+  const customerId = await getOrCreateStripeCustomer(session.user.id)
+
+  const userRow = await db
+    .select({ stripeCustomerId: users.stripeCustomerId })
+    .from(users)
+    .where(eq(users.id, session.user.id))
+    .limit(1)
+    .offset(0)
+  const savedCard = userRow[0]?.stripeCustomerId
+    ? await getDefaultPaymentMethod(userRow[0].stripeCustomerId)
+    : null
+  if (!savedCard) return { error: 'No saved payment method. Please add a card first.' }
+
+  const result = await createAndPayInvoice(customerId, jobId, subtotalCents, feeCents)
+
+  await db.insert(payments).values({
+    jobId,
+    amount: String(subtotalCents / 100),
+    fee: String(feeCents / 100),
+    method: 'stripe',
+    status: 'pending',
+    stripeInvoiceId: result.invoiceId,
+    stripePaymentIntentId: result.paymentIntentId ?? undefined,
+  })
+
+  revalidatePath('/client/dashboard/billing')
+  return { invoiceId: result.invoiceId }
+}
+
+export async function completeShift(shiftId: string) {
   const session = await auth()
   if (!session?.user?.id) return { error: 'Not authenticated' }
 
   const profile = await db.query.caregiverProfiles.findFirst({
     where: eq(caregiverProfiles.userId, session.user.id),
   })
-  if (!profile) return { error: 'Profile not found' }
+  if (!profile) return { error: 'Caregiver profile not found' }
 
   const existing = await db
     .select({ id: shifts.id })
@@ -122,16 +143,18 @@ export async function completeShift(
     .where(and(eq(shifts.id, shiftId), eq(jobs.caregiverId, profile.id)))
     .limit(1)
     .offset(0)
-
   if (existing.length === 0) return { error: 'Not found' }
 
-  await db.update(shifts).set({ status: 'completed' }).where(eq(shifts.id, shiftId))
+  await db
+    .update(shifts)
+    .set({ status: 'completed' })
+    .where(eq(shifts.id, shiftId))
 
   revalidatePath('/caregiver/dashboard/shifts')
   return {}
 }
 
-export async function setupStripeConnect(): Promise<{ url?: string; error?: string }> {
+export async function setupStripeConnect() {
   const session = await auth()
   if (!session?.user?.id) return { error: 'Not authenticated' }
 
@@ -140,9 +163,59 @@ export async function setupStripeConnect(): Promise<{ url?: string; error?: stri
   })
   if (!profile) return { error: 'Profile not found' }
 
-  const account = await createConnectAccount(session.user.email ?? '')
+  const account = await createConnectAccount(session.user.id)
   const returnUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? ''}/caregiver/dashboard/payments`
   const link = await createConnectAccountLink(account.id, returnUrl)
-
   return { url: link.url }
+}
+
+export async function fetchStripeChargeDetailsForClient(
+  paymentIntentId: string,
+): Promise<StripeChargeDetails | null> {
+  const session = await auth()
+  if (!session?.user?.id) return null
+
+  const paymentRow = await db
+    .select({ id: payments.id })
+    .from(payments)
+    .innerJoin(jobs, eq(payments.jobId, jobs.id))
+    .where(
+      and(
+        eq(payments.stripePaymentIntentId, paymentIntentId),
+        eq(jobs.clientId, session.user.id),
+      ),
+    )
+    .limit(1)
+    .offset(0)
+  if (paymentRow.length === 0) return null
+
+  return getPaymentIntentCharge(paymentIntentId)
+}
+
+export async function fetchStripeChargeDetails(
+  paymentIntentId: string,
+): Promise<StripeChargeDetails | null> {
+  const session = await auth()
+  if (!session?.user?.id) return null
+
+  const profile = await db.query.caregiverProfiles.findFirst({
+    where: eq(caregiverProfiles.userId, session.user.id),
+  })
+  if (!profile) return null
+
+  const paymentRow = await db
+    .select({ id: payments.id })
+    .from(payments)
+    .innerJoin(jobs, eq(payments.jobId, jobs.id))
+    .where(
+      and(
+        eq(payments.stripePaymentIntentId, paymentIntentId),
+        eq(jobs.caregiverId, profile.id),
+      ),
+    )
+    .limit(1)
+    .offset(0)
+  if (paymentRow.length === 0) return null
+
+  return getPaymentIntentCharge(paymentIntentId)
 }
