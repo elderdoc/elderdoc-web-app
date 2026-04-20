@@ -2,6 +2,8 @@
 
 import { useState } from 'react'
 import { ChevronDown, ChevronUp, Download } from 'lucide-react'
+import { DisputeModal } from './dispute-modal'
+import { withdrawDispute } from '@/domains/payments/actions'
 
 function ReceiptSkeleton() {
   return (
@@ -52,17 +54,23 @@ interface Props {
   method: string
   amount: number
   fee: number
-  status: string
+  status: 'pending' | 'completed' | 'failed'
   stripePaymentIntentId: string | null
   stripeInvoiceId: string | null
   createdAt: Date
+  jobId: string
+  paymentId: string
+  releasedAt: Date | null
+  activeDispute: { disputeId: string } | null
 }
 
 export function PaymentHistoryCard({
   careType, caregiverName, method, amount, fee, status, stripePaymentIntentId, stripeInvoiceId, createdAt,
+  jobId, paymentId, releasedAt, activeDispute,
 }: Props) {
   const [expanded, setExpanded] = useState(false)
   const [iframeLoaded, setIframeLoaded] = useState(false)
+  const [showDisputeModal, setShowDisputeModal] = useState(false)
 
   const receiptRef = stripeInvoiceId ?? stripePaymentIntentId
   const isMock = !receiptRef || receiptRef.startsWith('mock_pi_')
@@ -103,12 +111,47 @@ export function PaymentHistoryCard({
             }`}>
               {status}
             </span>
+            {status === 'completed' && releasedAt !== null && (
+              <span className="text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                Released
+              </span>
+            )}
+            {status === 'completed' && releasedAt === null && activeDispute && (
+              <span className="text-xs px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400">
+                Disputed
+              </span>
+            )}
           </div>
           <span className="text-muted-foreground">
             {expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
           </span>
         </div>
       </button>
+
+      {/* Dispute actions row — outside the toggle button */}
+      {status === 'completed' && releasedAt === null && (
+        <div className="px-4 py-2 flex items-center gap-3 border-t border-border/50">
+          {activeDispute ? (
+            <button
+              type="button"
+              onClick={async () => {
+                await withdrawDispute(activeDispute.disputeId)
+              }}
+              className="text-xs text-muted-foreground hover:text-foreground underline"
+            >
+              Withdraw dispute
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setShowDisputeModal(true)}
+              className="text-xs text-primary hover:underline"
+            >
+              Dispute
+            </button>
+          )}
+        </div>
+      )}
 
       {expanded && (
         <div className="border-t border-border bg-muted/20">
@@ -137,6 +180,14 @@ export function PaymentHistoryCard({
             </>
           )}
         </div>
+      )}
+
+      {showDisputeModal && (
+        <DisputeModal
+          jobId={jobId}
+          paymentId={paymentId}
+          onClose={() => setShowDisputeModal(false)}
+        />
       )}
     </div>
   )

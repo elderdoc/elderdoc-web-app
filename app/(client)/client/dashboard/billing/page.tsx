@@ -1,5 +1,5 @@
 import { requireRole } from '@/domains/auth/session'
-import { getClientPayments } from '@/domains/payments/queries'
+import { getClientPayments, getOpenDisputesForClient } from '@/domains/payments/queries'
 import { db } from '@/services/db'
 import { jobs, careRequests, caregiverProfiles, users } from '@/db/schema'
 import { eq, and } from 'drizzle-orm'
@@ -10,7 +10,7 @@ export default async function ClientBillingPage() {
   const session = await requireRole('client')
   const clientId = session.user.id!
 
-  const [paymentRows, activeJobs, userRow] = await Promise.all([
+  const [paymentRows, activeJobs, userRow, openDisputes] = await Promise.all([
     getClientPayments(clientId),
     db
       .select({
@@ -31,6 +31,7 @@ export default async function ClientBillingPage() {
       .where(eq(users.id, clientId))
       .limit(1)
       .offset(0),
+    getOpenDisputesForClient(clientId),
   ])
 
   const savedCard = userRow[0]?.stripeCustomerId
@@ -46,6 +47,7 @@ export default async function ClientBillingPage() {
         activeJobs={activeJobs}
         savedCard={savedCard}
         stripePublishableKey={process.env.STRIPE_PUBLISHABLE_KEY ?? ''}
+        openDisputes={openDisputes}
       />
     </div>
   )

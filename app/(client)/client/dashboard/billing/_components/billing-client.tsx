@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { RecordPaymentModal } from './record-payment-modal'
 import { SavedCardBanner } from './saved-card-banner'
 import { PaymentHistoryCard } from './payment-history-card'
-import type { PaymentRow } from '@/domains/payments/queries'
+import type { PaymentRow, DisputeRow } from '@/domains/payments/queries'
 
 interface ActiveJob {
   jobId: string
@@ -17,9 +17,10 @@ interface Props {
   activeJobs: ActiveJob[]
   savedCard: { brand: string; last4: string } | null
   stripePublishableKey: string
+  openDisputes: DisputeRow[]
 }
 
-export function BillingClient({ paymentRows, activeJobs, savedCard, stripePublishableKey }: Props) {
+export function BillingClient({ paymentRows, activeJobs, savedCard, stripePublishableKey, openDisputes }: Props) {
   const [modalJobId, setModalJobId] = useState<string | null>(null)
   const modalJob = activeJobs.find((j) => j.jobId === modalJobId)
 
@@ -69,20 +70,29 @@ export function BillingClient({ paymentRows, activeJobs, savedCard, stripePublis
           <p className="text-sm text-muted-foreground">No payments recorded yet.</p>
         ) : (
           <div className="space-y-2">
-            {paymentRows.map((row) => (
-              <PaymentHistoryCard
-                key={row.paymentId}
-                careType={row.careType}
-                caregiverName={row.caregiverName}
-                method={row.method}
-                amount={row.amount}
-                fee={row.fee}
-                status={row.status}
-                stripePaymentIntentId={row.stripePaymentIntentId}
-                stripeInvoiceId={row.stripeInvoiceId}
-                createdAt={row.createdAt}
-              />
-            ))}
+            {paymentRows.map((row) => {
+              const activeDispute = openDisputes.find(
+                (d) => d.paymentId === row.paymentId
+              ) ?? null
+              return (
+                <PaymentHistoryCard
+                  key={row.paymentId}
+                  careType={row.careType}
+                  caregiverName={row.caregiverName}
+                  method={row.method}
+                  amount={row.amount}
+                  fee={row.fee}
+                  status={row.status}
+                  stripePaymentIntentId={row.stripePaymentIntentId}
+                  stripeInvoiceId={row.stripeInvoiceId}
+                  createdAt={row.createdAt}
+                  jobId={row.jobId}
+                  paymentId={row.paymentId}
+                  releasedAt={row.releasedAt}
+                  activeDispute={activeDispute ? { disputeId: activeDispute.disputeId } : null}
+                />
+              )
+            })}
           </div>
         )}
       </div>
