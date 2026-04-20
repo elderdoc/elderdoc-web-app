@@ -9,8 +9,11 @@ export interface PaymentRow {
   caregiverName: string | null
   clientName: string | null
   amount: number
+  fee: number
   method: string
   status: string
+  stripePaymentIntentId: string | null
+  stripeInvoiceId: string | null
   createdAt: Date
 }
 
@@ -22,8 +25,11 @@ export async function getClientPayments(clientId: string): Promise<PaymentRow[]>
       careType: careRequests.careType,
       caregiverName: users.name,
       amount: payments.amount,
+      fee: payments.fee,
       method: payments.method,
       status: payments.status,
+      stripePaymentIntentId: payments.stripePaymentIntentId,
+      stripeInvoiceId: payments.stripeInvoiceId,
       createdAt: payments.createdAt,
     })
     .from(payments)
@@ -43,8 +49,11 @@ export async function getClientPayments(clientId: string): Promise<PaymentRow[]>
     caregiverName: r.caregiverName ?? null,
     clientName: null,
     amount: Number(r.amount),
+    fee: Number(r.fee),
     method: r.method,
     status: r.status ?? '',
+    stripePaymentIntentId: r.stripePaymentIntentId ?? null,
+    stripeInvoiceId: r.stripeInvoiceId ?? null,
     createdAt: r.createdAt,
   }))
 }
@@ -57,8 +66,11 @@ export async function getCaregiverPayments(caregiverId: string): Promise<Payment
       careType: careRequests.careType,
       clientName: users.name,
       amount: payments.amount,
+      fee: payments.fee,
       method: payments.method,
       status: payments.status,
+      stripePaymentIntentId: payments.stripePaymentIntentId,
+      stripeInvoiceId: payments.stripeInvoiceId,
       createdAt: payments.createdAt,
     })
     .from(payments)
@@ -77,8 +89,11 @@ export async function getCaregiverPayments(caregiverId: string): Promise<Payment
     caregiverName: null,
     clientName: r.clientName ?? null,
     amount: Number(r.amount),
+    fee: Number(r.fee),
     method: r.method,
     status: r.status ?? '',
+    stripePaymentIntentId: r.stripePaymentIntentId ?? null,
+    stripeInvoiceId: r.stripeInvoiceId ?? null,
     createdAt: r.createdAt,
   }))
 }
