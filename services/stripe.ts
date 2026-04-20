@@ -49,7 +49,7 @@ export async function createSetupIntent(customerId: string) {
   })
 }
 
-export async function savePaymentMethodToCustomer(customerId: string, paymentMethodId: string) {
+export async function savePaymentMethodToCustomer(customerId: string, paymentMethodId: string): Promise<void> {
   if (MOCK_MODE) return
   await getStripe().paymentMethods.attach(paymentMethodId, { customer: customerId })
   await getStripe().customers.update(customerId, {
@@ -66,10 +66,11 @@ export async function getDefaultPaymentMethod(customerId: string): Promise<Saved
   if (MOCK_MODE) return { brand: 'visa', last4: '4242' }
   const customer = await getStripe().customers.retrieve(customerId, {
     expand: ['invoice_settings.default_payment_method'],
-  }) as import('stripe').Stripe.Customer
+  }) as Stripe.Customer
+  if (customer.deleted) return null
   const pm = customer.invoice_settings?.default_payment_method
   if (!pm || typeof pm === 'string') return null
-  const card = (pm as import('stripe').Stripe.PaymentMethod).card
+  const card = (pm as Stripe.PaymentMethod).card
   if (!card) return null
   return { brand: card.brand, last4: card.last4 }
 }
@@ -116,23 +117,11 @@ export async function createAndPayInvoice(
   })
   const finalized = await getStripe().invoices.finalizeInvoice(invoice.id)
   const paid = await getStripe().invoices.pay(finalized.id)
-
-  // Retrieve the invoice with expansion to access the payment intent
-  const expandedInvoice = await getStripe().invoices.retrieve(paid.id, {
-    expand: ['payment_intent'],
-  }) as any
-
-  let paymentIntentId: string | null = null
-  const paymentIntent = expandedInvoice.payment_intent
-  if (paymentIntent) {
-    paymentIntentId = typeof paymentIntent === 'string' ? paymentIntent : paymentIntent.id
-  }
-
   return {
     invoiceId: paid.id,
     invoicePdfUrl: paid.invoice_pdf ?? null,
     hostedInvoiceUrl: paid.hosted_invoice_url ?? null,
-    paymentIntentId,
+    paymentIntentId: null,
   }
 }
 
