@@ -137,6 +137,29 @@ describe('getClientPayments', () => {
     await getClientPayments('client-1')
     expect(mockSelectChain.orderBy).toHaveBeenCalledOnce()
   })
+
+  it('coerces string amount and fee to numbers via Number()', async () => {
+    const now = new Date()
+    mockSelectChain.offset.mockResolvedValueOnce([
+      {
+        paymentId: 'pay-coerce',
+        jobId: 'job-coerce',
+        careType: 'personal-care',
+        caregiverName: 'Alice Smith',
+        amount: '75.50',
+        fee: '5.00',
+        method: 'stripe',
+        status: 'completed',
+        stripePaymentIntentId: null,
+        stripeInvoiceId: null,
+        createdAt: now,
+        releasedAt: null,
+      },
+    ])
+    const result = await getClientPayments('client-1')
+    expect(result[0].amount).toBe(75.5)
+    expect(result[0].fee).toBe(5)
+  })
 })
 
 // ── getCaregiverPayments ──────────────────────────────────────────────────────

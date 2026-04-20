@@ -10,8 +10,8 @@ export interface PaymentRow {
   clientName: string | null
   amount: number
   fee: number
-  method: string
-  status: string
+  method: 'stripe'
+  status: 'pending' | 'completed' | 'failed'
   stripePaymentIntentId: string | null
   stripeInvoiceId: string | null
   createdAt: Date
@@ -23,7 +23,7 @@ export interface DisputeRow {
   jobId: string
   paymentId: string | null
   reason: string
-  status: string
+  status: 'open' | 'resolved' | 'withdrawn'
   createdAt: Date
 }
 
