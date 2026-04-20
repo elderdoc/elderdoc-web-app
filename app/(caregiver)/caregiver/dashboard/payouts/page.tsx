@@ -23,8 +23,12 @@ export default async function CaregiverPayoutsPage() {
 
   const paymentRows = await getCaregiverPayments(profile.id);
 
-  const total = paymentRows
-    .filter((r) => r.status === "completed")
+  const totalReleased = paymentRows
+    .filter((r) => r.status === "completed" && r.releasedAt)
+    .reduce((sum, r) => sum + r.amount, 0);
+
+  const totalPending = paymentRows
+    .filter((r) => r.status === "completed" && !r.releasedAt)
     .reduce((sum, r) => sum + r.amount, 0);
 
   return (
@@ -39,11 +43,17 @@ export default async function CaregiverPayoutsPage() {
         {/* <SetupStripeConnectButton /> */}
       </div>
 
-      <div className="rounded-xl border border-border bg-card px-5 py-4 mb-8">
-        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">
-          Total Received
-        </p>
-        <p className="text-3xl font-bold">${(total / 100).toFixed(2)}</p>
+      <div className="flex gap-4 mb-8">
+        <div className="rounded-xl border border-border bg-card px-5 py-4 flex-1">
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">Released</p>
+          <p className="text-3xl font-bold">${(totalReleased / 100).toFixed(2)}</p>
+        </div>
+        {totalPending > 0 && (
+          <div className="rounded-xl border border-border bg-card px-5 py-4 flex-1">
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">Pending Release</p>
+            <p className="text-3xl font-bold text-muted-foreground">${(totalPending / 100).toFixed(2)}</p>
+          </div>
+        )}
       </div>
 
       <div>
@@ -81,6 +91,15 @@ export default async function CaregiverPayoutsPage() {
                   >
                     {row.status}
                   </span>
+                  {row.status === "completed" && (
+                    <span className={`text-xs px-2 py-0.5 rounded-full ${
+                      row.releasedAt
+                        ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+                        : "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"
+                    }`}>
+                      {row.releasedAt ? "Released" : "Pending release"}
+                    </span>
+                  )}
                 </div>
               </div>
             ))}

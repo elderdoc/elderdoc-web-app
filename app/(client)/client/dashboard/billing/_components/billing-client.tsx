@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { RecordPaymentModal } from './record-payment-modal'
+import { DisputeModal } from './dispute-modal'
 import { SavedCardBanner } from './saved-card-banner'
 import { PaymentHistoryCard } from './payment-history-card'
 import type { PaymentRow, DisputeRow } from '@/domains/payments/queries'
@@ -22,10 +23,18 @@ interface Props {
 
 export function BillingClient({ paymentRows, activeJobs, savedCard, stripePublishableKey, openDisputes }: Props) {
   const [modalJobId, setModalJobId] = useState<string | null>(null)
+  const [disputeJobId, setDisputeJobId] = useState<string | null>(null)
   const modalJob = activeJobs.find((j) => j.jobId === modalJobId)
 
   return (
     <>
+      {disputeJobId && (
+        <DisputeModal
+          jobId={disputeJobId}
+          onClose={() => setDisputeJobId(null)}
+        />
+      )}
+
       {modalJob && (
         <RecordPaymentModal
           jobId={modalJob.jobId}
@@ -46,20 +55,37 @@ export function BillingClient({ paymentRows, activeJobs, savedCard, stripePublis
           </div>
         ) : (
           <div className="space-y-2">
-            {activeJobs.map((job) => (
-              <div key={job.jobId} className="flex items-center justify-between rounded-lg border border-border bg-card px-4 py-3">
-                <div>
-                  <p className="text-sm font-medium">{job.careType}</p>
-                  <p className="text-xs text-muted-foreground">{job.caregiverName ?? 'Caregiver'}</p>
+            {(() => {
+              const jobDisputeSet = new Set(openDisputes.filter((d) => d.paymentId === null).map((d) => d.jobId))
+              return activeJobs.map((job) => (
+                <div key={job.jobId} className="flex items-center justify-between rounded-lg border border-border bg-card px-4 py-3">
+                  <div>
+                    <p className="text-sm font-medium">{job.careType}</p>
+                    <p className="text-xs text-muted-foreground">{job.caregiverName ?? 'Caregiver'}</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {jobDisputeSet.has(job.jobId) ? (
+                      <span className="text-xs px-2 py-1 rounded-md bg-orange-100 text-orange-700 font-medium">
+                        Issue reported
+                      </span>
+                    ) : (
+                      <button
+                        onClick={() => setDisputeJobId(job.jobId)}
+                        className="text-xs px-3 py-1.5 rounded-md border border-border hover:bg-muted text-muted-foreground"
+                      >
+                        Report issue
+                      </button>
+                    )}
+                    <button
+                      onClick={() => setModalJobId(job.jobId)}
+                      className="text-xs px-3 py-1.5 rounded-md bg-primary text-primary-foreground hover:bg-primary/90"
+                    >
+                      Record Payment
+                    </button>
+                  </div>
                 </div>
-                <button
-                  onClick={() => setModalJobId(job.jobId)}
-                  className="text-xs px-3 py-1.5 rounded-md bg-primary text-primary-foreground hover:bg-primary/90"
-                >
-                  Record Payment
-                </button>
-              </div>
-            ))}
+              ))
+            })()}
           </div>
         )}
       </div>
