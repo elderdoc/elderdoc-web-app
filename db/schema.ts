@@ -176,6 +176,7 @@ export const shifts = pgTable('shifts', {
   startTime: text('start_time').notNull(),
   endTime:   text('end_time').notNull(),
   status:    text('status', { enum: ['scheduled', 'completed', 'cancelled'] }).default('scheduled'),
+  billedAt:  timestamp('billed_at'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 })
 
