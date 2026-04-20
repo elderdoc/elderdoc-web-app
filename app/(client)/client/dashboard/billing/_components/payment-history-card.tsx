@@ -71,6 +71,8 @@ export function PaymentHistoryCard({
   const [expanded, setExpanded] = useState(false)
   const [iframeLoaded, setIframeLoaded] = useState(false)
   const [showDisputeModal, setShowDisputeModal] = useState(false)
+  const [withdrawing, setWithdrawing] = useState(false)
+  const [withdrawError, setWithdrawError] = useState<string | null>(null)
 
   const receiptRef = stripeInvoiceId ?? stripePaymentIntentId
   const isMock = !receiptRef || receiptRef.startsWith('mock_pi_')
@@ -132,15 +134,27 @@ export function PaymentHistoryCard({
       {status === 'completed' && releasedAt === null && (
         <div className="px-4 py-2 flex items-center gap-3 border-t border-border/50">
           {activeDispute ? (
-            <button
-              type="button"
-              onClick={async () => {
-                await withdrawDispute(activeDispute.disputeId)
-              }}
-              className="text-xs text-muted-foreground hover:text-foreground underline"
-            >
-              Withdraw dispute
-            </button>
+            <div className="flex flex-col gap-1">
+              <button
+                type="button"
+                onClick={async () => {
+                  setWithdrawing(true)
+                  setWithdrawError(null)
+                  const result = await withdrawDispute(activeDispute.disputeId)
+                  if (result.error) {
+                    setWithdrawError(result.error)
+                  }
+                  setWithdrawing(false)
+                }}
+                disabled={withdrawing}
+                className="text-xs text-muted-foreground hover:text-foreground underline disabled:opacity-50"
+              >
+                Withdraw dispute
+              </button>
+              {withdrawError && (
+                <p className="text-xs text-red-600 dark:text-red-400">{withdrawError}</p>
+              )}
+            </div>
           ) : (
             <button
               type="button"

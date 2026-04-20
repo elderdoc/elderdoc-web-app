@@ -72,7 +72,7 @@ export function BillingClient({ paymentRows, activeJobs, savedCard, stripePublis
           <div className="space-y-2">
             {paymentRows.map((row) => {
               const activeDispute = openDisputes.find(
-                (d) => d.paymentId === row.paymentId
+                (d) => d.paymentId !== null && d.paymentId === row.paymentId
               ) ?? null
               return (
                 <PaymentHistoryCard
