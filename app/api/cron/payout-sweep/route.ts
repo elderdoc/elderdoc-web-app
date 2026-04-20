@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/services/db'
 import { payments, jobs, caregiverProfiles, disputes } from '@/db/schema'
-import { eq, and, isNull, isNotNull } from 'drizzle-orm'
+import { eq, and, isNull, isNotNull, lt } from 'drizzle-orm'
 import { transferPayout } from '@/services/stripe'
 
 export async function POST(req: NextRequest) {
@@ -24,6 +24,7 @@ export async function POST(req: NextRequest) {
   )
 
   // 2. Find all eligible payments (completed, unreleased, caregiver has Connect account)
+  const cutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
   const eligible = await db
     .select({
       id: payments.id,
@@ -40,6 +41,7 @@ export async function POST(req: NextRequest) {
         eq(payments.status, 'completed'),
         isNull(payments.releasedAt),
         isNotNull(caregiverProfiles.stripeConnectAccountId),
+        lt(payments.createdAt, cutoff),
       )
     )
 

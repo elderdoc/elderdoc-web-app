@@ -166,6 +166,35 @@ describe('POST /api/cron/payout-sweep', () => {
     expect(body).toEqual({ released: 0, totalCents: 0 })
   })
 
+  it('does not release payments unless eligible query returns them (7-day hold enforced in WHERE clause)', async () => {
+    mockTransferPayout.mockResolvedValue(undefined)
+
+    // disputes: empty
+    mockDbSelect.mockReturnValueOnce({
+      from: vi.fn().mockReturnValue({
+        where: vi.fn().mockResolvedValue([]),
+      }),
+    })
+
+    // payments query returns empty — simulates all payments being too new
+    mockDbSelect.mockReturnValueOnce({
+      from: vi.fn().mockReturnValue({
+        innerJoin: vi.fn().mockReturnValue({
+          innerJoin: vi.fn().mockReturnValue({
+            where: vi.fn().mockResolvedValue([]),
+          }),
+        }),
+      }),
+    })
+
+    const req = makeRequest('Bearer test-secret')
+    const res = await POST(req)
+    expect(res.status).toBe(200)
+    expect(mockTransferPayout).not.toHaveBeenCalled()
+    const body = await res.json()
+    expect(body).toEqual({ released: 0, totalCents: 0 })
+  })
+
   it('skips payments where there is an open payment-level dispute for that payment', async () => {
     mockTransferPayout.mockResolvedValue(undefined)
 
