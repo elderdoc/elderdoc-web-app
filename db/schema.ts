@@ -5,14 +5,15 @@ import {
 import { relations, sql } from 'drizzle-orm'
 
 export const users = pgTable('users', {
-  id:        uuid('id').defaultRandom().primaryKey(),
-  email:     text('email').notNull().unique(),
-  name:      text('name'),
-  image:     text('image'),
-  phone:     text('phone'),
-  role:      text('role', { enum: ['client', 'caregiver'] }),
-  password:  text('password'),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
+  id:               uuid('id').defaultRandom().primaryKey(),
+  email:            text('email').notNull().unique(),
+  name:             text('name'),
+  image:            text('image'),
+  phone:            text('phone'),
+  role:             text('role', { enum: ['client', 'caregiver'] }),
+  password:         text('password'),
+  stripeCustomerId: text('stripe_customer_id'),
+  createdAt:        timestamp('created_at').defaultNow().notNull(),
 })
 
 export const caregiverProfiles = pgTable('caregiver_profiles', {
@@ -197,9 +198,11 @@ export const payments = pgTable('payments', {
   id:                    uuid('id').defaultRandom().primaryKey(),
   jobId:                 uuid('job_id').notNull().references(() => jobs.id, { onDelete: 'cascade' }),
   amount:                numeric('amount', { precision: 10, scale: 2 }).notNull(),
-  method:                text('method', { enum: ['stripe', 'cash'] }).notNull(),
+  fee:                   numeric('fee', { precision: 10, scale: 2 }).notNull().default('0'),
+  method:                text('method', { enum: ['stripe'] }).notNull().default('stripe'),
   status:                text('status', { enum: ['pending', 'completed', 'failed'] }).default('pending'),
   stripePaymentIntentId: text('stripe_payment_intent_id'),
+  stripeInvoiceId:       text('stripe_invoice_id'),
   createdAt:             timestamp('created_at').defaultNow().notNull(),
 })
 
