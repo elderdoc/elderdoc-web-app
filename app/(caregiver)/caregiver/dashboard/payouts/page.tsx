@@ -4,7 +4,6 @@ import { caregiverProfiles } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { getCaregiverPayments } from "@/domains/payments/queries";
 // import { SetupStripeConnectButton } from './_components/setup-stripe-connect-button'
-import { ConfirmCashButton } from "./_components/confirm-cash-button";
 
 export default async function CaregiverPayoutsPage() {
   const session = await requireRole("caregiver");
@@ -82,12 +81,6 @@ export default async function CaregiverPayoutsPage() {
                   >
                     {row.status}
                   </span>
-                  {row.status === "pending" && row.method === "cash" && (
-                    <ConfirmCashButton
-                      paymentId={row.paymentId}
-                      amount={(row.amount / 100).toFixed(2)}
-                    />
-                  )}
                 </div>
               </div>
             ))}

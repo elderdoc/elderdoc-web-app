@@ -3,7 +3,7 @@
 import { useState, useTransition } from 'react'
 import { loadStripe } from '@stripe/stripe-js'
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js'
-import { recordCashPayment, initiateStripePayment } from '@/domains/payments/actions'
+import { initiateStripePayment } from '@/domains/payments/actions'
 
 interface Props {
   jobId: string
@@ -88,9 +88,7 @@ export function RecordPaymentModal({ jobId, jobLabel, stripePublishableKey, onCl
     e.preventDefault()
     if (!amountValid) { setError('Enter a valid amount'); return }
     startTransition(async () => {
-      const result = await recordCashPayment(jobId, cents)
-      if (result.error) setError(result.error)
-      else onClose()
+      onClose()
     })
   }
 
