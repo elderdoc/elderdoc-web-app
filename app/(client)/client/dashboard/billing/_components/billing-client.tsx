@@ -1,11 +1,11 @@
 'use client'
 
 import { useState } from 'react'
-import { RecordPaymentModal } from './record-payment-modal'
 import { DisputeModal } from './dispute-modal'
 import { SavedCardBanner } from './saved-card-banner'
 import { PaymentHistoryCard } from './payment-history-card'
-import type { PaymentRow, DisputeRow } from '@/domains/payments/queries'
+import type { PaymentRow, DisputeRow, UnbilledShiftRow } from '@/domains/payments/queries'
+import { calculateShiftHours } from '@/lib/shift-utils'
 
 interface ActiveJob {
   jobId: string
@@ -19,12 +19,17 @@ interface Props {
   savedCard: { brand: string; last4: string } | null
   stripePublishableKey: string
   openDisputes: DisputeRow[]
+  unbilledShifts: UnbilledShiftRow[]
 }
 
-export function BillingClient({ paymentRows, activeJobs, savedCard, stripePublishableKey, openDisputes }: Props) {
-  const [modalJobId, setModalJobId] = useState<string | null>(null)
+export function BillingClient({ paymentRows, activeJobs, savedCard, stripePublishableKey, openDisputes, unbilledShifts }: Props) {
   const [disputeJobId, setDisputeJobId] = useState<string | null>(null)
-  const modalJob = activeJobs.find((j) => j.jobId === modalJobId)
+
+  const shiftsByJob = unbilledShifts.reduce<Record<string, UnbilledShiftRow[]>>((acc, shift) => {
+    if (!acc[shift.jobId]) acc[shift.jobId] = []
+    acc[shift.jobId].push(shift)
+    return acc
+  }, {})
 
   return (
     <>
@@ -35,23 +40,70 @@ export function BillingClient({ paymentRows, activeJobs, savedCard, stripePublis
         />
       )}
 
-      {modalJob && (
-        <RecordPaymentModal
-          jobId={modalJob.jobId}
-          jobLabel={`${modalJob.careType} — ${modalJob.caregiverName ?? 'Caregiver'}`}
-          savedCard={savedCard}
-          onClose={() => setModalJobId(null)}
-        />
-      )}
-
       <SavedCardBanner savedCard={savedCard} stripePublishableKey={stripePublishableKey} />
+
+      {Object.keys(shiftsByJob).length > 0 && (
+        <div className="mb-8">
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-3">
+            Upcoming Charge — charges Sunday
+          </p>
+          <div className="space-y-3">
+            {Object.entries(shiftsByJob).map(([jobId, jobShifts]) => {
+              const subtotal = jobShifts.reduce(
+                (sum, s) => sum + calculateShiftHours(s.startTime, s.endTime) * s.hourlyRate,
+                0
+              )
+              const fee = subtotal * 0.01
+              const total = subtotal + fee
+              return (
+                <div key={jobId} className="rounded-lg border border-border bg-card p-4 space-y-3">
+                  <p className="text-sm font-medium">
+                    {jobShifts[0].careType} · {jobShifts[0].caregiverName ?? 'Caregiver'}
+                  </p>
+                  <div className="space-y-1">
+                    {jobShifts.map((s) => {
+                      const hours = calculateShiftHours(s.startTime, s.endTime)
+                      return (
+                        <div key={s.shiftId} className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">
+                            {s.date} &nbsp; {s.startTime}–{s.endTime} &nbsp; {hours}h
+                          </span>
+                          <span>${(hours * s.hourlyRate).toFixed(2)}</span>
+                        </div>
+                      )
+                    })}
+                  </div>
+                  <div className="border-t border-border pt-2 space-y-1 text-sm">
+                    <div className="flex justify-between text-muted-foreground">
+                      <span>Subtotal</span>
+                      <span>${subtotal.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between text-muted-foreground">
+                      <span>Trust &amp; Support fee (1%)</span>
+                      <span>${fee.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between font-medium">
+                      <span>Total due Sunday</span>
+                      <span>${total.toFixed(2)}</span>
+                    </div>
+                  </div>
+                  {!savedCard && (
+                    <p className="text-xs text-destructive">
+                      Add a payment method before Sunday to avoid a missed payment.
+                    </p>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
 
       <div className="mb-8">
         <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-3">Active Jobs</p>
         {activeJobs.length === 0 ? (
           <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border py-10 text-center">
             <p className="text-sm text-muted-foreground">No active jobs yet.</p>
-            <p className="text-xs text-muted-foreground mt-1">Payments can be recorded once a caregiver is hired.</p>
           </div>
         ) : (
           <div className="space-y-2">
@@ -76,12 +128,6 @@ export function BillingClient({ paymentRows, activeJobs, savedCard, stripePublis
                         Report issue
                       </button>
                     )}
-                    <button
-                      onClick={() => setModalJobId(job.jobId)}
-                      className="text-xs px-3 py-1.5 rounded-md bg-primary text-primary-foreground hover:bg-primary/90"
-                    >
-                      Record Payment
-                    </button>
                   </div>
                 </div>
               ))
@@ -93,7 +139,7 @@ export function BillingClient({ paymentRows, activeJobs, savedCard, stripePublis
       <div>
         <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-3">Payment History</p>
         {paymentRows.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No payments recorded yet.</p>
+          <p className="text-sm text-muted-foreground">No payments yet.</p>
         ) : (
           <div className="space-y-2">
             {paymentRows.map((row) => {

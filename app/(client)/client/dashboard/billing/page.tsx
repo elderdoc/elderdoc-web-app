@@ -1,5 +1,5 @@
 import { requireRole } from '@/domains/auth/session'
-import { getClientPayments, getOpenDisputesForClient } from '@/domains/payments/queries'
+import { getClientPayments, getOpenDisputesForClient, getUnbilledShiftsForClient } from '@/domains/payments/queries'
 import { db } from '@/services/db'
 import { jobs, careRequests, caregiverProfiles, users } from '@/db/schema'
 import { eq, and } from 'drizzle-orm'
@@ -10,7 +10,7 @@ export default async function ClientBillingPage() {
   const session = await requireRole('client')
   const clientId = session.user.id!
 
-  const [paymentRows, activeJobs, userRow, openDisputes] = await Promise.all([
+  const [paymentRows, activeJobs, userRow, openDisputes, unbilledShifts] = await Promise.all([
     getClientPayments(clientId),
     db
       .select({
@@ -32,6 +32,7 @@ export default async function ClientBillingPage() {
       .limit(1)
       .offset(0),
     getOpenDisputesForClient(clientId),
+    getUnbilledShiftsForClient(clientId),
   ])
 
   const savedCard = userRow[0]?.stripeCustomerId
@@ -41,13 +42,14 @@ export default async function ClientBillingPage() {
   return (
     <div className="p-4 lg:p-8">
       <h1 className="text-2xl font-semibold mb-1">Billing</h1>
-      <p className="text-sm text-muted-foreground mb-8">Record and view payments for your care services.</p>
+      <p className="text-sm text-muted-foreground mb-8">View payments and upcoming charges for your care services.</p>
       <BillingClient
         paymentRows={paymentRows}
         activeJobs={activeJobs}
         savedCard={savedCard}
         stripePublishableKey={process.env.STRIPE_PUBLISHABLE_KEY ?? ''}
         openDisputes={openDisputes}
+        unbilledShifts={unbilledShifts}
       />
     </div>
   )
