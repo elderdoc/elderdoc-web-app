@@ -1,6 +1,7 @@
 {
   "crons": [
     { "path": "/api/cron/payout-sweep", "schedule": "0 9 * * 1" },
-    { "path": "/api/cron/resolve-disputes", "schedule": "0 8 * * *" }
+    { "path": "/api/cron/resolve-disputes", "schedule": "0 8 * * *" },
+    { "path": "/api/cron/weekly-billing", "schedule": "0 23 * * 0" }
   ]
 }
