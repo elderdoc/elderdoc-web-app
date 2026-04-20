@@ -164,7 +164,12 @@ export async function setupStripeConnect() {
   if (!profile) return { error: 'Profile not found' }
 
   const account = await createConnectAccount(session.user.id)
-  const returnUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? ''}/caregiver/dashboard/payments`
+  await db
+    .update(caregiverProfiles)
+    .set({ stripeConnectAccountId: account.id })
+    .where(eq(caregiverProfiles.id, profile.id))
+
+  const returnUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? ''}/caregiver/dashboard/payouts`
   const link = await createConnectAccountLink(account.id, returnUrl)
   return { url: link.url }
 }
