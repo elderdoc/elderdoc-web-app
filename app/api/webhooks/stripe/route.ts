@@ -3,6 +3,7 @@ import Stripe from 'stripe'
 import { db } from '@/services/db'
 import { payments } from '@/db/schema'
 import { eq } from 'drizzle-orm'
+import { revalidatePath } from 'next/cache'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY ?? 'sk_test_stub')
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET ?? ''
@@ -20,6 +21,26 @@ export async function POST(req: NextRequest) {
   }
 
   switch (event.type) {
+    case 'invoice.payment_succeeded': {
+      const invoice = event.data.object as Stripe.Invoice
+      await db
+        .update(payments)
+        .set({ status: 'completed' })
+        .where(eq(payments.stripeInvoiceId, invoice.id))
+      revalidatePath('/client/dashboard/billing')
+      break
+    }
+
+    case 'invoice.payment_failed': {
+      const invoice = event.data.object as Stripe.Invoice
+      await db
+        .update(payments)
+        .set({ status: 'failed' })
+        .where(eq(payments.stripeInvoiceId, invoice.id))
+      break
+    }
+
+    // Legacy: only updates rows that have no stripeInvoiceId (old PaymentIntent payments)
     case 'payment_intent.succeeded': {
       const intent = event.data.object as Stripe.PaymentIntent
       await db
@@ -38,15 +59,10 @@ export async function POST(req: NextRequest) {
       break
     }
 
-    case 'account.updated': {
-      // Caregiver Connect account status changed — extend here when storing stripeAccountId
-      break
-    }
-
+    case 'account.updated':
     case 'transfer.created':
     case 'payout.paid':
     case 'payout.failed':
-      // Logged for now; extend when payout tracking is added
       break
   }
 
