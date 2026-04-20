@@ -272,7 +272,7 @@ async function seed() {
       // Payments for completed shifts
       for (const date of pastDates) {
         const amount = (reqs[0].durationHours * 24 + i).toFixed(2)
-        await db.insert(payments).values({ jobId: job.id, amount, method: 'cash', status: 'completed' })
+        await db.insert(payments).values({ jobId: job.id, amount, fee: '0', method: 'stripe', status: 'completed', stripePaymentIntentId: `mock_pi_${job.id}_${date}` })
       }
 
       // Mark request as filled
