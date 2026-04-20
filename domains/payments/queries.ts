@@ -1,6 +1,6 @@
 import { db } from '@/services/db'
-import { payments, jobs, careRequests, users, caregiverProfiles, disputes } from '@/db/schema'
-import { eq, and, desc } from 'drizzle-orm'
+import { payments, jobs, careRequests, users, caregiverProfiles, disputes, shifts } from '@/db/schema'
+import { eq, and, desc, isNull } from 'drizzle-orm'
 
 export interface PaymentRow {
   paymentId: string
@@ -25,6 +25,17 @@ export interface DisputeRow {
   reason: string
   status: 'open' | 'resolved' | 'withdrawn'
   createdAt: Date
+}
+
+export interface UnbilledShiftRow {
+  shiftId: string
+  jobId: string
+  careType: string
+  caregiverName: string | null
+  date: string
+  startTime: string
+  endTime: string
+  hourlyRate: number
 }
 
 export async function getClientPayments(clientId: string): Promise<PaymentRow[]> {
@@ -134,5 +145,44 @@ export async function getOpenDisputesForClient(clientId: string): Promise<Disput
     reason: r.reason,
     status: r.status,
     createdAt: r.createdAt,
+  }))
+}
+
+export async function getUnbilledShiftsForClient(clientId: string): Promise<UnbilledShiftRow[]> {
+  const rows = await db
+    .select({
+      shiftId: shifts.id,
+      jobId: shifts.jobId,
+      careType: careRequests.careType,
+      caregiverName: users.name,
+      date: shifts.date,
+      startTime: shifts.startTime,
+      endTime: shifts.endTime,
+      hourlyRate: careRequests.budgetAmount,
+    })
+    .from(shifts)
+    .innerJoin(jobs, eq(shifts.jobId, jobs.id))
+    .innerJoin(careRequests, eq(jobs.requestId, careRequests.id))
+    .innerJoin(caregiverProfiles, eq(jobs.caregiverId, caregiverProfiles.id))
+    .innerJoin(users, eq(caregiverProfiles.userId, users.id))
+    .where(
+      and(
+        eq(jobs.clientId, clientId),
+        eq(shifts.status, 'completed'),
+        isNull(shifts.billedAt),
+      )
+    )
+    .orderBy(shifts.date, shifts.startTime)
+    .limit(500)
+
+  return rows.map((r) => ({
+    shiftId: r.shiftId,
+    jobId: r.jobId,
+    careType: r.careType,
+    caregiverName: r.caregiverName ?? null,
+    date: r.date,
+    startTime: r.startTime,
+    endTime: r.endTime,
+    hourlyRate: Number(r.hourlyRate ?? 0),
   }))
 }

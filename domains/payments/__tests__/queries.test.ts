@@ -28,7 +28,7 @@ const { mockSelectChain, mockDb } = vi.hoisted(() => {
 
 vi.mock('@/services/db', () => ({ db: mockDb }))
 
-import { getClientPayments, getCaregiverPayments, getOpenDisputesForClient } from '../queries'
+import { getClientPayments, getCaregiverPayments, getOpenDisputesForClient, getUnbilledShiftsForClient } from '../queries'
 
 beforeEach(() => {
   vi.clearAllMocks()
@@ -374,5 +374,91 @@ describe('getOpenDisputesForClient', () => {
     ])
     const result = await getOpenDisputesForClient('client-1')
     expect(result[0].paymentId).toBeNull()
+  })
+})
+
+// ── getUnbilledShiftsForClient ────────────────────────────────────────────────
+
+describe('getUnbilledShiftsForClient', () => {
+  // getUnbilledShiftsForClient terminal call is .limit()
+  beforeEach(() => {
+    mockSelectChain.limit.mockResolvedValue([])
+  })
+
+  it('returns empty array when DB returns []', async () => {
+    mockSelectChain.limit.mockResolvedValueOnce([])
+    const result = await getUnbilledShiftsForClient('client-1')
+    expect(result).toEqual([])
+  })
+
+  it('maps rows correctly', async () => {
+    mockSelectChain.limit.mockResolvedValueOnce([
+      {
+        shiftId: 'shift-1',
+        jobId: 'job-1',
+        careType: 'personal-care',
+        caregiverName: 'Alice Smith',
+        date: '2026-04-21',
+        startTime: '09:00',
+        endTime: '12:00',
+        hourlyRate: '20.00',
+      },
+    ])
+    const result = await getUnbilledShiftsForClient('client-1')
+    expect(result).toHaveLength(1)
+    expect(result[0].shiftId).toBe('shift-1')
+    expect(result[0].jobId).toBe('job-1')
+    expect(result[0].careType).toBe('personal-care')
+    expect(result[0].caregiverName).toBe('Alice Smith')
+    expect(result[0].date).toBe('2026-04-21')
+    expect(result[0].startTime).toBe('09:00')
+    expect(result[0].endTime).toBe('12:00')
+    expect(result[0].hourlyRate).toBe(20)
+  })
+
+  it('coerces string hourlyRate to number', async () => {
+    mockSelectChain.limit.mockResolvedValueOnce([
+      {
+        shiftId: 'shift-2',
+        jobId: 'job-2',
+        careType: 'dementia-care',
+        caregiverName: 'Bob',
+        date: '2026-04-22',
+        startTime: '08:00',
+        endTime: '16:00',
+        hourlyRate: '25.50',
+      },
+    ])
+    const result = await getUnbilledShiftsForClient('client-1')
+    expect(result[0].hourlyRate).toBe(25.5)
+  })
+
+  it('maps null caregiverName to null', async () => {
+    mockSelectChain.limit.mockResolvedValueOnce([
+      {
+        shiftId: 'shift-3',
+        jobId: 'job-3',
+        careType: 'personal-care',
+        caregiverName: null,
+        date: '2026-04-23',
+        startTime: '10:00',
+        endTime: '14:00',
+        hourlyRate: '18.00',
+      },
+    ])
+    const result = await getUnbilledShiftsForClient('client-1')
+    expect(result[0].caregiverName).toBeNull()
+  })
+
+  it('calls where with clientId + completed status + null billedAt', async () => {
+    mockSelectChain.limit.mockResolvedValueOnce([])
+    await getUnbilledShiftsForClient('client-abc')
+    expect(mockSelectChain.where).toHaveBeenCalledOnce()
+  })
+
+  it('calls orderBy for date + startTime ordering', async () => {
+    mockSelectChain.limit.mockResolvedValueOnce([])
+    await getUnbilledShiftsForClient('client-1')
+    expect(mockSelectChain.orderBy).toHaveBeenCalledOnce()
   })
 })
