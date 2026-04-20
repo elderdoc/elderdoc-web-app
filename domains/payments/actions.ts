@@ -2,7 +2,7 @@
 
 import { auth } from '@/auth'
 import { db } from '@/services/db'
-import { payments, jobs, shifts, caregiverProfiles, users } from '@/db/schema'
+import { payments, jobs, shifts, caregiverProfiles, users, disputes } from '@/db/schema'
 import { eq, and } from 'drizzle-orm'
 import { revalidatePath } from 'next/cache'
 import {
@@ -223,4 +223,64 @@ export async function fetchStripeChargeDetails(
   if (paymentRow.length === 0) return null
 
   return getPaymentIntentCharge(paymentIntentId)
+}
+
+export async function openDispute(
+  jobId: string,
+  reason: string,
+  paymentId?: string,
+): Promise<{ error?: string }> {
+  const session = await auth()
+  if (!session?.user?.id) return { error: 'Not authenticated' }
+
+  const jobRow = await db
+    .select({ id: jobs.id })
+    .from(jobs)
+    .where(and(eq(jobs.id, jobId), eq(jobs.clientId, session.user.id)))
+    .limit(1)
+  if (jobRow.length === 0) return { error: 'Job not found' }
+
+  const existing = await db
+    .select({ id: disputes.id })
+    .from(disputes)
+    .where(
+      and(
+        eq(disputes.jobId, jobId),
+        eq(disputes.clientId, session.user.id),
+        eq(disputes.status, 'open'),
+        paymentId ? eq(disputes.paymentId, paymentId) : eq(disputes.jobId, jobId),
+      ),
+    )
+    .limit(1)
+  if (existing.length > 0) return { error: 'A dispute is already open for this payment' }
+
+  await db.insert(disputes).values({
+    jobId,
+    clientId: session.user.id,
+    paymentId: paymentId ?? null,
+    reason,
+  })
+
+  revalidatePath('/client/dashboard/billing')
+  return {}
+}
+
+export async function withdrawDispute(disputeId: string): Promise<{ error?: string }> {
+  const session = await auth()
+  if (!session?.user?.id) return { error: 'Not authenticated' }
+
+  const row = await db
+    .select({ id: disputes.id, clientId: disputes.clientId })
+    .from(disputes)
+    .where(and(eq(disputes.id, disputeId), eq(disputes.clientId, session.user.id), eq(disputes.status, 'open')))
+    .limit(1)
+  if (row.length === 0) return { error: 'Dispute not found' }
+
+  await db
+    .update(disputes)
+    .set({ status: 'withdrawn', resolvedAt: new Date() })
+    .where(eq(disputes.id, disputeId))
+
+  revalidatePath('/client/dashboard/billing')
+  return {}
 }
