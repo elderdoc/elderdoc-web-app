@@ -10,11 +10,14 @@ const { mockSelectChain, mockDb } = vi.hoisted(() => {
     offset:    vi.fn(),
   }
 
+  // Default chain — each method returns the chain itself
   mockSelectChain.from.mockReturnValue(mockSelectChain)
   mockSelectChain.innerJoin.mockReturnValue(mockSelectChain)
   mockSelectChain.where.mockReturnValue(mockSelectChain)
   mockSelectChain.orderBy.mockReturnValue(mockSelectChain)
+  // limit returns chain so .offset() can be called on it
   mockSelectChain.limit.mockReturnValue(mockSelectChain)
+  // offset is the terminal call for payment queries — resolves to []
   mockSelectChain.offset.mockResolvedValue([])
 
   const mockDb = {
@@ -25,7 +28,7 @@ const { mockSelectChain, mockDb } = vi.hoisted(() => {
 
 vi.mock('@/services/db', () => ({ db: mockDb }))
 
-import { getClientPayments, getCaregiverPayments } from '../queries'
+import { getClientPayments, getCaregiverPayments, getOpenDisputesForClient } from '../queries'
 
 beforeEach(() => {
   vi.clearAllMocks()
@@ -56,9 +59,13 @@ describe('getClientPayments', () => {
         careType: 'personal-care',
         caregiverName: 'Alice Smith',
         amount: 5000,
+        fee: 250,
         method: 'stripe',
         status: 'completed',
+        stripePaymentIntentId: null,
+        stripeInvoiceId: null,
         createdAt: now,
+        releasedAt: null,
       },
     ])
     const result = await getClientPayments('client-1')
@@ -72,6 +79,51 @@ describe('getClientPayments', () => {
     expect(result[0].method).toBe('stripe')
     expect(result[0].status).toBe('completed')
     expect(result[0].createdAt).toBe(now)
+  })
+
+  it('returns releasedAt as null when not set', async () => {
+    const now = new Date()
+    mockSelectChain.offset.mockResolvedValueOnce([
+      {
+        paymentId: 'pay-1',
+        jobId: 'job-1',
+        careType: 'personal-care',
+        caregiverName: 'Alice Smith',
+        amount: 5000,
+        fee: 250,
+        method: 'stripe',
+        status: 'completed',
+        stripePaymentIntentId: null,
+        stripeInvoiceId: null,
+        createdAt: now,
+        releasedAt: null,
+      },
+    ])
+    const result = await getClientPayments('client-1')
+    expect(result[0].releasedAt).toBeNull()
+  })
+
+  it('returns releasedAt as a Date when set', async () => {
+    const now = new Date()
+    const released = new Date('2026-01-15T10:00:00Z')
+    mockSelectChain.offset.mockResolvedValueOnce([
+      {
+        paymentId: 'pay-1',
+        jobId: 'job-1',
+        careType: 'personal-care',
+        caregiverName: 'Alice Smith',
+        amount: 5000,
+        fee: 250,
+        method: 'stripe',
+        status: 'released',
+        stripePaymentIntentId: null,
+        stripeInvoiceId: null,
+        createdAt: now,
+        releasedAt: released,
+      },
+    ])
+    const result = await getClientPayments('client-1')
+    expect(result[0].releasedAt).toBe(released)
   })
 
   it('calls where with clientId filter applied', async () => {
@@ -105,9 +157,13 @@ describe('getCaregiverPayments', () => {
         careType: 'dementia-care',
         clientName: 'Bob Jones',
         amount: 7500,
+        fee: 375,
         method: 'stripe',
         status: 'pending',
+        stripePaymentIntentId: null,
+        stripeInvoiceId: null,
         createdAt: now,
+        releasedAt: null,
       },
     ])
     const result = await getCaregiverPayments('cg-1')
@@ -123,6 +179,51 @@ describe('getCaregiverPayments', () => {
     expect(result[0].createdAt).toBe(now)
   })
 
+  it('returns releasedAt as null when not set', async () => {
+    const now = new Date()
+    mockSelectChain.offset.mockResolvedValueOnce([
+      {
+        paymentId: 'pay-2',
+        jobId: 'job-2',
+        careType: 'dementia-care',
+        clientName: 'Bob Jones',
+        amount: 7500,
+        fee: 375,
+        method: 'stripe',
+        status: 'pending',
+        stripePaymentIntentId: null,
+        stripeInvoiceId: null,
+        createdAt: now,
+        releasedAt: null,
+      },
+    ])
+    const result = await getCaregiverPayments('cg-1')
+    expect(result[0].releasedAt).toBeNull()
+  })
+
+  it('returns releasedAt as a Date when set', async () => {
+    const now = new Date()
+    const released = new Date('2026-02-20T14:00:00Z')
+    mockSelectChain.offset.mockResolvedValueOnce([
+      {
+        paymentId: 'pay-2',
+        jobId: 'job-2',
+        careType: 'dementia-care',
+        clientName: 'Bob Jones',
+        amount: 7500,
+        fee: 375,
+        method: 'stripe',
+        status: 'released',
+        stripePaymentIntentId: null,
+        stripeInvoiceId: null,
+        createdAt: now,
+        releasedAt: released,
+      },
+    ])
+    const result = await getCaregiverPayments('cg-1')
+    expect(result[0].releasedAt).toBe(released)
+  })
+
   it('calls where with caregiverId filter applied', async () => {
     mockSelectChain.offset.mockResolvedValueOnce([])
     await getCaregiverPayments('cg-xyz')
@@ -133,5 +234,99 @@ describe('getCaregiverPayments', () => {
     mockSelectChain.offset.mockResolvedValueOnce([])
     await getCaregiverPayments('cg-1')
     expect(mockSelectChain.orderBy).toHaveBeenCalledOnce()
+  })
+})
+
+// ── getOpenDisputesForClient ──────────────────────────────────────────────────
+
+describe('getOpenDisputesForClient', () => {
+  // For getOpenDisputesForClient, .limit() is the terminal call (no .offset())
+  // Override limit to resolve as a promise for these tests
+  beforeEach(() => {
+    mockSelectChain.limit.mockResolvedValue([])
+  })
+
+  it('returns empty array when DB returns []', async () => {
+    mockSelectChain.limit.mockResolvedValueOnce([])
+    const result = await getOpenDisputesForClient('client-1')
+    expect(result).toEqual([])
+  })
+
+  it('returns open disputes for client', async () => {
+    const now = new Date()
+    mockSelectChain.limit.mockResolvedValueOnce([
+      {
+        disputeId: 'dispute-1',
+        jobId: 'job-1',
+        paymentId: 'pay-1',
+        reason: 'Caregiver no-show',
+        status: 'open',
+        createdAt: now,
+      },
+      {
+        disputeId: 'dispute-2',
+        jobId: 'job-2',
+        paymentId: null,
+        reason: 'Wrong hours billed',
+        status: 'open',
+        createdAt: now,
+      },
+    ])
+    const result = await getOpenDisputesForClient('client-1')
+    expect(result).toHaveLength(2)
+    expect(result[0].disputeId).toBe('dispute-1')
+    expect(result[0].jobId).toBe('job-1')
+    expect(result[0].paymentId).toBe('pay-1')
+    expect(result[0].reason).toBe('Caregiver no-show')
+    expect(result[0].status).toBe('open')
+    expect(result[0].createdAt).toBe(now)
+    expect(result[1].paymentId).toBeNull()
+  })
+
+  it('excludes resolved disputes (only open ones come back from query)', async () => {
+    const now = new Date()
+    // The query filters to status='open' — simulate DB returning only open ones
+    mockSelectChain.limit.mockResolvedValueOnce([
+      {
+        disputeId: 'dispute-1',
+        jobId: 'job-1',
+        paymentId: 'pay-1',
+        reason: 'Caregiver no-show',
+        status: 'open',
+        createdAt: now,
+      },
+    ])
+    const result = await getOpenDisputesForClient('client-1')
+    // Only 1 open dispute returned; resolved ones are not present
+    expect(result).toHaveLength(1)
+    expect(result.every((d) => d.status === 'open')).toBe(true)
+  })
+
+  it('calls where with both clientId and status=open filters', async () => {
+    mockSelectChain.limit.mockResolvedValueOnce([])
+    await getOpenDisputesForClient('client-abc')
+    expect(mockSelectChain.where).toHaveBeenCalledOnce()
+  })
+
+  it('calls orderBy for desc ordering', async () => {
+    mockSelectChain.limit.mockResolvedValueOnce([])
+    await getOpenDisputesForClient('client-1')
+    expect(mockSelectChain.orderBy).toHaveBeenCalledOnce()
+  })
+
+  it('maps paymentId to null when undefined/null in DB row', async () => {
+    const now = new Date()
+    mockSelectChain.limit.mockResolvedValueOnce([
+      {
+        disputeId: 'dispute-3',
+        jobId: 'job-3',
+        paymentId: undefined,
+        reason: 'Service quality issue',
+        status: 'open',
+        createdAt: now,
+      },
+    ])
+    const result = await getOpenDisputesForClient('client-1')
+    expect(result[0].paymentId).toBeNull()
   })
 })

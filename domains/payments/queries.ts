@@ -1,5 +1,5 @@
 import { db } from '@/services/db'
-import { payments, jobs, careRequests, users, caregiverProfiles } from '@/db/schema'
+import { payments, jobs, careRequests, users, caregiverProfiles, disputes } from '@/db/schema'
 import { eq, and, desc } from 'drizzle-orm'
 
 export interface PaymentRow {
@@ -14,6 +14,16 @@ export interface PaymentRow {
   status: string
   stripePaymentIntentId: string | null
   stripeInvoiceId: string | null
+  createdAt: Date
+  releasedAt: Date | null
+}
+
+export interface DisputeRow {
+  disputeId: string
+  jobId: string
+  paymentId: string | null
+  reason: string
+  status: string
   createdAt: Date
 }
 
@@ -31,6 +41,7 @@ export async function getClientPayments(clientId: string): Promise<PaymentRow[]>
       stripePaymentIntentId: payments.stripePaymentIntentId,
       stripeInvoiceId: payments.stripeInvoiceId,
       createdAt: payments.createdAt,
+      releasedAt: payments.releasedAt,
     })
     .from(payments)
     .innerJoin(jobs, eq(payments.jobId, jobs.id))
@@ -55,6 +66,7 @@ export async function getClientPayments(clientId: string): Promise<PaymentRow[]>
     stripePaymentIntentId: r.stripePaymentIntentId ?? null,
     stripeInvoiceId: r.stripeInvoiceId ?? null,
     createdAt: r.createdAt,
+    releasedAt: r.releasedAt ?? null,
   }))
 }
 
@@ -72,6 +84,7 @@ export async function getCaregiverPayments(caregiverId: string): Promise<Payment
       stripePaymentIntentId: payments.stripePaymentIntentId,
       stripeInvoiceId: payments.stripeInvoiceId,
       createdAt: payments.createdAt,
+      releasedAt: payments.releasedAt,
     })
     .from(payments)
     .innerJoin(jobs, eq(payments.jobId, jobs.id))
@@ -94,6 +107,32 @@ export async function getCaregiverPayments(caregiverId: string): Promise<Payment
     status: r.status ?? '',
     stripePaymentIntentId: r.stripePaymentIntentId ?? null,
     stripeInvoiceId: r.stripeInvoiceId ?? null,
+    createdAt: r.createdAt,
+    releasedAt: r.releasedAt ?? null,
+  }))
+}
+
+export async function getOpenDisputesForClient(clientId: string): Promise<DisputeRow[]> {
+  const rows = await db
+    .select({
+      disputeId: disputes.id,
+      jobId: disputes.jobId,
+      paymentId: disputes.paymentId,
+      reason: disputes.reason,
+      status: disputes.status,
+      createdAt: disputes.createdAt,
+    })
+    .from(disputes)
+    .where(and(eq(disputes.clientId, clientId), eq(disputes.status, 'open')))
+    .orderBy(desc(disputes.createdAt))
+    .limit(100)
+
+  return rows.map((r) => ({
+    disputeId: r.disputeId,
+    jobId: r.jobId,
+    paymentId: r.paymentId ?? null,
+    reason: r.reason,
+    status: r.status,
     createdAt: r.createdAt,
   }))
 }
