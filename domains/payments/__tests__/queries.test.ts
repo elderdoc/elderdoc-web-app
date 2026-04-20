@@ -115,7 +115,7 @@ describe('getClientPayments', () => {
         amount: 5000,
         fee: 250,
         method: 'stripe',
-        status: 'released',
+        status: 'completed',
         stripePaymentIntentId: null,
         stripeInvoiceId: null,
         createdAt: now,
@@ -236,7 +236,7 @@ describe('getCaregiverPayments', () => {
         amount: 7500,
         fee: 375,
         method: 'stripe',
-        status: 'released',
+        status: 'completed',
         stripePaymentIntentId: null,
         stripeInvoiceId: null,
         createdAt: now,
@@ -257,6 +257,29 @@ describe('getCaregiverPayments', () => {
     mockSelectChain.offset.mockResolvedValueOnce([])
     await getCaregiverPayments('cg-1')
     expect(mockSelectChain.orderBy).toHaveBeenCalledOnce()
+  })
+
+  it('coerces string amount and fee to numbers via Number()', async () => {
+    const now = new Date()
+    mockSelectChain.offset.mockResolvedValueOnce([
+      {
+        paymentId: 'pay-coerce',
+        jobId: 'job-coerce',
+        careType: 'dementia-care',
+        clientName: 'Bob Jones',
+        amount: '75.50',
+        fee: '5.00',
+        method: 'stripe',
+        status: 'completed',
+        stripePaymentIntentId: null,
+        stripeInvoiceId: null,
+        createdAt: now,
+        releasedAt: null,
+      },
+    ])
+    const result = await getCaregiverPayments('cg-1')
+    expect(result[0].amount).toBe(75.5)
+    expect(result[0].fee).toBe(5)
   })
 })
 
