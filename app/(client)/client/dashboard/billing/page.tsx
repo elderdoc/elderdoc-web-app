@@ -3,13 +3,14 @@ import { getClientPayments } from '@/domains/payments/queries'
 import { db } from '@/services/db'
 import { jobs, careRequests, caregiverProfiles, users } from '@/db/schema'
 import { eq, and } from 'drizzle-orm'
+import { getDefaultPaymentMethod } from '@/services/stripe'
 import { BillingClient } from './_components/billing-client'
 
 export default async function ClientBillingPage() {
   const session = await requireRole('client')
   const clientId = session.user.id!
 
-  const [paymentRows, activeJobs] = await Promise.all([
+  const [paymentRows, activeJobs, userRow] = await Promise.all([
     getClientPayments(clientId),
     db
       .select({
@@ -24,7 +25,17 @@ export default async function ClientBillingPage() {
       .where(and(eq(jobs.clientId, clientId), eq(jobs.status, 'active')))
       .limit(50)
       .offset(0),
+    db
+      .select({ stripeCustomerId: users.stripeCustomerId })
+      .from(users)
+      .where(eq(users.id, clientId))
+      .limit(1)
+      .offset(0),
   ])
+
+  const savedCard = userRow[0]?.stripeCustomerId
+    ? await getDefaultPaymentMethod(userRow[0].stripeCustomerId)
+    : null
 
   return (
     <div className="p-4 lg:p-8">
@@ -33,6 +44,7 @@ export default async function ClientBillingPage() {
       <BillingClient
         paymentRows={paymentRows}
         activeJobs={activeJobs}
+        savedCard={savedCard}
         stripePublishableKey={process.env.STRIPE_PUBLISHABLE_KEY ?? ''}
       />
     </div>
