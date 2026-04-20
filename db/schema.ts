@@ -29,8 +29,9 @@ export const caregiverProfiles = pgTable('caregiver_profiles', {
   education:     text('education'),
   relocatable:   boolean('relocatable').default(false),
   status:        text('status', { enum: ['pending', 'active', 'inactive'] }).default('pending'),
-  completedStep: integer('completed_step').default(0),
-  createdAt:     timestamp('created_at').defaultNow().notNull(),
+  completedStep:            integer('completed_step').default(0),
+  stripeConnectAccountId:   text('stripe_connect_account_id'),
+  createdAt:                timestamp('created_at').defaultNow().notNull(),
 })
 
 export const caregiverCareTypes = pgTable('caregiver_care_types', {
@@ -221,7 +222,19 @@ export const payments = pgTable('payments', {
   status:                text('status', { enum: ['pending', 'completed', 'failed'] }).default('pending'),
   stripePaymentIntentId: text('stripe_payment_intent_id'),
   stripeInvoiceId:       text('stripe_invoice_id'),
+  releasedAt:            timestamp('released_at'),
   createdAt:             timestamp('created_at').defaultNow().notNull(),
+})
+
+export const disputes = pgTable('disputes', {
+  id:         uuid('id').defaultRandom().primaryKey(),
+  jobId:      uuid('job_id').notNull().references(() => jobs.id, { onDelete: 'cascade' }),
+  clientId:   uuid('client_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  paymentId:  uuid('payment_id').references(() => payments.id, { onDelete: 'set null' }),
+  reason:     text('reason').notNull(),
+  status:     text('status', { enum: ['open', 'resolved', 'withdrawn'] }).notNull().default('open'),
+  createdAt:  timestamp('created_at').defaultNow().notNull(),
+  resolvedAt: timestamp('resolved_at'),
 })
 
 // --- Relations ---
@@ -278,6 +291,7 @@ export const jobsRelations = relations(jobs, ({ one, many }) => ({
   carePlan:    one(carePlans, { fields: [jobs.id], references: [carePlans.jobId] }),
   messages:    many(messages),
   payments:    many(payments),
+  disputes:    many(disputes),
 }))
 
 export const shiftsRelations = relations(shifts, ({ one }) => ({
@@ -300,4 +314,10 @@ export const notificationsRelations = relations(notifications, ({ one }) => ({
 
 export const paymentsRelations = relations(payments, ({ one }) => ({
   job: one(jobs, { fields: [payments.jobId], references: [jobs.id] }),
+}))
+
+export const disputesRelations = relations(disputes, ({ one }) => ({
+  job:     one(jobs,     { fields: [disputes.jobId],     references: [jobs.id] }),
+  client:  one(users,    { fields: [disputes.clientId],  references: [users.id] }),
+  payment: one(payments, { fields: [disputes.paymentId], references: [payments.id] }),
 }))
