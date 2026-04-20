@@ -19,6 +19,7 @@ vi.mock('@/services/db', () => ({
     insert: mockInsert,
     update: mockUpdate,
     select: mockSelect,
+    transaction: vi.fn(async (fn) => fn({ insert: mockInsert, update: mockUpdate, select: mockSelect })),
     query: {
       caregiverProfiles: { findFirst: mockFindFirst },
     },
@@ -136,6 +137,7 @@ describe('completeShift', () => {
     const notifArg = mockValues.mock.calls[0][0]
     expect(notifArg.userId).toBe('client-1')
     expect(notifArg.type).toBe('shift_completed')
+    expect(notifArg.read).toBe(false)
     expect(notifArg.payload.caregiverName).toBe('Margaret Collins')
     expect(notifArg.payload.hours).toBe(3)
     expect(notifArg.payload.date).toBe('2026-04-21')

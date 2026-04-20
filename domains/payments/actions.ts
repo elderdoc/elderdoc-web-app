@@ -154,8 +154,6 @@ export async function completeShift(shiftId: string) {
 
   const { date, startTime, endTime, clientId } = existing[0]
 
-  await db.update(shifts).set({ status: 'completed' }).where(eq(shifts.id, shiftId))
-
   const caregiverUser = await db
     .select({ name: users.name })
     .from(users)
@@ -165,16 +163,20 @@ export async function completeShift(shiftId: string) {
   const caregiverName = caregiverUser[0]?.name ?? 'Your caregiver'
   const hours = calculateShiftHours(startTime, endTime)
 
-  await db.insert(notifications).values({
-    userId: clientId,
-    type: 'shift_completed',
-    payload: {
-      shiftId,
-      caregiverName,
-      hours,
-      date,
-      message: `${caregiverName} completed a ${hours}h shift on ${date}. You'll be charged Sunday for this week's total.`,
-    },
+  await db.transaction(async (tx) => {
+    await tx.update(shifts).set({ status: 'completed' }).where(eq(shifts.id, shiftId))
+    await tx.insert(notifications).values({
+      userId: clientId,
+      type: 'shift_completed',
+      read: false,
+      payload: {
+        shiftId,
+        caregiverName,
+        hours,
+        date,
+        message: `${caregiverName} completed a ${hours}h shift on ${date}. You'll be charged Sunday for this week's total.`,
+      },
+    })
   })
 
   revalidatePath('/caregiver/dashboard/shifts')
