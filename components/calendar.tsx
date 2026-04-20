@@ -11,6 +11,7 @@ import {
   isSameDay,
   isToday,
 } from 'date-fns'
+import { SelectField } from '@/components/select-field'
 
 export type CalendarEvent = {
   id: string
@@ -62,6 +63,7 @@ export function Calendar({ year, month, events, activeJobs, basePath, addShiftAc
 
   const [cancelShiftId, setCancelShiftId] = useState<string | null>(null)
   const [lateCancelWarning, setLateCancelWarning] = useState(false)
+  const [confirmAddShift, setConfirmAddShift] = useState(false)
 
   const monthDate = new Date(year, month - 1, 1)
   const monthStart = startOfMonth(monthDate)
@@ -95,11 +97,24 @@ export function Calendar({ year, month, events, activeJobs, basePath, addShiftAc
       if (result.error) {
         setFormError(result.error)
       } else {
+        setConfirmAddShift(false)
         setFormStart('09:00')
         setFormEnd('17:00')
       }
     })
   }
+
+  function openAddConfirm() {
+    if (!selectedDate || !formJobId || !formStart || !formEnd) return
+    if (formEnd <= formStart) {
+      setFormError('End time must be after start time.')
+      return
+    }
+    setFormError(null)
+    setConfirmAddShift(true)
+  }
+
+  const confirmJobLabel = activeJobs.find((j) => j.jobId === formJobId)?.label ?? ''
 
   function startEdit(event: CalendarEvent) {
     setEditingShiftId(event.id)
@@ -158,6 +173,43 @@ export function Calendar({ year, month, events, activeJobs, basePath, addShiftAc
               <button type="button" onClick={() => confirmCancel(cancelShiftId)} disabled={isPending}
                 className="text-sm px-4 py-2 rounded-md bg-destructive text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50">
                 {isPending ? 'Cancelling…' : 'Yes, cancel'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {confirmAddShift && selectedDate && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="bg-card rounded-xl border border-border shadow-lg w-full max-w-sm p-6 flex flex-col gap-4">
+            <div>
+              <h2 className="text-base font-semibold mb-1">Add this shift?</h2>
+              <p className="text-sm text-muted-foreground">Please confirm the details below.</p>
+            </div>
+            <dl className="space-y-2 text-sm">
+              {confirmJobLabel && (
+                <div className="flex gap-3">
+                  <dt className="text-muted-foreground w-20 shrink-0">Job</dt>
+                  <dd className="font-medium">{confirmJobLabel}</dd>
+                </div>
+              )}
+              <div className="flex gap-3">
+                <dt className="text-muted-foreground w-20 shrink-0">Date</dt>
+                <dd className="font-medium">{format(selectedDate, 'EEEE, MMMM d, yyyy')}</dd>
+              </div>
+              <div className="flex gap-3">
+                <dt className="text-muted-foreground w-20 shrink-0">Time</dt>
+                <dd className="font-medium">{formStart} – {formEnd}</dd>
+              </div>
+            </dl>
+            <div className="flex gap-2 justify-end">
+              <button type="button" onClick={() => setConfirmAddShift(false)} disabled={isPending}
+                className="text-sm px-4 py-2 rounded-md border border-border hover:bg-muted disabled:opacity-50">
+                Cancel
+              </button>
+              <button type="button" onClick={submitShift} disabled={isPending}
+                className="text-sm px-4 py-2 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50">
+                {isPending ? 'Adding…' : 'Confirm'}
               </button>
             </div>
           </div>
@@ -268,12 +320,12 @@ export function Calendar({ year, month, events, activeJobs, basePath, addShiftAc
               <div className="border-t border-border pt-4 space-y-3">
                 <p className="text-xs font-medium">Add Shift</p>
                 {activeJobs.length > 1 && (
-                  <select value={formJobId} onChange={(e) => setFormJobId(e.target.value)}
-                    className="h-8 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none focus-visible:border-ring">
-                    {activeJobs.map((job) => (
-                      <option key={job.jobId} value={job.jobId}>{job.label}</option>
-                    ))}
-                  </select>
+                  <SelectField
+                    options={activeJobs.map((job) => ({ value: job.jobId, label: job.label }))}
+                    value={formJobId}
+                    onChange={(val) => setFormJobId(val)}
+                    placeholder="Select a job…"
+                  />
                 )}
                 <div className="flex gap-2">
                   <div className="flex-1">
@@ -288,9 +340,9 @@ export function Calendar({ year, month, events, activeJobs, basePath, addShiftAc
                   </div>
                 </div>
                 {formError && <p className="text-xs text-destructive">{formError}</p>}
-                <button onClick={submitShift} disabled={isPending}
+                <button onClick={openAddConfirm} disabled={isPending}
                   className="w-full h-8 rounded-lg bg-primary text-primary-foreground text-sm font-medium disabled:opacity-50 hover:bg-primary/90 transition-colors">
-                  {isPending ? 'Adding…' : 'Add Shift'}
+                  Add Shift
                 </button>
               </div>
             )}

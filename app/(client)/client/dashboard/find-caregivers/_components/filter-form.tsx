@@ -16,6 +16,7 @@ interface Props {
     language?: string[]
     certification?: string[]
     experience?: string
+    sort?: string
     page?: string
   }
 }
@@ -26,6 +27,12 @@ const EXPERIENCE_OPTIONS = [
   { value: '3 years', label: '3 years' },
   { value: '5 years', label: '5 years' },
   { value: '10+ years', label: '10+ years' },
+]
+
+const SORT_OPTIONS = [
+  { value: '',               label: 'Default' },
+  { value: 'distance-asc',   label: 'Nearest first' },
+  { value: 'distance-desc',  label: 'Farthest first' },
 ]
 
 const CARE_TYPE_OPTIONS = CARE_TYPES.map((ct) => ({ value: ct.key, label: ct.label }))
@@ -48,6 +55,7 @@ export function FilterForm({ activeRequests, currentFilters }: Props) {
         language:      currentFilters.language,
         certification: currentFilters.certification,
         experience:    currentFilters.experience,
+        sort:          currentFilters.sort,
         page:          currentFilters.page,
         ...overrides,
       }
@@ -58,6 +66,7 @@ export function FilterForm({ activeRequests, currentFilters }: Props) {
       if (merged.rateMin)      params.set('rateMin', merged.rateMin as string)
       if (merged.rateMax)      params.set('rateMax', merged.rateMax as string)
       if (merged.experience)   params.set('experience', merged.experience as string)
+      if (merged.sort)         params.set('sort', merged.sort as string)
       if (merged.page)         params.set('page', merged.page as string)
       for (const lang of (merged.language as string[] | undefined) ?? []) {
         params.append('language', lang)
@@ -158,6 +167,17 @@ export function FilterForm({ activeRequests, currentFilters }: Props) {
               value={currentFilters.experience ?? ''}
               onChange={(val) => push({ experience: val || undefined })}
               placeholder="Any"
+            />
+          </div>
+
+          {/* Sort */}
+          <div>
+            <label className="block text-xs font-medium mb-1">Sort by</label>
+            <SelectField
+              options={SORT_OPTIONS}
+              value={currentFilters.sort ?? ''}
+              onChange={(val) => push({ sort: val || undefined })}
+              placeholder="Default"
             />
           </div>
 

@@ -1,10 +1,21 @@
 'use server'
 
 import { db } from '@/services/db'
-import { shifts, jobs, careRequests, caregiverProfiles, users } from '@/db/schema'
+import { shifts, jobs, careRequests, caregiverProfiles, users, notifications } from '@/db/schema'
 import { eq, and, gte, lte, desc } from 'drizzle-orm'
 import { revalidatePath } from 'next/cache'
 import { auth } from '@/auth'
+
+async function getShiftCaregiverUserId(jobId: string): Promise<string | null> {
+  const [row] = await db
+    .select({ userId: users.id })
+    .from(jobs)
+    .innerJoin(caregiverProfiles, eq(jobs.caregiverId, caregiverProfiles.id))
+    .innerJoin(users, eq(caregiverProfiles.userId, users.id))
+    .where(eq(jobs.id, jobId))
+    .limit(1)
+  return row?.userId ?? null
+}
 
 export type ClientCalendarShift = {
   id: string
@@ -122,7 +133,7 @@ export async function editClientShift(
   if (!session?.user?.id) return { error: 'Not authenticated' }
 
   const [row] = await db
-    .select({ id: shifts.id, status: shifts.status })
+    .select({ id: shifts.id, status: shifts.status, jobId: shifts.jobId })
     .from(shifts)
     .innerJoin(jobs, eq(shifts.jobId, jobs.id))
     .where(and(eq(shifts.id, shiftId), eq(jobs.clientId, session.user.id)))
@@ -134,7 +145,20 @@ export async function editClientShift(
 
   await db.update(shifts).set({ date, startTime, endTime }).where(eq(shifts.id, shiftId))
 
+  const caregiverUserId = await getShiftCaregiverUserId(row.jobId)
+  if (caregiverUserId) {
+    await db.insert(notifications).values({
+      userId: caregiverUserId,
+      type: 'shift_edited',
+      payload: { jobId: row.jobId, shiftId, date, startTime, endTime },
+      read: false,
+    })
+  }
+
   revalidatePath('/client/dashboard/calendar')
+  revalidatePath('/caregiver/dashboard/calendar')
+  revalidatePath('/caregiver/dashboard/shifts')
+  revalidatePath('/caregiver/dashboard/notifications')
   return {}
 }
 
@@ -145,7 +169,7 @@ export async function cancelClientShift(
   if (!session?.user?.id) return { error: 'Not authenticated' }
 
   const [row] = await db
-    .select({ id: shifts.id, date: shifts.date, startTime: shifts.startTime, status: shifts.status })
+    .select({ id: shifts.id, date: shifts.date, startTime: shifts.startTime, status: shifts.status, jobId: shifts.jobId })
     .from(shifts)
     .innerJoin(jobs, eq(shifts.jobId, jobs.id))
     .where(and(eq(shifts.id, shiftId), eq(jobs.clientId, session.user.id)))
@@ -162,6 +186,19 @@ export async function cancelClientShift(
 
   await db.update(shifts).set({ status: 'cancelled' }).where(eq(shifts.id, shiftId))
 
+  const caregiverUserId = await getShiftCaregiverUserId(row.jobId)
+  if (caregiverUserId) {
+    await db.insert(notifications).values({
+      userId: caregiverUserId,
+      type: 'shift_cancelled',
+      payload: { jobId: row.jobId, shiftId, date: row.date, startTime: row.startTime, lateCancellation: lateCancellation ? 'true' : 'false' },
+      read: false,
+    })
+  }
+
   revalidatePath('/client/dashboard/calendar')
+  revalidatePath('/caregiver/dashboard/calendar')
+  revalidatePath('/caregiver/dashboard/shifts')
+  revalidatePath('/caregiver/dashboard/notifications')
   return { lateCancellation }
 }

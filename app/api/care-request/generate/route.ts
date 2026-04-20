@@ -4,7 +4,6 @@ import { openai } from '@ai-sdk/openai'
 
 interface CareRequestGenerateInput {
   careType: string
-  recipientName: string
   conditions: string[]
   mobility?: string
   frequency: string
@@ -18,7 +17,6 @@ interface CareRequestGenerateInput {
 
 function buildPrompt(data: CareRequestGenerateInput): string {
   return `Care type: ${data.careType}
-Recipient: ${data.recipientName}
 Conditions: ${data.conditions.join(', ') || 'none listed'}
 Mobility: ${data.mobility || 'not specified'}
 Schedule: ${data.frequency}, ${data.days.join('/')} ${data.shifts.join('/')}

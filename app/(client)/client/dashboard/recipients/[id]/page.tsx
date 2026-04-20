@@ -5,6 +5,7 @@ import { db } from '@/services/db'
 import { careRecipients } from '@/db/schema'
 import { and, eq } from 'drizzle-orm'
 import { CONDITIONS } from '@/lib/constants'
+import { formatDistanceToNow } from 'date-fns'
 
 const CONDITIONS_LABELS: Record<string, string> = Object.fromEntries(
   CONDITIONS.map((c) => [c.key, c.label])
@@ -65,6 +66,9 @@ export default async function RecipientDetailPage({ params }: PageProps) {
                   {r.relationship.replace(/-/g, ' ')}
                 </p>
               )}
+              <p className="text-xs text-muted-foreground mt-1">
+                Added {formatDistanceToNow(r.createdAt, { addSuffix: true })}
+              </p>
             </div>
             <div className="flex gap-2 shrink-0">
               <Link

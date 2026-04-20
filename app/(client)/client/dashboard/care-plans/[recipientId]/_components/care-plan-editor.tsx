@@ -5,6 +5,30 @@ import { upsertCarePlan } from '@/domains/clients/care-plan-actions'
 import { formatUSPhone } from '@/lib/phone'
 import type { CarePlanDetail } from '@/domains/clients/care-plans'
 
+function to24h(time: string): string {
+  if (!time) return ''
+  if (/^\d{2}:\d{2}$/.test(time)) return time
+  const m = time.match(/^(\d+):(\d+)\s*(AM|PM)$/i)
+  if (!m) return ''
+  let h = parseInt(m[1], 10)
+  const min = m[2]
+  const period = m[3].toUpperCase()
+  if (period === 'AM' && h === 12) h = 0
+  if (period === 'PM' && h !== 12) h += 12
+  return `${String(h).padStart(2, '0')}:${min}`
+}
+
+function to12h(time: string): string {
+  if (!time) return ''
+  if (/^\d+:\d+\s*(AM|PM)$/i.test(time)) return time
+  const [hStr, min] = time.split(':')
+  const h = parseInt(hStr, 10)
+  if (isNaN(h)) return time
+  const period = h < 12 ? 'AM' : 'PM'
+  const h12 = h % 12 || 12
+  return `${h12}:${min} ${period}`
+}
+
 type Props = {
   recipientId: string
   carePlan: CarePlanDetail | null
@@ -18,7 +42,7 @@ export function CarePlanEditor({ recipientId, carePlan }: Props) {
   const [error, setError] = useState<string | null>(null)
 
   const [dailySchedule, setDailySchedule] = useState(
-    carePlan?.dailySchedule ?? []
+    (carePlan?.dailySchedule ?? []).map(item => ({ ...item, time: to24h(item.time) }))
   )
   const [medications, setMedications] = useState(
     carePlan?.medications ?? []
@@ -53,7 +77,7 @@ export function CarePlanEditor({ recipientId, carePlan }: Props) {
   }
 
   function cancel() {
-    setDailySchedule(carePlan?.dailySchedule ?? [])
+    setDailySchedule((carePlan?.dailySchedule ?? []).map(item => ({ ...item, time: to24h(item.time) })))
     setMedications(carePlan?.medications ?? [])
     setDietaryRestrictions(carePlan?.dietaryRestrictions ?? [])
     setEmergencyContacts(carePlan?.emergencyContacts ?? [])
@@ -140,7 +164,7 @@ export function CarePlanEditor({ recipientId, carePlan }: Props) {
           <ul className="space-y-1">
             {dailySchedule.map((item, i) => (
               <li key={i} className="text-sm flex gap-4">
-                <span className="font-mono text-muted-foreground whitespace-nowrap shrink-0 w-20">{item.time}</span>
+                <span className="font-mono text-muted-foreground whitespace-nowrap shrink-0 w-20">{to12h(item.time)}</span>
                 <span>{item.activity}</span>
               </li>
             ))}

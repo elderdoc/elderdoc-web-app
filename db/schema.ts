@@ -24,6 +24,7 @@ export const caregiverProfiles = pgTable('caregiver_profiles', {
   photoUrl:      text('photo_url'),
   hourlyMin:     numeric('hourly_min', { precision: 10, scale: 2 }),
   hourlyMax:     numeric('hourly_max', { precision: 10, scale: 2 }),
+  rating:        numeric('rating', { precision: 3, scale: 2 }),
   experience:    text('experience'),
   education:     text('education'),
   relocatable:   boolean('relocatable').default(false),
@@ -66,6 +67,23 @@ export const caregiverLocations = pgTable('caregiver_locations', {
   state:       text('state'),
   lat:         numeric('lat', { precision: 10, scale: 7 }),
   lng:         numeric('lng', { precision: 10, scale: 7 }),
+})
+
+export const caregiverFavorites = pgTable('caregiver_favorites', {
+  clientId:    uuid('client_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  caregiverId: uuid('caregiver_id').notNull().references(() => caregiverProfiles.id, { onDelete: 'cascade' }),
+  createdAt:   timestamp('created_at').defaultNow().notNull(),
+}, (t) => [primaryKey({ columns: [t.clientId, t.caregiverId] })])
+
+export const clientLocations = pgTable('client_locations', {
+  id:       uuid('id').defaultRandom().primaryKey(),
+  clientId: uuid('client_id').notNull().unique().references(() => users.id, { onDelete: 'cascade' }),
+  address1: text('address1'),
+  address2: text('address2'),
+  city:     text('city'),
+  state:    text('state'),
+  lat:      numeric('lat', { precision: 10, scale: 7 }),
+  lng:      numeric('lng', { precision: 10, scale: 7 }),
 })
 
 export const careRecipients = pgTable('care_recipients', {

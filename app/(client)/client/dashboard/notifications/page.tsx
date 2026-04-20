@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { requireRole } from '@/domains/auth/session'
 import { db } from '@/services/db'
 import { notifications } from '@/db/schema'
@@ -5,6 +6,42 @@ import { eq, desc } from 'drizzle-orm'
 
 function formatType(type: string) {
   return type.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
+}
+
+function clientHref(type: string, payload: Record<string, string> | null): string {
+  const requestId          = payload?.requestId
+  const jobId              = payload?.jobId
+  const caregiverProfileId = payload?.caregiverProfileId
+  const recipientId        = payload?.recipientId
+  const shiftId            = payload?.shiftId
+
+  if (type === 'match_found' || type === 'offer_accepted') {
+    if (caregiverProfileId) return `/client/dashboard/find-caregivers/${caregiverProfileId}`
+    if (requestId)          return `/client/dashboard/requests/${requestId}`
+  }
+  if (type === 'offer_received' || type === 'offer_declined' || type === 'application_received') {
+    if (requestId) return `/client/dashboard/requests/${requestId}`
+  }
+  if (type === 'message_received') {
+    if (jobId) return `/client/dashboard/messages/${jobId}`
+  }
+  if (type === 'shift_scheduled' || type === 'shift_completed' || type === 'shift_cancelled') {
+    if (shiftId && jobId) return `/client/dashboard/messages/${jobId}`
+    if (jobId)            return `/client/dashboard/messages/${jobId}`
+  }
+  if (type === 'payment_received' || type === 'payment_sent' || type === 'payment_completed') {
+    return '/client/dashboard/billing'
+  }
+  if (type === 'care_plan_updated' && recipientId) {
+    return `/client/dashboard/care-plans/${recipientId}`
+  }
+
+  // Generic fallbacks: use the most specific resource in the payload
+  if (caregiverProfileId) return `/client/dashboard/find-caregivers/${caregiverProfileId}`
+  if (recipientId)        return `/client/dashboard/recipients/${recipientId}`
+  if (requestId)          return `/client/dashboard/requests/${requestId}`
+  if (jobId)              return `/client/dashboard/messages/${jobId}`
+  return '/client/dashboard'
 }
 
 export default async function NotificationsPage() {
@@ -40,11 +77,13 @@ export default async function NotificationsPage() {
           {rows.map((n) => {
             const payload = n.payload as Record<string, string> | null
             const message = payload?.message ?? payload?.body ?? formatType(n.type)
+            const href = clientHref(n.type, payload)
             return (
-              <div
+              <Link
                 key={n.id}
+                href={href}
                 className={[
-                  'rounded-xl border px-5 py-4',
+                  'block rounded-xl border px-5 py-4 transition-colors hover:bg-accent',
                   n.read
                     ? 'border-border bg-card'
                     : 'border-primary/20 bg-primary/5',
@@ -61,7 +100,7 @@ export default async function NotificationsPage() {
                     {n.createdAt.toLocaleDateString()}
                   </p>
                 </div>
-              </div>
+              </Link>
             )
           })}
         </div>

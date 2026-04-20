@@ -5,7 +5,7 @@ import { db } from '@/services/db'
 import {
   caregiverProfiles, users, caregiverCareTypes, caregiverLocations,
   caregiverCertifications, caregiverLanguages, caregiverWorkPrefs,
-  careRequests, matches,
+  careRequests, matches, caregiverFavorites,
 } from '@/db/schema'
 import { eq, and } from 'drizzle-orm'
 import {
@@ -13,6 +13,8 @@ import {
   WORK_TYPES, DAYS_OF_WEEK, SHIFTS, START_AVAILABILITY,
 } from '@/lib/constants'
 import { SendOfferModal } from '../_components/send-offer-modal'
+import { FavoriteButton } from '../_components/favorite-button'
+import { BackButton } from '@/components/back-button'
 
 const CARE_TYPE_LABELS  = Object.fromEntries(CARE_TYPES.map((c) => [c.key, c.label]))
 const CERT_LABELS       = Object.fromEntries(CERTIFICATIONS.map((c) => [c.key, c.label]))
@@ -31,7 +33,7 @@ export default async function CaregiverProfilePage({ params }: PageProps) {
   const session = await requireRole('client')
   const clientId = session.user.id!
 
-  const [profile, careTypes, locations, certs, langs, workPrefs, activeRequests, existingMatch] = await Promise.all([
+  const [profile, careTypes, locations, certs, langs, workPrefs, activeRequests, existingMatch, favoriteRow] = await Promise.all([
     db
       .select({
         id:          caregiverProfiles.id,
@@ -40,6 +42,7 @@ export default async function CaregiverProfilePage({ params }: PageProps) {
         photoUrl:    caregiverProfiles.photoUrl,
         hourlyMin:   caregiverProfiles.hourlyMin,
         hourlyMax:   caregiverProfiles.hourlyMax,
+        rating:      caregiverProfiles.rating,
         experience:  caregiverProfiles.experience,
         education:   caregiverProfiles.education,
         relocatable: caregiverProfiles.relocatable,
@@ -75,7 +78,13 @@ export default async function CaregiverProfilePage({ params }: PageProps) {
       .innerJoin(careRequests, eq(matches.requestId, careRequests.id))
       .where(and(eq(matches.caregiverId, profileId), eq(careRequests.clientId, clientId)))
       .limit(1),
+    db.select({ clientId: caregiverFavorites.clientId })
+      .from(caregiverFavorites)
+      .where(and(eq(caregiverFavorites.clientId, clientId), eq(caregiverFavorites.caregiverId, profileId)))
+      .limit(1),
   ])
+
+  const isFavorited = favoriteRow.length > 0
 
   if (!profile.length) notFound()
   const p = profile[0]
@@ -93,12 +102,7 @@ export default async function CaregiverProfilePage({ params }: PageProps) {
 
   return (
     <div className="p-8">
-      <Link
-        href="/client/dashboard/find-caregivers"
-        className="text-xs text-muted-foreground hover:text-foreground mb-6 inline-flex items-center gap-1"
-      >
-        ← Back to Find Caregivers
-      </Link>
+      <BackButton label="← Back" />
 
       {/* Header */}
       <div className="flex items-start gap-5 mt-4 mb-8">
@@ -112,15 +116,25 @@ export default async function CaregiverProfilePage({ params }: PageProps) {
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <h1 className="text-2xl font-bold">{p.name}</h1>
+              <div className="flex items-center gap-2">
+                <h1 className="text-2xl font-bold">{p.name}</h1>
+                {p.rating && (
+                  <span className="flex items-center gap-1 text-sm text-amber-500 font-medium">
+                    ★ {Number(p.rating).toFixed(1)}
+                  </span>
+                )}
+              </div>
               {location && <p className="text-sm text-muted-foreground mt-0.5">{location}</p>}
               {p.headline && <p className="text-sm text-muted-foreground mt-1">{p.headline}</p>}
             </div>
-            <SendOfferModal
-              caregiverId={profileId}
-              activeRequests={activeRequests}
-              alreadyOffered={alreadyOffered}
-            />
+            <div className="flex items-center gap-2 shrink-0">
+              <FavoriteButton caregiverId={profileId} initialFavorited={isFavorited} />
+              <SendOfferModal
+                caregiverId={profileId}
+                activeRequests={activeRequests}
+                alreadyOffered={alreadyOffered}
+              />
+            </div>
           </div>
           <div className="flex flex-wrap gap-x-5 gap-y-1 mt-3 text-sm text-muted-foreground">
             {(p.hourlyMin || p.hourlyMax) && (
@@ -225,6 +239,12 @@ export default async function CaregiverProfilePage({ params }: PageProps) {
         <section>
           <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-4">Background</h2>
           <dl className="space-y-4">
+            {p.phone && (
+              <div className="flex gap-4">
+                <dt className="text-sm text-muted-foreground w-36 shrink-0">Phone</dt>
+                <dd className="text-sm font-medium">{p.phone}</dd>
+              </div>
+            )}
             {p.experience && (
               <div className="flex gap-4">
                 <dt className="text-sm text-muted-foreground w-36 shrink-0">Experience</dt>

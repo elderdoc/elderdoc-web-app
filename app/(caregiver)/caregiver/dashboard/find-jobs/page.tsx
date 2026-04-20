@@ -1,11 +1,13 @@
 import { requireRole } from '@/domains/auth/session'
 import { db } from '@/services/db'
 import {
-  caregiverProfiles, careRequests, careRequestLocations,
+  caregiverProfiles, caregiverLocations, careRequests, careRequestLocations,
   jobApplications, matches, users, careRecipients,
 } from '@/db/schema'
 import { eq, and, notInArray } from 'drizzle-orm'
 import { CARE_TYPES } from '@/lib/constants'
+import { haversineDistance, formatMiles } from '@/lib/geo'
+import { MapPin } from 'lucide-react'
 import { JobDetailDrawer } from '../_components/job-detail-drawer'
 
 const CARE_TYPE_LABELS = Object.fromEntries(CARE_TYPES.map((ct) => [ct.key, ct.label]))
@@ -14,13 +16,22 @@ export default async function FindJobsPage() {
   const session = await requireRole('caregiver')
   const userId = session.user.id!
 
-  const profile = await db.query.caregiverProfiles.findFirst({
-    where: eq(caregiverProfiles.userId, userId),
-  })
+  const [profile, cgLocationRow] = await Promise.all([
+    db.query.caregiverProfiles.findFirst({ where: eq(caregiverProfiles.userId, userId) }),
+    db.select({ lat: caregiverLocations.lat, lng: caregiverLocations.lng })
+      .from(caregiverLocations)
+      .innerJoin(caregiverProfiles, eq(caregiverProfiles.id, caregiverLocations.caregiverId))
+      .where(eq(caregiverProfiles.userId, userId))
+      .limit(1)
+      .then((rows) => rows[0] ?? null),
+  ])
 
   if (!profile) {
     return <div className="p-4 lg:p-8 text-muted-foreground text-sm">Complete your profile to browse jobs.</div>
   }
+
+  const cgLat = cgLocationRow?.lat ? Number(cgLocationRow.lat) : null
+  const cgLng = cgLocationRow?.lng ? Number(cgLocationRow.lng) : null
 
   const [appliedRows, matchedRows] = await Promise.all([
     db.select({ id: jobApplications.requestId })
@@ -56,6 +67,8 @@ export default async function FindJobsPage() {
       city:                   careRequestLocations.city,
       state:                  careRequestLocations.state,
       address1:               careRequestLocations.address1,
+      lat:                    careRequestLocations.lat,
+      lng:                    careRequestLocations.lng,
       clientName:             users.name,
       recipientName:          careRecipients.name,
       recipientConditions:    careRecipients.conditions,
@@ -78,7 +91,11 @@ export default async function FindJobsPage() {
       ) : (
         <div className="space-y-4">
           {requests.map((req) => {
-            const location = [req.city, req.state].filter(Boolean).join(', ')
+            const reqLat = req.lat ? Number(req.lat) : null
+            const reqLng = req.lng ? Number(req.lng) : null
+            const distLabel = cgLat && cgLng && reqLat && reqLng
+              ? `${formatMiles(haversineDistance(cgLat, cgLng, reqLat, reqLng))} away`
+              : [req.city, req.state].filter(Boolean).join(', ') || null
             const title = req.title ?? `${CARE_TYPE_LABELS[req.careType] ?? req.careType} Request`
             const job = { ...req, title, careTypeLabel: CARE_TYPE_LABELS[req.careType] ?? req.careType }
 
@@ -94,7 +111,12 @@ export default async function FindJobsPage() {
                       <span className="inline-flex items-center rounded-full bg-primary/10 text-primary px-2 py-0.5 font-medium">
                         {CARE_TYPE_LABELS[req.careType] ?? req.careType}
                       </span>
-                      {location && <span>{location}</span>}
+                      {distLabel && (
+                        <span className="inline-flex items-center gap-1">
+                          <MapPin className="h-3 w-3 shrink-0" />
+                          {distLabel}
+                        </span>
+                      )}
                       {req.frequency && (
                         <span className="capitalize">{req.frequency.replace(/-/g, ' ')}</span>
                       )}

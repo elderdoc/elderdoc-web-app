@@ -1,11 +1,14 @@
 import { requireRole } from '@/domains/auth/session'
 import { db } from '@/services/db'
-import { careRequests, matches } from '@/db/schema'
+import { careRequests, careRequestLocations, clientLocations, caregiverFavorites, matches } from '@/db/schema'
 import { and, eq } from 'drizzle-orm'
 import { getMatchesForRequest, searchCaregivers } from '@/domains/clients/find-caregivers'
 import { FilterForm } from './_components/filter-form'
 import { SendOfferModal } from './_components/send-offer-modal'
+import { FavoriteButton } from './_components/favorite-button'
 import { CARE_TYPES } from '@/lib/constants'
+import { haversineDistance, formatMiles } from '@/lib/geo'
+import { MapPin } from 'lucide-react'
 import Link from 'next/link'
 
 interface PageProps {
@@ -26,6 +29,7 @@ function buildPageUrl(
     requestId?: string; careType?: string; state?: string
     rateMin?: string; rateMax?: string; experience?: string
     language?: string[]; certification?: string[]
+    sort?: string
   },
   targetPage: number,
 ): string {
@@ -36,6 +40,7 @@ function buildPageUrl(
   if (base.rateMin)      params.set('rateMin', base.rateMin)
   if (base.rateMax)      params.set('rateMax', base.rateMax)
   if (base.experience)   params.set('experience', base.experience)
+  if (base.sort)         params.set('sort', base.sort)
   for (const lang of base.language ?? []) params.append('language', lang)
   for (const cert of base.certification ?? []) params.append('certification', cert)
   params.set('page', String(targetPage))
@@ -55,7 +60,7 @@ export default async function FindCaregiversPage({ searchParams }: PageProps) {
 
   const resolvedSearchParams = await searchParams
 
-  const [activeRequests, existingMatches] = await Promise.all([
+  const [activeRequests, existingMatches, favoriteRows] = await Promise.all([
     db
       .select({ id: careRequests.id, title: careRequests.title, careType: careRequests.careType })
       .from(careRequests)
@@ -65,9 +70,14 @@ export default async function FindCaregiversPage({ searchParams }: PageProps) {
       .from(matches)
       .innerJoin(careRequests, eq(matches.requestId, careRequests.id))
       .where(eq(careRequests.clientId, clientId)),
+    db
+      .select({ caregiverId: caregiverFavorites.caregiverId })
+      .from(caregiverFavorites)
+      .where(eq(caregiverFavorites.clientId, clientId)),
   ])
 
-  const offeredSet = new Set(existingMatches.map((m) => m.caregiverId))
+  const offeredSet  = new Set(existingMatches.map((m) => m.caregiverId))
+  const favoriteSet = new Set(favoriteRows.map((f) => f.caregiverId))
 
   const requestId     = sp(resolvedSearchParams.requestId)
   const careType      = sp(resolvedSearchParams.careType)
@@ -77,10 +87,11 @@ export default async function FindCaregiversPage({ searchParams }: PageProps) {
   const language      = spArr(resolvedSearchParams.language)
   const certification = spArr(resolvedSearchParams.certification)
   const experience    = sp(resolvedSearchParams.experience)
+  const sort          = sp(resolvedSearchParams.sort)
   const page          = Math.max(1, parseInt(sp(resolvedSearchParams.page) ?? '1', 10) || 1)
 
   const currentFilters = {
-    requestId, careType, state, rateMin, rateMax, language, certification, experience,
+    requestId, careType, state, rateMin, rateMax, language, certification, experience, sort,
     page: String(page),
   }
 
@@ -88,14 +99,50 @@ export default async function FindCaregiversPage({ searchParams }: PageProps) {
     ? activeRequests.find((r) => r.id === requestId)
     : undefined
 
-  const myMatches = ownedRequest
-    ? await getMatchesForRequest(ownedRequest.id, clientId)
-    : []
+  const [myMatches, requestLocationRow, clientLocationRow] = await Promise.all([
+    ownedRequest ? getMatchesForRequest(ownedRequest.id, clientId) : Promise.resolve([]),
+    ownedRequest
+      ? db.select({ lat: careRequestLocations.lat, lng: careRequestLocations.lng })
+          .from(careRequestLocations)
+          .where(eq(careRequestLocations.requestId, ownedRequest.id))
+          .limit(1)
+          .then((rows) => rows[0] ?? null)
+      : Promise.resolve(null),
+    db.select({ lat: clientLocations.lat, lng: clientLocations.lng })
+      .from(clientLocations)
+      .where(eq(clientLocations.clientId, clientId))
+      .limit(1)
+      .then((rows) => rows[0] ?? null),
+  ])
+
+  const reqLat = requestLocationRow?.lat ? Number(requestLocationRow.lat) : null
+  const reqLng = requestLocationRow?.lng ? Number(requestLocationRow.lng) : null
+  const clientRefLat = clientLocationRow?.lat ? Number(clientLocationRow.lat) : null
+  const clientRefLng = clientLocationRow?.lng ? Number(clientLocationRow.lng) : null
 
   const { caregivers, total } = await searchCaregivers(
     { careType, state, rateMin, rateMax, language, certification, experience },
     page,
   )
+
+  const caregiversWithDistance = caregivers.map((cg) => {
+    const cgLat = cg.lat ? Number(cg.lat) : null
+    const cgLng = cg.lng ? Number(cg.lng) : null
+    const distanceMiles = clientRefLat && clientRefLng && cgLat && cgLng
+      ? haversineDistance(clientRefLat, clientRefLng, cgLat, cgLng)
+      : null
+    return { ...cg, distanceMiles }
+  })
+
+  if (sort === 'distance-asc' || sort === 'distance-desc') {
+    const dir = sort === 'distance-asc' ? 1 : -1
+    caregiversWithDistance.sort((a, b) => {
+      if (a.distanceMiles == null && b.distanceMiles == null) return 0
+      if (a.distanceMiles == null) return 1
+      if (b.distanceMiles == null) return -1
+      return (a.distanceMiles - b.distanceMiles) * dir
+    })
+  }
 
   const totalPages = Math.ceil(total / 20)
 
@@ -132,6 +179,17 @@ export default async function FindCaregiversPage({ searchParams }: PageProps) {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {myMatches.map((m) => {
               const badge = scoreBadge(m.score)
+              const cgLat = m.lat ? Number(m.lat) : null
+              const cgLng = m.lng ? Number(m.lng) : null
+              const distLabel = reqLat && reqLng && cgLat && cgLng
+                ? `${formatMiles(haversineDistance(reqLat, reqLng, cgLat, cgLng))} away`
+                : null
+              const DistLine = distLabel && (
+                <p className="text-xs text-muted-foreground flex items-center gap-1">
+                  <MapPin className="h-3 w-3 shrink-0" />
+                  {distLabel}
+                </p>
+              )
               return (
                 <div key={m.matchId} className="rounded-xl border border-border bg-card p-5 space-y-3">
                   <div className="flex items-center gap-3">
@@ -143,10 +201,15 @@ export default async function FindCaregiversPage({ searchParams }: PageProps) {
                       </div>
                     )}
                     <div className="min-w-0">
-                      <p className="font-medium text-sm truncate">{m.name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {[m.city, m.state].filter(Boolean).join(', ')}
-                      </p>
+                      <div className="flex items-center gap-1.5">
+                        <p className="font-medium text-sm truncate">{m.name}</p>
+                        {m.rating && (
+                          <span className="flex items-center gap-0.5 text-xs text-amber-500 shrink-0">
+                            ★ {Number(m.rating).toFixed(1)}
+                          </span>
+                        )}
+                      </div>
+                      {DistLine}
                     </div>
                   </div>
 
@@ -175,6 +238,7 @@ export default async function FindCaregiversPage({ searchParams }: PageProps) {
                       {badge.label}
                     </span>
                     <div className="flex items-center gap-2 ml-auto">
+                      <FavoriteButton caregiverId={m.caregiverId} initialFavorited={favoriteSet.has(m.caregiverId)} size="sm" />
                       <Link
                         href={`/client/dashboard/find-caregivers/${m.caregiverId}`}
                         className="whitespace-nowrap px-3 py-1.5 rounded-md border border-border text-xs font-medium hover:bg-muted transition-colors"
@@ -208,11 +272,15 @@ export default async function FindCaregiversPage({ searchParams }: PageProps) {
           <span className="text-xs text-muted-foreground">{total} caregiver{total !== 1 ? 's' : ''} found</span>
         </div>
 
-        {caregivers.length === 0 ? (
+        {caregiversWithDistance.length === 0 ? (
           <p className="text-sm text-muted-foreground">No caregivers match the current filters.</p>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {caregivers.map((cg) => (
+            {caregiversWithDistance.map((cg) => {
+              const distLabel = cg.distanceMiles != null
+                ? `${formatMiles(cg.distanceMiles)} away`
+                : null
+              return (
               <div key={cg.caregiverId} className="rounded-xl border border-border bg-card p-5 space-y-3">
                 <div className="flex items-center gap-3">
                   {cg.image ? (
@@ -223,10 +291,20 @@ export default async function FindCaregiversPage({ searchParams }: PageProps) {
                     </div>
                   )}
                   <div className="min-w-0">
-                    <p className="font-medium text-sm truncate">{cg.name}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {[cg.city, cg.state].filter(Boolean).join(', ')}
-                    </p>
+                    <div className="flex items-center gap-1.5">
+                      <p className="font-medium text-sm truncate">{cg.name}</p>
+                      {cg.rating && (
+                        <span className="flex items-center gap-0.5 text-xs text-amber-500 shrink-0">
+                          ★ {Number(cg.rating).toFixed(1)}
+                        </span>
+                      )}
+                    </div>
+                    {distLabel && (
+                      <p className="text-xs text-muted-foreground flex items-center gap-1">
+                        <MapPin className="h-3 w-3 shrink-0" />
+                        {distLabel}
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -255,6 +333,7 @@ export default async function FindCaregiversPage({ searchParams }: PageProps) {
                 )}
 
                 <div className="flex items-center justify-end gap-2 flex-wrap">
+                  <FavoriteButton caregiverId={cg.caregiverId} initialFavorited={favoriteSet.has(cg.caregiverId)} size="sm" />
                   <Link
                     href={`/client/dashboard/find-caregivers/${cg.caregiverId}`}
                     className="whitespace-nowrap px-3 py-1.5 rounded-md border border-border text-xs font-medium hover:bg-muted transition-colors"
@@ -268,7 +347,7 @@ export default async function FindCaregiversPage({ searchParams }: PageProps) {
                   />
                 </div>
               </div>
-            ))}
+            )})}
           </div>
         )}
 
@@ -276,7 +355,7 @@ export default async function FindCaregiversPage({ searchParams }: PageProps) {
           <div className="flex items-center justify-center gap-2 mt-6">
             {page > 1 && (
               <a
-                href={buildPageUrl({ requestId, careType, state, rateMin, rateMax, experience, language, certification }, page - 1)}
+                href={buildPageUrl({ requestId, careType, state, rateMin, rateMax, experience, language, certification, sort }, page - 1)}
                 className="px-3 py-1.5 rounded-md border border-border text-sm hover:bg-muted"
               >
                 ← Prev
@@ -287,7 +366,7 @@ export default async function FindCaregiversPage({ searchParams }: PageProps) {
             </span>
             {page < totalPages && (
               <a
-                href={buildPageUrl({ requestId, careType, state, rateMin, rateMax, experience, language, certification }, page + 1)}
+                href={buildPageUrl({ requestId, careType, state, rateMin, rateMax, experience, language, certification, sort }, page + 1)}
                 className="px-3 py-1.5 rounded-md border border-border text-sm hover:bg-muted"
               >
                 Next →

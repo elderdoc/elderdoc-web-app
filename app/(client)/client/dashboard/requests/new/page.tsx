@@ -20,6 +20,7 @@ export default async function NewRequestPage({ searchParams }: PageProps) {
         name:         careRecipients.name,
         relationship: careRecipients.relationship,
         photoUrl:     careRecipients.photoUrl,
+        address:      careRecipients.address,
       })
       .from(careRecipients)
       .where(eq(careRecipients.clientId, userId)),

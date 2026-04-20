@@ -19,10 +19,11 @@ interface RecipientOption {
   name: string
   relationship: string | null
   photoUrl: string | null
+  address: { address1?: string; address2?: string; city?: string; state?: string } | null
 }
 
 interface RequestForm {
-  careType: string
+  careTypes: string[]
   recipientId: string
   recipientName: string
   address: { address1: string; address2: string; city: string; state: string }
@@ -40,7 +41,7 @@ interface RequestForm {
 }
 
 const EMPTY: RequestForm = {
-  careType: '', recipientId: '', recipientName: '',
+  careTypes: [], recipientId: '', recipientName: '',
   address: { address1: '', address2: '', city: '', state: '' },
   frequency: '', days: [], shifts: [], startDate: '', durationHours: 0,
   genderPref: '', languagePref: [], budgetType: '', budgetAmount: '',
@@ -64,6 +65,15 @@ interface Props {
   avgHourlyMax: number | null
 }
 
+function recipientAddressToForm(addr: RecipientOption['address']): RequestForm['address'] {
+  return {
+    address1: addr?.address1 ?? '',
+    address2: addr?.address2 ?? '',
+    city:     addr?.city ?? '',
+    state:    addr?.state ?? '',
+  }
+}
+
 export function NewRequestForm({ initialRecipients, initialRecipientId, avgHourlyMin, avgHourlyMax }: Props) {
   const router = useRouter()
   const [step, setStep] = useState(1)
@@ -74,7 +84,9 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgHourl
     ...EMPTY,
     recipientId:   preselected?.id ?? '',
     recipientName: preselected?.name ?? '',
+    address:       preselected?.address ? recipientAddressToForm(preselected.address) : EMPTY.address,
   })
+  const [useRecipientAddress, setUseRecipientAddress] = useState(true)
   const [recipients, setRecipients] = useState<RecipientOption[]>(initialRecipients)
   const [generated, setGenerated] = useState(false)
   const [isGenerating, setIsGenerating] = useState(false)
@@ -83,7 +95,7 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgHourl
   const [candidates, setCandidates] = useState<RankedCandidate[]>([])
   const [matchRequestId, setMatchRequestId] = useState<string | null>(null)
 
-  function toggleMulti(field: 'days' | 'shifts' | 'languagePref', key: string) {
+  function toggleMulti(field: 'careTypes' | 'days' | 'shifts' | 'languagePref', key: string) {
     setForm((f) => ({
       ...f,
       [field]: (f[field] as string[]).includes(key)
@@ -93,9 +105,28 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgHourl
   }
 
   function handleNewRecipientCreated(id: string, name: string) {
-    const newRec: RecipientOption = { id, name, relationship: null, photoUrl: null }
+    const newRec: RecipientOption = { id, name, relationship: null, photoUrl: null, address: null }
     setRecipients((prev) => [...prev, newRec])
     setForm((f) => ({ ...f, recipientId: id, recipientName: name }))
+  }
+
+  function handleRecipientSelect(r: RecipientOption) {
+    setForm((f) => ({
+      ...f,
+      recipientId:   r.id,
+      recipientName: r.name,
+      address:       useRecipientAddress && r.address ? recipientAddressToForm(r.address) : f.address,
+    }))
+  }
+
+  function handleUseRecipientAddressToggle(checked: boolean) {
+    setUseRecipientAddress(checked)
+    if (checked) {
+      const selected = recipients.find((r) => r.id === form.recipientId)
+      if (selected?.address) {
+        setForm((f) => ({ ...f, address: recipientAddressToForm(selected.address) }))
+      }
+    }
   }
 
   async function handleGenerate() {
@@ -105,7 +136,7 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgHourl
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          careType: form.careType, recipientName: form.recipientName,
+          careType: form.careTypes[0] ?? '',
           conditions: [], frequency: form.frequency, days: form.days,
           shifts: form.shifts, duration: String(form.durationHours),
           languages: form.languagePref,
@@ -138,7 +169,7 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgHourl
       try {
         result = await createCareRequest({
           recipientId:   form.recipientId,
-          careType:      form.careType,
+          careType:      form.careTypes[0] ?? '',
           address:       form.address,
           frequency:     form.frequency,
           days:          form.days,
@@ -180,7 +211,7 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgHourl
   }
 
   const stepValid = [
-    form.careType.length > 0,
+    form.careTypes.length > 0,
     form.recipientId.length > 0,
     form.address.address1.trim().length > 0 && form.address.city.trim().length > 0 && form.address.state.length > 0,
     form.frequency.length > 0 && form.days.length > 0 && form.shifts.length > 0 && form.startDate.length > 0,
@@ -222,22 +253,25 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgHourl
       )}
       <h1 className="text-2xl font-semibold mb-8">{STEP_TITLES[step - 1]}</h1>
 
-      {/* Step 1 — Care Type */}
+      {/* Step 1 — Care Type (multi-select) */}
       {step === 1 && (
-        <div className="grid grid-cols-2 gap-3">
-          {CARE_TYPES.map((ct) => (
-            <button
-              key={ct.key}
-              type="button"
-              onClick={() => setForm((f) => ({ ...f, careType: ct.key }))}
-              className={[
-                'rounded-xl border-2 px-5 py-4 text-sm font-medium transition-colors text-left',
-                form.careType === ct.key ? 'border-primary bg-primary/5 text-primary' : 'border-border hover:border-primary/50',
-              ].join(' ')}
-            >
-              {ct.label}
-            </button>
-          ))}
+        <div className="space-y-3">
+          <p className="text-sm text-muted-foreground">Select all that apply.</p>
+          <div className="grid grid-cols-2 gap-3">
+            {CARE_TYPES.map((ct) => (
+              <button
+                key={ct.key}
+                type="button"
+                onClick={() => toggleMulti('careTypes', ct.key)}
+                className={[
+                  'rounded-xl border-2 px-5 py-4 text-sm font-medium transition-colors text-left',
+                  form.careTypes.includes(ct.key) ? 'border-primary bg-primary/5 text-primary' : 'border-border hover:border-primary/50',
+                ].join(' ')}
+              >
+                {ct.label}
+              </button>
+            ))}
+          </div>
         </div>
       )}
 
@@ -251,7 +285,7 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgHourl
                 <button
                   key={r.id}
                   type="button"
-                  onClick={() => setForm((f) => ({ ...f, recipientId: r.id, recipientName: r.name }))}
+                  onClick={() => handleRecipientSelect(r)}
                   className={[
                     'flex items-center gap-3 rounded-xl border-2 px-4 py-3 text-sm text-left transition-colors',
                     form.recipientId === r.id ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50',
@@ -282,6 +316,17 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgHourl
       {/* Step 3 — Address */}
       {step === 3 && (
         <div className="space-y-4">
+          {form.recipientId && (
+            <label className="flex items-center gap-2 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={useRecipientAddress}
+                onChange={(e) => handleUseRecipientAddressToggle(e.target.checked)}
+                className="h-4 w-4 rounded border-border accent-primary"
+              />
+              <span className="text-sm">Use {form.recipientName || 'care recipient'}'s location</span>
+            </label>
+          )}
           <div>
             <label className="block text-sm font-medium mb-1">Address Line 1 *</label>
             <input type="text" value={form.address.address1}
@@ -551,14 +596,21 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgHourl
                           <div className="flex items-center justify-between gap-2 flex-wrap mb-1">
                             <div className="flex items-center gap-2 flex-wrap">
                               <p className="font-semibold">{c.name ?? 'Caregiver'}</p>
+                              {c.rating && (
+                                <span className="flex items-center gap-0.5 text-xs text-amber-500 font-medium">
+                                  ★ {Number(c.rating).toFixed(1)}
+                                </span>
+                              )}
                               <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${scoreBadge.cls}`}>
                                 {scoreBadge.label}
                               </span>
                             </div>
                             <span className="text-sm font-semibold text-primary shrink-0">{c.score}% match</span>
                           </div>
-                          {(c.city || c.state) && (
-                            <p className="text-sm text-muted-foreground">{[c.city, c.state].filter(Boolean).join(', ')}</p>
+                          {(c.distanceLabel || c.city || c.state) && (
+                            <p className="text-sm text-muted-foreground">
+                              {c.distanceLabel ?? [c.city, c.state].filter(Boolean).join(', ')}
+                            </p>
                           )}
                           {c.headline && <p className="text-sm text-muted-foreground mt-0.5">{c.headline}</p>}
                           {c.careTypes.length > 0 && (

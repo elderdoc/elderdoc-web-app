@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { requireRole } from '@/domains/auth/session'
 import { db } from '@/services/db'
 import { notifications } from '@/db/schema'
@@ -5,6 +6,44 @@ import { eq, desc } from 'drizzle-orm'
 
 function formatType(type: string) {
   return type.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
+}
+
+function caregiverHref(type: string, payload: Record<string, string> | null): string {
+  const requestId = payload?.requestId
+  const jobId     = payload?.jobId
+  const offerId   = payload?.offerId ?? payload?.matchId
+
+  if (type === 'offer_received') {
+    if (offerId) return `/caregiver/dashboard/offers?offerId=${offerId}`
+    return '/caregiver/dashboard/offers'
+  }
+  if (type === 'application_accepted' || type === 'application_declined') {
+    if (jobId) return `/caregiver/dashboard/messages/${jobId}`
+    return '/caregiver/dashboard/my-jobs'
+  }
+  if (type === 'job_started') {
+    if (jobId) return `/caregiver/dashboard/messages/${jobId}`
+    return '/caregiver/dashboard/my-jobs'
+  }
+  if (type === 'shift_scheduled' || type === 'shift_completed' || type === 'shift_cancelled' || type === 'shift_edited') {
+    return '/caregiver/dashboard/shifts'
+  }
+  if (type === 'message_received') {
+    if (jobId) return `/caregiver/dashboard/messages/${jobId}`
+    return '/caregiver/dashboard/messages'
+  }
+  if (type === 'payment_received' || type === 'payment_completed') {
+    return '/caregiver/dashboard/payouts'
+  }
+  if (type === 'new_job_match' || type === 'new_request') {
+    return '/caregiver/dashboard/find-jobs'
+  }
+
+  // Generic fallbacks
+  if (jobId)     return `/caregiver/dashboard/messages/${jobId}`
+  if (offerId)   return `/caregiver/dashboard/offers?offerId=${offerId}`
+  if (requestId) return '/caregiver/dashboard/find-jobs'
+  return '/caregiver/dashboard'
 }
 
 export default async function NotificationsPage() {
@@ -39,11 +78,13 @@ export default async function NotificationsPage() {
           {rows.map((n) => {
             const payload = n.payload as Record<string, string> | null
             const message = payload?.message ?? payload?.body ?? formatType(n.type)
+            const href = caregiverHref(n.type, payload)
             return (
-              <div
+              <Link
                 key={n.id}
+                href={href}
                 className={[
-                  'rounded-xl border px-5 py-4',
+                  'block rounded-xl border px-5 py-4 transition-colors hover:bg-accent',
                   n.read
                     ? 'border-border bg-card'
                     : 'border-primary/20 bg-primary/5',
@@ -60,7 +101,7 @@ export default async function NotificationsPage() {
                     {n.createdAt.toLocaleDateString()}
                   </p>
                 </div>
-              </div>
+              </Link>
             )
           })}
         </div>

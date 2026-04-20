@@ -105,7 +105,7 @@ describe('getCaregiverPayments', () => {
         careType: 'dementia-care',
         clientName: 'Bob Jones',
         amount: 7500,
-        method: 'cash',
+        method: 'stripe',
         status: 'pending',
         createdAt: now,
       },
@@ -118,7 +118,7 @@ describe('getCaregiverPayments', () => {
     expect(result[0].clientName).toBe('Bob Jones')
     expect(result[0].caregiverName).toBeNull()
     expect(result[0].amount).toBe(7500)
-    expect(result[0].method).toBe('cash')
+    expect(result[0].method).toBe('stripe')
     expect(result[0].status).toBe('pending')
     expect(result[0].createdAt).toBe(now)
   })

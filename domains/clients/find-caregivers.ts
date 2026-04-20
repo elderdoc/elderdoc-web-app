@@ -16,6 +16,9 @@ export type MatchResult = {
   careTypes: string[]
   city: string | null
   state: string | null
+  lat: string | null
+  lng: string | null
+  rating: string | null
   hourlyMin: string | null
   hourlyMax: string | null
 }
@@ -31,6 +34,9 @@ export type CaregiverResult = {
   certifications: string[]
   city: string | null
   state: string | null
+  lat: string | null
+  lng: string | null
+  rating: string | null
   hourlyMin: string | null
   hourlyMax: string | null
 }
@@ -60,6 +66,9 @@ export async function getMatchesForRequest(
       headline:   caregiverProfiles.headline,
       city:       caregiverLocations.city,
       state:      caregiverLocations.state,
+      lat:        caregiverLocations.lat,
+      lng:        caregiverLocations.lng,
+      rating:     caregiverProfiles.rating,
       hourlyMin:  caregiverProfiles.hourlyMin,
       hourlyMax:  caregiverProfiles.hourlyMax,
     })
@@ -93,6 +102,9 @@ export async function getMatchesForRequest(
 
   return rows.map((r) => ({
     ...r,
+    lat: r.lat ?? null,
+    lng: r.lng ?? null,
+    rating: r.rating ?? null,
     careTypes: careTypeMap.get(r.caregiverId) ?? [],
   }))
 }
@@ -147,6 +159,9 @@ export async function searchCaregivers(
       experience:  caregiverProfiles.experience,
       city:        caregiverLocations.city,
       state:       caregiverLocations.state,
+      lat:         caregiverLocations.lat,
+      lng:         caregiverLocations.lng,
+      rating:      caregiverProfiles.rating,
       hourlyMin:   caregiverProfiles.hourlyMin,
       hourlyMax:   caregiverProfiles.hourlyMax,
     })
@@ -170,6 +185,8 @@ export async function searchCaregivers(
     caregiverId: string; name: string | null; image: string | null
     headline: string | null; experience: string | null
     city: string | null; state: string | null
+    lat: string | null; lng: string | null
+    rating: string | null
     hourlyMin: string | null; hourlyMax: string | null
   }
   const rows: SearchRow[] = await baseQuery
@@ -226,6 +243,9 @@ export async function searchCaregivers(
       experience:     r.experience,
       city:           r.city,
       state:          r.state,
+      lat:            r.lat ?? null,
+      lng:            r.lng ?? null,
+      rating:         r.rating ?? null,
       hourlyMin:      r.hourlyMin,
       hourlyMax:      r.hourlyMax,
       careTypes:      careTypeMap.get(r.caregiverId) ?? [],

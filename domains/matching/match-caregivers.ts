@@ -6,6 +6,7 @@ import {
   caregiverLanguages, users,
 } from '@/db/schema'
 import { eq, and, inArray } from 'drizzle-orm'
+import { haversineDistance, formatMiles } from '@/lib/geo'
 
 export type RankedCandidate = {
   caregiverId: string
@@ -17,6 +18,8 @@ export type RankedCandidate = {
   careTypes: string[]
   city: string | null
   state: string | null
+  distanceLabel: string | null
+  rating: string | null
   hourlyMin: string | null
   hourlyMax: string | null
 }
@@ -36,6 +39,8 @@ export async function matchCaregivers(requestId: string): Promise<RankedCandidat
       title:         careRequests.title,
       description:   careRequests.description,
       state:         careRequestLocations.state,
+      lat:           careRequestLocations.lat,
+      lng:           careRequestLocations.lng,
     })
     .from(careRequests)
     .leftJoin(careRequestLocations, eq(careRequestLocations.requestId, careRequests.id))
@@ -56,6 +61,9 @@ export async function matchCaregivers(requestId: string): Promise<RankedCandidat
       image:      users.image,
       city:       caregiverLocations.city,
       state:      caregiverLocations.state,
+      lat:        caregiverLocations.lat,
+      lng:        caregiverLocations.lng,
+      rating:     caregiverProfiles.rating,
     })
     .from(caregiverProfiles)
     .innerJoin(users, eq(users.id, caregiverProfiles.userId))
@@ -141,24 +149,34 @@ ${JSON.stringify(candidates.map((c) => ({
     return []
   }
 
+  const reqLat = requestRow.lat ? Number(requestRow.lat) : null
+  const reqLng = requestRow.lng ? Number(requestRow.lng) : null
+
   // 6. Top 5 by score, join display data
   return rankings
     .sort((a, b) => b.score - a.score)
     .slice(0, 5)
     .map((r) => {
       const c = candidates.find((x) => x.id === r.caregiverId)
+      const cgLat = c?.lat ? Number(c.lat) : null
+      const cgLng = c?.lng ? Number(c.lng) : null
+      const distanceLabel = reqLat && reqLng && cgLat && cgLng
+        ? formatMiles(haversineDistance(reqLat, reqLng, cgLat, cgLng))
+        : null
       return {
-        caregiverId: r.caregiverId,
-        score:       r.score,
-        reason:      r.reason,
-        name:        c?.name ?? null,
-        image:       c?.image ?? null,
-        headline:    c?.headline ?? null,
-        careTypes:   typeMap.get(r.caregiverId) ?? [],
-        city:        c?.city ?? null,
-        state:       c?.state ?? null,
-        hourlyMin:   c?.hourlyMin ?? null,
-        hourlyMax:   c?.hourlyMax ?? null,
+        caregiverId:   r.caregiverId,
+        score:         r.score,
+        reason:        r.reason,
+        name:          c?.name ?? null,
+        image:         c?.image ?? null,
+        headline:      c?.headline ?? null,
+        careTypes:     typeMap.get(r.caregiverId) ?? [],
+        city:          c?.city ?? null,
+        state:         c?.state ?? null,
+        distanceLabel,
+        rating:        c?.rating ?? null,
+        hourlyMin:     c?.hourlyMin ?? null,
+        hourlyMax:     c?.hourlyMax ?? null,
       }
     })
 }
