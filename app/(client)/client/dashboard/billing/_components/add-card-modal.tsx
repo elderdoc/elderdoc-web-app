@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { loadStripe } from '@stripe/stripe-js'
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js'
 import { createPaymentSetupIntent, saveDefaultPaymentMethod } from '@/domains/payments/actions'
@@ -43,22 +43,24 @@ function SetupForm({ onClose }: { onClose: () => void }) {
       return
     }
 
-    const pmId = typeof setupIntent?.payment_method === 'string'
-      ? setupIntent.payment_method
-      : setupIntent?.payment_method?.id
+    if (setupIntent?.status === 'succeeded') {
+      const pmId = typeof setupIntent.payment_method === 'string'
+        ? setupIntent.payment_method
+        : setupIntent.payment_method?.id
 
-    if (pmId) {
-      const result = await saveDefaultPaymentMethod(pmId)
-      if (result.error) {
-        setError(result.error)
-        setIsPending(false)
-        return
+      if (pmId) {
+        const result = await saveDefaultPaymentMethod(pmId)
+        if (result.error) {
+          setError(result.error)
+          setIsPending(false)
+          return
+        }
       }
     }
 
-    router.refresh()
-    onClose()
     setIsPending(false)
+    onClose()
+    router.refresh()
   }
 
   return (
@@ -86,7 +88,7 @@ function SetupForm({ onClose }: { onClose: () => void }) {
 }
 
 export function AddCardModal({ stripePublishableKey, onClose }: Props) {
-  const stripePromise = loadStripe(stripePublishableKey)
+  const stripePromise = useMemo(() => loadStripe(stripePublishableKey), [stripePublishableKey])
   const [clientSecret, setClientSecret] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
@@ -103,7 +105,7 @@ export function AddCardModal({ stripePublishableKey, onClose }: Props) {
         <div className="p-6 flex flex-col gap-5">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold">Add payment method</h2>
-            <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
+            <button onClick={onClose} aria-label="Close" className="text-muted-foreground hover:text-foreground">
               <X className="h-4 w-4" />
             </button>
           </div>
