@@ -2,6 +2,8 @@
 
 import { useState } from 'react'
 import { RecordPaymentModal } from './record-payment-modal'
+import { SavedCardBanner } from './saved-card-banner'
+import { PaymentHistoryCard } from './payment-history-card'
 import type { PaymentRow } from '@/domains/payments/queries'
 
 interface ActiveJob {
@@ -14,9 +16,10 @@ interface Props {
   paymentRows: PaymentRow[]
   activeJobs: ActiveJob[]
   savedCard: { brand: string; last4: string } | null
+  stripePublishableKey: string
 }
 
-export function BillingClient({ paymentRows, activeJobs, savedCard }: Props) {
+export function BillingClient({ paymentRows, activeJobs, savedCard, stripePublishableKey }: Props) {
   const [modalJobId, setModalJobId] = useState<string | null>(null)
   const modalJob = activeJobs.find((j) => j.jobId === modalJobId)
 
@@ -30,6 +33,8 @@ export function BillingClient({ paymentRows, activeJobs, savedCard }: Props) {
           onClose={() => setModalJobId(null)}
         />
       )}
+
+      <SavedCardBanner savedCard={savedCard} stripePublishableKey={stripePublishableKey} />
 
       <div className="mb-8">
         <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-3">Active Jobs</p>
@@ -65,26 +70,18 @@ export function BillingClient({ paymentRows, activeJobs, savedCard }: Props) {
         ) : (
           <div className="space-y-2">
             {paymentRows.map((row) => (
-              <div key={row.paymentId} className="flex items-center justify-between rounded-lg border border-border bg-card px-4 py-3">
-                <div>
-                  <p className="text-sm font-medium">{row.careType}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {row.caregiverName} · {row.method} · {row.createdAt.toLocaleDateString()}
-                  </p>
-                </div>
-                <div className="text-right">
-                  <p className="text-sm font-semibold">${(row.amount / 100).toFixed(2)}</p>
-                  <span className={`text-xs px-2 py-0.5 rounded-full ${
-                    row.status === 'completed'
-                      ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                      : row.status === 'failed'
-                      ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-                      : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
-                  }`}>
-                    {row.status}
-                  </span>
-                </div>
-              </div>
+              <PaymentHistoryCard
+                key={row.paymentId}
+                careType={row.careType}
+                caregiverName={row.caregiverName}
+                method={row.method}
+                amount={row.amount}
+                fee={row.fee}
+                status={row.status}
+                stripePaymentIntentId={row.stripePaymentIntentId}
+                stripeInvoiceId={row.stripeInvoiceId}
+                createdAt={row.createdAt}
+              />
             ))}
           </div>
         )}
