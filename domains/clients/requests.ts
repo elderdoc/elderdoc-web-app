@@ -2,7 +2,7 @@
 
 import { auth } from '@/auth'
 import { db } from '@/services/db'
-import { careRecipients, careRequests, careRequestLocations } from '@/db/schema'
+import { careRecipients, careRequests, careRequestLocations, carePlans, type CareTaskEntry } from '@/db/schema'
 import { eq, and } from 'drizzle-orm'
 
 export async function createCareRecipient(data: {
@@ -171,4 +171,48 @@ export async function updateCareRequest(id: string, data: {
       clientStatus:    data.clientStatus,
     })
     .where(and(eq(careRequests.id, id), eq(careRequests.clientId, session.user.id)))
+}
+
+export async function saveCareRequestCarePlan(
+  requestId: string,
+  plan: {
+    activityMobilitySafety: CareTaskEntry[]
+    hygieneElimination:     CareTaskEntry[]
+    homeManagement:         CareTaskEntry[]
+    hydrationNutrition:     CareTaskEntry[]
+    medicationReminders:    CareTaskEntry[]
+  }
+): Promise<void> {
+  const session = await auth()
+  if (!session?.user?.id) throw new Error('Unauthorized')
+
+  const [req] = await db
+    .select({ id: careRequests.id, recipientId: careRequests.recipientId })
+    .from(careRequests)
+    .where(and(eq(careRequests.id, requestId), eq(careRequests.clientId, session.user.id)))
+    .limit(1)
+  if (!req) throw new Error('Not found')
+
+  await db
+    .insert(carePlans)
+    .values({
+      requestId,
+      recipientId: req.recipientId ?? undefined,
+      activityMobilitySafety: plan.activityMobilitySafety,
+      hygieneElimination:     plan.hygieneElimination,
+      homeManagement:         plan.homeManagement,
+      hydrationNutrition:     plan.hydrationNutrition,
+      medicationReminders:    plan.medicationReminders,
+    })
+    .onConflictDoUpdate({
+      target: carePlans.requestId,
+      set: {
+        activityMobilitySafety: plan.activityMobilitySafety,
+        hygieneElimination:     plan.hygieneElimination,
+        homeManagement:         plan.homeManagement,
+        hydrationNutrition:     plan.hydrationNutrition,
+        medicationReminders:    plan.medicationReminders,
+        updatedAt:              new Date(),
+      },
+    })
 }
