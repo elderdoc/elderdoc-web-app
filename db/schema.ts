@@ -31,6 +31,7 @@ export const caregiverProfiles = pgTable('caregiver_profiles', {
   status:        text('status', { enum: ['pending', 'active', 'inactive'] }).default('pending'),
   completedStep:            integer('completed_step').default(0),
   stripeConnectAccountId:   text('stripe_connect_account_id'),
+  availability: jsonb('availability').$type<Array<{ day: string; startTime: string; endTime: string }>>(),
   createdAt:                timestamp('created_at').defaultNow().notNull(),
 })
 
@@ -53,8 +54,6 @@ export const caregiverWorkPrefs = pgTable('caregiver_work_prefs', {
   id:                  uuid('id').defaultRandom().primaryKey(),
   caregiverId:         uuid('caregiver_id').notNull().references(() => caregiverProfiles.id, { onDelete: 'cascade' }),
   workType:            text('work_type'),
-  shift:               text('shift'),
-  day:                 text('day'),
   travelDistanceMiles: integer('travel_distance_miles'),
   startAvailability:   text('start_availability'),
 })
@@ -126,10 +125,8 @@ export const careRequests = pgTable('care_requests', {
   description:  text('description'),
   careType:     text('care_type').notNull(),
   frequency:    text('frequency'),
-  days:         text('days').array(),
-  shifts:       text('shifts').array(),
+  schedule:     jsonb('schedule').$type<Array<{ day: string; startTime: string; endTime: string }>>(),
   startDate:    text('start_date'),
-  durationHours:integer('duration_hours'),
   genderPref:   text('gender_pref'),
   languagePref: text('language_pref').array(),
   budgetType:   text('budget_type'),
