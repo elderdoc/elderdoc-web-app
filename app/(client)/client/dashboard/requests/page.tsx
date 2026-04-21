@@ -18,8 +18,7 @@ export default async function RequestsPage() {
       frequency:     careRequests.frequency,
       budgetType:    careRequests.budgetType,
       budgetAmount:  careRequests.budgetAmount,
-      durationHours: careRequests.durationHours,
-      shifts:        careRequests.shifts,
+      schedule:      careRequests.schedule,
       createdAt:     careRequests.createdAt,
       recipientName: careRecipients.name,
     })

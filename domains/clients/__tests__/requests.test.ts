@@ -78,8 +78,8 @@ describe('createCareRequest', () => {
   const BASE = {
     recipientId: 'rec-1', careType: 'personal-care',
     address: { address1: '123 Main St', city: 'Austin', state: 'Texas' },
-    frequency: 'weekly', days: ['monday'], shifts: ['morning'],
-    startDate: '2026-05-01', durationHours: 4,
+    frequency: 'weekly', schedule: [{ day: 'monday', startTime: '09:00', endTime: '17:00' }],
+    startDate: '2026-05-01',
     languagePref: ['english'], title: 'Help for Mom', description: 'Desc',
   }
 

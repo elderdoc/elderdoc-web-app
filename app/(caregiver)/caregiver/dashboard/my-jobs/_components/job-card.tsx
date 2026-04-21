@@ -26,10 +26,6 @@ const FREQUENCY_LABELS: Record<string, string> = {
   as_needed:'As needed',
 }
 
-const DAY_LABELS: Record<string, string> = {
-  mon: 'Mon', tue: 'Tue', wed: 'Wed', thu: 'Thu',
-  fri: 'Fri', sat: 'Sat', sun: 'Sun',
-}
 
 export interface JobCardData {
   id: string
@@ -40,10 +36,8 @@ export interface JobCardData {
   careTypeLabel: string
   description: string | null
   frequency: string | null
-  days: string[] | null
-  shiftTimes: string[] | null
+  schedule: Array<{ day: string; startTime: string; endTime: string }> | null
   startDate: string | null
-  durationHours: number | null
   budgetAmount: string | null
   clientName: string | null
   recipientName: string | null
@@ -66,10 +60,8 @@ export function JobCard({ job }: Props) {
   const [open, setOpen] = useState(false)
   const statusLabel = STATUS_LABELS[job.status ?? 'active'] ?? job.status
   const statusClass = STATUS_CLASSES[job.status ?? 'active'] ?? 'bg-muted text-muted-foreground'
-  const daysLabel = job.days?.map((d) => DAY_LABELS[d] ?? d).join(', ')
   const freqLabel = job.frequency ? (FREQUENCY_LABELS[job.frequency] ?? job.frequency) : null
   const rateLabel = job.budgetAmount ? `$${Number(job.budgetAmount).toFixed(0)}/hr` : null
-  const durationLabel = job.durationHours ? `${job.durationHours}h / shift` : null
 
   return (
     <>
@@ -123,13 +115,20 @@ export function JobCard({ job }: Props) {
               <div className="grid grid-cols-2 gap-3">
                 {job.startDate && <DetailTile label="Start date" value={new Date(job.startDate).toLocaleDateString()} />}
                 {freqLabel && <DetailTile label="Frequency" value={freqLabel} />}
-                {daysLabel && <DetailTile label="Days" value={daysLabel} />}
-                {job.shiftTimes && job.shiftTimes.length > 0 && (
-                  <DetailTile label="Shift times" value={job.shiftTimes.join(', ')} />
-                )}
-                {durationLabel && <DetailTile label="Duration" value={durationLabel} />}
                 {rateLabel && <DetailTile label="Hourly rate" value={rateLabel} />}
               </div>
+              {job.schedule && job.schedule.length > 0 && (
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">Schedule</p>
+                  <div className="flex flex-wrap gap-2">
+                    {job.schedule.map((entry, i) => (
+                      <span key={i} className="rounded bg-muted px-2 py-0.5 text-xs capitalize">
+                        {entry.day} {entry.startTime}–{entry.endTime}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Description */}
               {job.description && (

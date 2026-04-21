@@ -10,7 +10,7 @@ import {
 import { eq, and } from 'drizzle-orm'
 import {
   CARE_TYPES, CERTIFICATIONS, LANGUAGES,
-  WORK_TYPES, DAYS_OF_WEEK, SHIFTS, START_AVAILABILITY,
+  WORK_TYPES, START_AVAILABILITY,
 } from '@/lib/constants'
 import { SendOfferModal } from '../_components/send-offer-modal'
 import { FavoriteButton } from '../_components/favorite-button'
@@ -20,8 +20,6 @@ const CARE_TYPE_LABELS  = Object.fromEntries(CARE_TYPES.map((c) => [c.key, c.lab
 const CERT_LABELS       = Object.fromEntries(CERTIFICATIONS.map((c) => [c.key, c.label]))
 const LANG_LABELS       = Object.fromEntries(LANGUAGES.map((l) => [l.key, l.label]))
 const WORK_TYPE_LABELS  = Object.fromEntries(WORK_TYPES.map((w) => [w.key, w.label]))
-const DAY_LABELS        = Object.fromEntries(DAYS_OF_WEEK.map((d) => [d.key, d.label]))
-const SHIFT_LABELS      = Object.fromEntries(SHIFTS.map((s) => [s.key, s.label]))
 const START_LABELS      = Object.fromEntries(START_AVAILABILITY.map((s) => [s.key, s.label]))
 
 interface PageProps {
@@ -64,8 +62,6 @@ export default async function CaregiverProfilePage({ params }: PageProps) {
       .from(caregiverLanguages).where(eq(caregiverLanguages.caregiverId, profileId)),
     db.select({
         workType:            caregiverWorkPrefs.workType,
-        shift:               caregiverWorkPrefs.shift,
-        day:                 caregiverWorkPrefs.day,
         travelDistanceMiles: caregiverWorkPrefs.travelDistanceMiles,
         startAvailability:   caregiverWorkPrefs.startAvailability,
       })
@@ -95,8 +91,6 @@ export default async function CaregiverProfilePage({ params }: PageProps) {
 
   // Deduplicate work prefs
   const workTypes = [...new Set(workPrefs.map((w) => w.workType).filter(Boolean))] as string[]
-  const availDays = [...new Set(workPrefs.map((w) => w.day).filter(Boolean))] as string[]
-  const availShifts = [...new Set(workPrefs.map((w) => w.shift).filter(Boolean))] as string[]
   const travelDistances = [...new Set(workPrefs.map((w) => w.travelDistanceMiles).filter((v) => v != null))] as number[]
   const startAvail = workPrefs.find((w) => w.startAvailability)?.startAvailability ?? null
 
@@ -175,7 +169,7 @@ export default async function CaregiverProfilePage({ params }: PageProps) {
         {/* Availability */}
         <section>
           <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-4">Availability</h2>
-          {workTypes.length === 0 && availDays.length === 0 && availShifts.length === 0 && !startAvail ? (
+          {workTypes.length === 0 && !startAvail ? (
             <p className="text-sm text-muted-foreground">Availability not specified.</p>
           ) : (
           <dl className="space-y-3">
@@ -185,26 +179,6 @@ export default async function CaregiverProfilePage({ params }: PageProps) {
                 <dd className="flex flex-wrap gap-1.5">
                   {workTypes.map((w) => (
                     <span key={w} className="rounded bg-muted px-2 py-0.5 text-xs">{WORK_TYPE_LABELS[w] ?? w}</span>
-                  ))}
-                </dd>
-              </div>
-            )}
-            {availDays.length > 0 && (
-              <div className="flex gap-4">
-                <dt className="text-sm text-muted-foreground w-36 shrink-0">Days</dt>
-                <dd className="flex flex-wrap gap-1.5">
-                  {availDays.map((d) => (
-                    <span key={d} className="rounded bg-muted px-2 py-0.5 text-xs">{DAY_LABELS[d] ?? d}</span>
-                  ))}
-                </dd>
-              </div>
-            )}
-            {availShifts.length > 0 && (
-              <div className="flex gap-4">
-                <dt className="text-sm text-muted-foreground w-36 shrink-0">Shifts</dt>
-                <dd className="flex flex-wrap gap-1.5">
-                  {availShifts.map((s) => (
-                    <span key={s} className="rounded bg-muted px-2 py-0.5 text-xs">{SHIFT_LABELS[s] ?? s}</span>
                   ))}
                 </dd>
               </div>

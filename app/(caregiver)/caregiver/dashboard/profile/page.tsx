@@ -44,8 +44,6 @@ export default async function CaregiverProfilePage() {
   ])
 
   const workTypes    = [...new Set(workPrefs.map(w => w.workType).filter(Boolean))] as string[]
-  const days         = [...new Set(workPrefs.map(w => w.day).filter(Boolean))] as string[]
-  const shifts       = [...new Set(workPrefs.map(w => w.shift).filter(Boolean))] as string[]
   const travelDists  = [...new Set(workPrefs.map(w => w.travelDistanceMiles).filter(v => v != null))] as number[]
   const startAvail   = workPrefs.find(w => w.startAvailability)?.startAvailability ?? ''
 
@@ -59,8 +57,6 @@ export default async function CaregiverProfilePage() {
           certifications: certs.map(c => c.certification),
           languages:      langs.map(l => l.language),
           workTypes,
-          days,
-          shifts,
           startAvailability: startAvail,
           travelDistances: travelDists,
           address1: location[0]?.address1 ?? '',

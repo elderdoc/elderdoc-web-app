@@ -6,7 +6,7 @@ import { updateCaregiverProfile } from '@/domains/caregivers/profile'
 import { formatUSPhone } from '@/lib/phone'
 import {
   CARE_TYPES, CERTIFICATIONS, LANGUAGES, WORK_TYPES,
-  DAYS_OF_WEEK, START_AVAILABILITY, TRAVEL_DISTANCES,
+  START_AVAILABILITY, TRAVEL_DISTANCES,
   EDUCATION_OPTIONS,
 } from '@/lib/constants'
 
@@ -28,8 +28,6 @@ interface Profile {
   certifications: string[]
   languages: string[]
   workTypes: string[]
-  days: string[]
-  shifts: string[]
   startAvailability: string
   travelDistances: number[]
   address1: string
@@ -56,8 +54,6 @@ export function CaregiverProfileForm({ profile: p }: { profile: Profile }) {
     certifications:    p.certifications,
     languages:         p.languages,
     workTypes:         p.workTypes,
-    days:              p.days,
-    shifts:            p.shifts,
     startAvailability: p.startAvailability,
     travelDistances:   p.travelDistances,
     address1:          p.address1,
@@ -66,7 +62,7 @@ export function CaregiverProfileForm({ profile: p }: { profile: Profile }) {
     state:             p.state,
   })
 
-  function toggleArr<K extends 'careTypes' | 'certifications' | 'languages' | 'workTypes' | 'days' | 'shifts'>(field: K, key: string) {
+  function toggleArr<K extends 'careTypes' | 'certifications' | 'languages' | 'workTypes'>(field: K, key: string) {
     setForm(f => ({
       ...f,
       [field]: (f[field] as string[]).includes(key)
@@ -100,8 +96,6 @@ export function CaregiverProfileForm({ profile: p }: { profile: Profile }) {
         certifications:    form.certifications,
         languages:         form.languages,
         workTypes:         form.workTypes,
-        days:              form.days,
-        shifts:            form.shifts,
         startAvailability: form.startAvailability || undefined,
         travelDistances:   form.travelDistances,
         address1:          form.address1 || undefined,
@@ -250,49 +244,6 @@ export function CaregiverProfileForm({ profile: p }: { profile: Profile }) {
                     form.workTypes.includes(w.key) ? 'border-primary bg-primary/5 text-primary' : 'border-border hover:border-primary/50',
                   ].join(' ')}>{w.label}</button>
               ))}
-            </div>
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-2">Days</label>
-            <div className="flex flex-wrap gap-2">
-              {DAYS_OF_WEEK.map(d => (
-                <button key={d.key} type="button" onClick={() => toggleArr('days', d.key)}
-                  className={['rounded-xl border-2 px-4 py-2 text-sm font-medium transition-colors',
-                    form.days.includes(d.key) ? 'border-primary bg-primary/5 text-primary' : 'border-border hover:border-primary/50',
-                  ].join(' ')}>{d.label}</button>
-              ))}
-            </div>
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-2">Shift Availability</label>
-            <div className="flex items-center gap-3">
-              <div className="flex-1">
-                <label className="block text-xs text-muted-foreground mb-1">From</label>
-                <input
-                  type="time"
-                  value={form.shifts[0]?.split('–')[0]?.trim() ?? ''}
-                  onChange={(e) => {
-                    const to = form.shifts[0]?.split('–')[1]?.trim() ?? ''
-                    const val = e.target.value ? `${e.target.value}–${to}` : ''
-                    setForm(f => ({ ...f, shifts: val ? [val] : [] }))
-                  }}
-                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                />
-              </div>
-              <span className="text-muted-foreground mt-5">–</span>
-              <div className="flex-1">
-                <label className="block text-xs text-muted-foreground mb-1">To</label>
-                <input
-                  type="time"
-                  value={form.shifts[0]?.split('–')[1]?.trim() ?? ''}
-                  onChange={(e) => {
-                    const from = form.shifts[0]?.split('–')[0]?.trim() ?? ''
-                    const val = e.target.value ? `${from}–${e.target.value}` : ''
-                    setForm(f => ({ ...f, shifts: val ? [val] : [] }))
-                  }}
-                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                />
-              </div>
             </div>
           </div>
           <div>

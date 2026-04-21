@@ -45,8 +45,7 @@ export interface CareRequestCardData {
   frequency:     string | null
   budgetType:    string | null
   budgetAmount:  string | null
-  durationHours: number | null
-  shifts:        string[] | null
+  schedule:      Array<{ day: string; startTime: string; endTime: string }> | null
   createdAt:     Date
   recipientName: string | null
 }
@@ -58,7 +57,7 @@ export function CareRequestCard({ req }: { req: CareRequestCardData }) {
     ? `$${Number(req.budgetAmount).toFixed(0)}${BUDGET_SUFFIX[req.budgetType ?? ''] ?? ''}`
     : null
   const frequency = req.frequency ? (FREQUENCY_LABELS[req.frequency] ?? req.frequency) : null
-  const shiftCount = req.shifts?.length ?? 0
+  const scheduleCount = req.schedule?.length ?? 0
 
   return (
     <Link
@@ -83,11 +82,8 @@ export function CareRequestCard({ req }: { req: CareRequestCardData }) {
         <span className="rounded bg-muted px-1.5 py-0.5 font-medium text-foreground">{careTypeLabel}</span>
         {frequency && <span>{frequency}</span>}
         {budget && <span className="font-medium text-foreground">{budget}</span>}
-        {req.durationHours != null && (
-          <span>{req.durationHours}h/session</span>
-        )}
-        {shiftCount > 0 && (
-          <span>{shiftCount} shift{shiftCount !== 1 ? 's' : ''}/week</span>
+        {scheduleCount > 0 && (
+          <span>{scheduleCount} session{scheduleCount !== 1 ? 's' : ''}/week</span>
         )}
       </div>
 

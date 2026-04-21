@@ -55,9 +55,7 @@ export default async function FindJobsPage() {
       careType:               careRequests.careType,
       description:            careRequests.description,
       frequency:              careRequests.frequency,
-      days:                   careRequests.days,
-      shifts:                 careRequests.shifts,
-      durationHours:          careRequests.durationHours,
+      schedule:               careRequests.schedule,
       startDate:              careRequests.startDate,
       genderPref:             careRequests.genderPref,
       languagePref:           careRequests.languagePref,
@@ -125,16 +123,15 @@ export default async function FindJobsPage() {
 
                   <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
                     {req.startDate && <span>Starts {req.startDate}</span>}
-                    {req.durationHours && <span>{req.durationHours}h/visit</span>}
                     {req.budgetAmount && (
                       <span className="font-medium text-foreground">
                         ${req.budgetAmount}{req.budgetType === 'hourly' ? '/hr' : req.budgetType === 'daily' ? '/day' : ''}
                       </span>
                     )}
                     {req.recipientName && <span>For: {req.recipientName}</span>}
-                    {req.days && req.days.length > 0 && (
-                      <span>{req.days.slice(0, 3).join(', ')}{req.days.length > 3 ? ` +${req.days.length - 3}` : ''}</span>
-                    )}
+                    {req.schedule && (req.schedule as Array<{ day: string; startTime: string; endTime: string }>).slice(0, 3).map((entry, i) => (
+                      <span key={i}>{entry.day} {entry.startTime}–{entry.endTime}</span>
+                    ))}
                   </div>
 
                   {req.description && (

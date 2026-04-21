@@ -103,15 +103,15 @@ export function PostRequestForm({
           address: { address1, address2, city, state },
         })
 
+        const schedule = selectedDays.map(day => ({ day, startTime: '09:00', endTime: '17:00' }))
+
         await createCareRequest({
           recipientId,
           careType: primaryCareType,
           address: { address1, address2, city, state },
           frequency,
-          days: selectedDays,
-          shifts: selectedShifts,
+          schedule,
           startDate,
-          durationHours: Number(durationHours),
           genderPref: genderPref || undefined,
           languagePref: [],
           budgetType: budgetType || undefined,

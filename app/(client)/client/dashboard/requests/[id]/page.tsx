@@ -46,10 +46,8 @@ export default async function CareRequestDetailPage({ params }: PageProps) {
         careType:      careRequests.careType,
         status:        careRequests.status,
         frequency:     careRequests.frequency,
-        days:          careRequests.days,
-        shifts:        careRequests.shifts,
+        schedule:      careRequests.schedule,
         startDate:     careRequests.startDate,
-        durationHours: careRequests.durationHours,
         genderPref:    careRequests.genderPref,
         languagePref:  careRequests.languagePref,
         budgetType:    careRequests.budgetType,
@@ -196,39 +194,26 @@ export default async function CareRequestDetailPage({ params }: PageProps) {
             <Row label="Care Type" value={careTypeLabel} />
             {req.frequency && <Row label="Frequency" value={FREQ_LABELS[req.frequency] ?? req.frequency} />}
             {budget && <Row label="Budget" value={budget} />}
-            {req.durationHours != null && <Row label="Duration per visit" value={`${req.durationHours} hours`} />}
+            {req.schedule && req.schedule.length > 0 && (
+              <Row label="Schedule entries" value={String(req.schedule.length)} />
+            )}
             {req.startDate && <Row label="Start Date" value={req.startDate} />}
             {req.genderPref && <Row label="Caregiver Gender" value={req.genderPref} capitalize />}
           </dl>
         </section>
 
-        {(req.days?.length || req.shifts?.length) && (
+        {req.schedule && req.schedule.length > 0 && (
           <>
             <hr className="border-border" />
             <section>
               <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-4">Schedule</h2>
-              <dl className="space-y-3">
-                {req.days && req.days.length > 0 && (
-                  <div className="flex gap-4">
-                    <dt className="text-sm text-muted-foreground w-36 shrink-0">Days</dt>
-                    <dd className="flex flex-wrap gap-1.5">
-                      {req.days.map((d) => (
-                        <span key={d} className="rounded bg-muted px-2 py-0.5 text-xs capitalize">{d}</span>
-                      ))}
-                    </dd>
-                  </div>
-                )}
-                {req.shifts && req.shifts.length > 0 && (
-                  <div className="flex gap-4">
-                    <dt className="text-sm text-muted-foreground w-36 shrink-0">Shifts</dt>
-                    <dd className="flex flex-wrap gap-1.5">
-                      {req.shifts.map((s) => (
-                        <span key={s} className="rounded bg-muted px-2 py-0.5 text-xs capitalize">{s.replace(/-/g, ' ')}</span>
-                      ))}
-                    </dd>
-                  </div>
-                )}
-              </dl>
+              <div className="flex flex-wrap gap-2">
+                {(req.schedule as Array<{ day: string; startTime: string; endTime: string }>).map((entry, i) => (
+                  <span key={i} className="rounded bg-muted px-2 py-0.5 text-xs capitalize">
+                    {entry.day} {entry.startTime}–{entry.endTime}
+                  </span>
+                ))}
+              </div>
             </section>
           </>
         )}

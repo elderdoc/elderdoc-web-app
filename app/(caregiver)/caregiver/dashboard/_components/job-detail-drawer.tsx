@@ -15,9 +15,7 @@ export interface JobDetail {
   careTypeLabel: string
   description: string | null
   frequency: string | null
-  days: string[] | null
-  shifts: string[] | null
-  durationHours: number | null
+  schedule: Array<{ day: string; startTime: string; endTime: string }> | null
   startDate: string | null
   budgetType: string | null
   budgetAmount: string | null
@@ -96,10 +94,10 @@ export function JobDetailDrawer({ job, trigger }: Props) {
                   <p className="text-sm font-medium">{job.startDate}</p>
                 </div>
               )}
-              {job.durationHours && (
+              {job.schedule && job.schedule.length > 0 && (
                 <div className="rounded-lg bg-muted/50 px-4 py-3">
-                  <p className="text-xs text-muted-foreground mb-0.5">Duration</p>
-                  <p className="text-sm font-medium">{job.durationHours}h / visit</p>
+                  <p className="text-xs text-muted-foreground mb-0.5">Sessions</p>
+                  <p className="text-sm font-medium">{job.schedule.length}/week</p>
                 </div>
               )}
               {job.budgetAmount && (
@@ -129,31 +127,18 @@ export function JobDetailDrawer({ job, trigger }: Props) {
             </div>
 
             {/* Schedule */}
-            {(job.days?.length || job.shifts?.length) ? (
+            {job.schedule && job.schedule.length > 0 && (
               <div className="space-y-2">
                 <p className="text-sm font-semibold">Schedule</p>
-                {job.days && job.days.length > 0 && (
-                  <div>
-                    <p className="text-xs text-muted-foreground mb-1.5">Days</p>
-                    <div className="flex flex-wrap gap-1.5">
-                      {job.days.map((d) => (
-                        <span key={d} className="rounded bg-muted px-2 py-0.5 text-xs capitalize">{d}</span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                {job.shifts && job.shifts.length > 0 && (
-                  <div>
-                    <p className="text-xs text-muted-foreground mb-1.5">Shifts</p>
-                    <div className="flex flex-wrap gap-1.5">
-                      {job.shifts.map((s) => (
-                        <span key={s} className="rounded bg-muted px-2 py-0.5 text-xs capitalize">{s.replace(/-/g, ' ')}</span>
-                      ))}
-                    </div>
-                  </div>
-                )}
+                <div className="flex flex-wrap gap-1.5">
+                  {job.schedule.map((entry, i) => (
+                    <span key={i} className="rounded bg-muted px-2 py-0.5 text-xs capitalize">
+                      {entry.day} {entry.startTime}–{entry.endTime}
+                    </span>
+                  ))}
+                </div>
               </div>
-            ) : null}
+            )}
 
             {/* Language preferences */}
             {job.languagePref && job.languagePref.length > 0 && (

@@ -23,8 +23,6 @@ export async function updateCaregiverProfile(data: {
   certifications: string[]
   languages: string[]
   workTypes: string[]
-  days: string[]
-  shifts: string[]
   startAvailability?: string
   travelDistances: number[]
   address1?: string
@@ -76,8 +74,6 @@ export async function updateCaregiverProfile(data: {
     await tx.delete(caregiverWorkPrefs).where(eq(caregiverWorkPrefs.caregiverId, profile.id))
     const workPrefRows: (typeof caregiverWorkPrefs.$inferInsert)[] = [
       ...data.workTypes.map(workType => ({ caregiverId: profile.id, workType })),
-      ...data.days.map(day => ({ caregiverId: profile.id, day })),
-      ...data.shifts.map(shift => ({ caregiverId: profile.id, shift })),
       ...(data.startAvailability ? [{ caregiverId: profile.id, startAvailability: data.startAvailability }] : []),
       ...data.travelDistances.map(miles => ({ caregiverId: profile.id, travelDistanceMiles: miles })),
     ]

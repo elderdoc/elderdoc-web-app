@@ -4,7 +4,7 @@ import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { updateCareRequest } from '@/domains/clients/requests'
-import { DAYS_OF_WEEK, SHIFTS, LANGUAGES, GENDER_PREFERENCES, CARE_FREQUENCIES, CARE_DURATIONS } from '@/lib/constants'
+import { LANGUAGES, GENDER_PREFERENCES, CARE_FREQUENCIES } from '@/lib/constants'
 
 const BUDGET_TYPES = [
   { key: 'hourly',     label: 'Per hour' },
@@ -17,10 +17,8 @@ interface Request {
   title: string | null
   description: string | null
   frequency: string | null
-  days: string[] | null
-  shifts: string[] | null
+  schedule: Array<{ day: string; startTime: string; endTime: string }> | null
   startDate: string | null
-  durationHours: number | null
   genderPref: string | null
   languagePref: string[] | null
   budgetType: string | null
@@ -40,17 +38,15 @@ export function EditRequestForm({ request: req, location }: { request: Request; 
     title:         req.title ?? '',
     description:   req.description ?? '',
     frequency:     req.frequency ?? '',
-    days:          req.days ?? [],
-    shifts:        req.shifts ?? [],
+    schedule:      req.schedule ?? [] as Array<{ day: string; startTime: string; endTime: string }>,
     startDate:     req.startDate ?? '',
-    durationHours: String(req.durationHours ?? ''),
     genderPref:    req.genderPref ?? '',
     languagePref:  req.languagePref ?? [],
     budgetType:    req.budgetType ?? '',
     budgetAmount:  req.budgetAmount ?? '',
   })
 
-  function toggle<K extends 'days' | 'shifts' | 'languagePref'>(field: K, key: string) {
+  function toggle<K extends 'languagePref'>(field: K, key: string) {
     setForm(f => ({
       ...f,
       [field]: (f[field] as string[]).includes(key)
@@ -65,10 +61,8 @@ export function EditRequestForm({ request: req, location }: { request: Request; 
         title:         form.title || undefined,
         description:   form.description || undefined,
         frequency:     form.frequency || undefined,
-        days:          form.days,
-        shifts:        form.shifts,
+        schedule:      form.schedule,
         startDate:     form.startDate || undefined,
-        durationHours: form.durationHours ? Number(form.durationHours) : undefined,
         genderPref:    form.genderPref || undefined,
         languagePref:  form.languagePref,
         budgetType:    form.budgetType || undefined,
@@ -130,69 +124,14 @@ export function EditRequestForm({ request: req, location }: { request: Request; 
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-2">Days</label>
-          <div className="flex flex-wrap gap-2">
-            {DAYS_OF_WEEK.map(d => (
-              <button
-                key={d.key}
-                type="button"
-                onClick={() => toggle('days', d.key)}
-                className={['rounded-xl border-2 px-4 py-2 text-sm font-medium transition-colors',
-                  form.days.includes(d.key) ? 'border-primary bg-primary/5 text-primary' : 'border-border hover:border-primary/50',
-                ].join(' ')}
-              >
-                {d.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium mb-2">Shifts</label>
-          <div className="flex flex-wrap gap-2">
-            {SHIFTS.map(s => (
-              <button
-                key={s.key}
-                type="button"
-                onClick={() => toggle('shifts', s.key)}
-                className={['rounded-xl border-2 px-4 py-2 text-sm font-medium transition-colors',
-                  form.shifts.includes(s.key) ? 'border-primary bg-primary/5 text-primary' : 'border-border hover:border-primary/50',
-                ].join(' ')}
-              >
-                {s.label} <span className="text-xs opacity-70">{s.time}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium mb-1">Start Date</label>
-            <input
-              type="text"
-              value={form.startDate}
-              onChange={e => setForm(f => ({ ...f, startDate: e.target.value }))}
-              className="w-full rounded-lg border border-border px-4 py-3 text-sm focus:border-primary focus:outline-none"
-              placeholder="MM/DD/YYYY"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-2">Duration per visit</label>
-            <div className="flex flex-wrap gap-2">
-              {CARE_DURATIONS.map(d => (
-                <button
-                  key={d.key}
-                  type="button"
-                  onClick={() => setForm(f => ({ ...f, durationHours: d.key }))}
-                  className={['rounded-xl border-2 px-3 py-1.5 text-sm font-medium transition-colors',
-                    form.durationHours === d.key ? 'border-primary bg-primary/5 text-primary' : 'border-border hover:border-primary/50',
-                  ].join(' ')}
-                >
-                  {d.label}
-                </button>
-              ))}
-            </div>
-          </div>
+          <label className="block text-sm font-medium mb-1">Start Date</label>
+          <input
+            type="text"
+            value={form.startDate}
+            onChange={e => setForm(f => ({ ...f, startDate: e.target.value }))}
+            className="w-full rounded-lg border border-border px-4 py-3 text-sm focus:border-primary focus:outline-none"
+            placeholder="MM/DD/YYYY"
+          />
         </div>
 
         <div>

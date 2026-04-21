@@ -132,8 +132,7 @@ describe('saveCaregiverStep2', () => {
 describe('saveCaregiverStep3', () => {
   const DATA = {
     workTypes: ['full-time', 'flexible'],
-    days: ['monday', 'tuesday'],
-    shifts: ['morning', 'afternoon'],
+    availability: [{ day: 'monday', startTime: '09:00', endTime: '17:00' }],
     startAvailability: 'immediately',
   }
 
