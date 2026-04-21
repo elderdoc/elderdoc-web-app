@@ -1,6 +1,6 @@
 import { requireRole } from '@/domains/auth/session'
 import { db } from '@/services/db'
-import { caregiverProfiles, jobs, careRequests, users } from '@/db/schema'
+import { caregiverProfiles, jobs, careRequests, users, careRecipients } from '@/db/schema'
 import { eq, desc } from 'drizzle-orm'
 import { CARE_TYPES } from '@/lib/constants'
 import { JobCard } from './_components/job-card'
@@ -21,16 +21,25 @@ export default async function MyJobsPage() {
 
   const myJobs = await db
     .select({
-      id:         jobs.id,
-      status:     jobs.status,
-      createdAt:  jobs.createdAt,
-      title:      careRequests.title,
-      careType:   careRequests.careType,
-      clientName: users.name,
+      id:            jobs.id,
+      status:        jobs.status,
+      createdAt:     jobs.createdAt,
+      title:         careRequests.title,
+      careType:      careRequests.careType,
+      description:   careRequests.description,
+      frequency:     careRequests.frequency,
+      days:          careRequests.days,
+      shiftTimes:    careRequests.shifts,
+      startDate:     careRequests.startDate,
+      durationHours: careRequests.durationHours,
+      budgetAmount:  careRequests.budgetAmount,
+      clientName:    users.name,
+      recipientName: careRecipients.name,
     })
     .from(jobs)
     .innerJoin(careRequests, eq(jobs.requestId, careRequests.id))
     .innerJoin(users, eq(jobs.clientId, users.id))
+    .leftJoin(careRecipients, eq(careRequests.recipientId, careRecipients.id))
     .where(eq(jobs.caregiverId, profile.id))
     .orderBy(desc(jobs.createdAt))
 
@@ -50,6 +59,7 @@ export default async function MyJobsPage() {
                 ...job,
                 title: job.title ?? `${CARE_TYPE_LABELS[job.careType] ?? job.careType} Request`,
                 careTypeLabel: CARE_TYPE_LABELS[job.careType] ?? job.careType,
+                budgetAmount: job.budgetAmount ?? null,
               }}
             />
           ))}

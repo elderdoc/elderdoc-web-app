@@ -83,7 +83,7 @@ export default async function CaregiverCarePlansPage() {
                       <ul className="space-y-1">
                         {row.dailySchedule.map((item, i) => (
                           <li key={i} className="text-sm flex gap-4">
-                            <span className="font-mono text-muted-foreground w-14 shrink-0">{item.time}</span>
+                            <span className="font-mono text-muted-foreground w-16 shrink-0 whitespace-nowrap">{item.time}</span>
                             <span>{item.activity}</span>
                           </li>
                         ))}

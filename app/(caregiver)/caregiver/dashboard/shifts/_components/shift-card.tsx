@@ -31,9 +31,10 @@ export interface ShiftCardData {
 
 interface Props {
   shift: ShiftCardData
+  canComplete?: boolean
 }
 
-export function ShiftCard({ shift }: Props) {
+export function ShiftCard({ shift, canComplete = true }: Props) {
   const [open, setOpen] = useState(false)
   const statusLabel = STATUS_LABELS[shift.status ?? 'scheduled'] ?? shift.status
   const statusClass = STATUS_CLASSES[shift.status ?? 'scheduled'] ?? 'bg-muted text-muted-foreground'
@@ -58,7 +59,7 @@ export function ShiftCard({ shift }: Props) {
           <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${statusClass}`}>
             {statusLabel}
           </span>
-          {shift.status !== 'completed' && (
+          {shift.status !== 'completed' && canComplete && (
             <div onClick={(e) => e.stopPropagation()}>
               <CompleteShiftButton shiftId={shift.id} />
             </div>
@@ -99,7 +100,7 @@ export function ShiftCard({ shift }: Props) {
             </div>
           </div>
 
-          {shift.status !== 'completed' && (
+          {shift.status !== 'completed' && canComplete && (
             <div className="px-6 py-4 border-t border-border bg-background">
               <CompleteShiftButton shiftId={shift.id} />
             </div>
