@@ -20,9 +20,13 @@ export type RankedCandidate = {
   city: string | null
   state: string | null
   distanceLabel: string | null
+  proximityMiles: number | null
   rating: string | null
   hourlyMin: string | null
   hourlyMax: string | null
+  completedJobs: number
+  hasVehicle: boolean
+  hasDriversLicense: boolean
 }
 
 export async function matchCaregivers(requestId: string): Promise<RankedCandidate[]> {
@@ -42,6 +46,8 @@ export async function matchCaregivers(requestId: string): Promise<RankedCandidat
       lng:           careRequestLocations.lng,
       clientStatus:  careRequests.clientStatus,
       recipientId:   careRequests.recipientId,
+      genderPref:    careRequests.genderPref,
+      transportationNeeded: careRequests.transportationNeeded,
     })
     .from(careRequests)
     .leftJoin(careRequestLocations, eq(careRequestLocations.requestId, careRequests.id))
@@ -74,8 +80,12 @@ export async function matchCaregivers(requestId: string): Promise<RankedCandidat
       careCapabilities:     caregiverProfiles.careCapabilities,
       specialNeedsHandling: caregiverProfiles.specialNeedsHandling,
       maxCarryLbs:          caregiverProfiles.maxCarryLbs,
+      hasVehicle:           caregiverProfiles.hasVehicle,
+      hasDriversLicense:    caregiverProfiles.hasDriversLicense,
+      willingToTravel:      caregiverProfiles.willingToTravel,
       name:                 users.name,
       image:        users.image,
+      gender:       caregiverProfiles.gender,
       city:         caregiverLocations.city,
       state:        caregiverLocations.state,
       lat:          caregiverLocations.lat,
@@ -99,6 +109,7 @@ export async function matchCaregivers(requestId: string): Promise<RankedCandidat
   )
 
   const filteredCandidates = candidates.filter(c => {
+    if (requestRow.genderPref && requestRow.genderPref !== 'no-preference' && c.gender && c.gender !== requestRow.genderPref) return false
     if (requestedDays.size === 0) return true
     const cgAvail = c.availability as Array<{ day: string }> | null
     if (!cgAvail || cgAvail.length === 0) return true  // no availability set — pass through
@@ -153,12 +164,14 @@ SCORING WEIGHTS (apply in this priority order):
 4. carePlanOverlap (15 pts): high overlap across sections = up to 15.
 5. languageMatch (10 pts): all preferred languages covered = 10.
 6. weightCarryFit (5 pts): sufficient = 5, insufficient = −5, unknown = 0.
+7. transportationFit: if transportationNeeded=true and caregiver does NOT have a vehicle/license, apply −10 pts. If caregiver has vehicle+license when transportation is needed, apply +5 pts.
 
 REASON GUIDELINES:
 - Write 3–5 natural, flowing sentences. Do NOT follow a fixed template — vary the structure for each candidate so no two cards sound the same.
 - Lead with the most compelling thing about this candidate for this specific request — that could be proximity, a standout rating, rare special needs experience, years in the field, or a high job count.
-- Weave in the relevant facts naturally: distance in miles, rating (e.g. "rated 4.8"), completed jobs (e.g. "has completed 12 jobs on the platform"), languages spoken, special needs handled (name them specifically: hard of hearing, vision impairment, amputee, mobility/overweight assistance, dementia, etc.), schedule fit, certifications, weight carry capacity.
+- Weave in the relevant facts naturally: distance in miles, rating (e.g. "rated 4.8"), completed jobs (e.g. "has completed 12 jobs on the platform"), languages spoken, special needs handled (name them specifically: hard of hearing, vision impairment, amputee, mobility/overweight assistance, dementia, etc.), schedule fit, certifications, weight carry capacity, vehicle/transportation (if relevant to the request).
 - Only mention factors that are actually present and relevant — skip factors with no data or no impact on this match.
+- If transportation is needed and the caregiver has a vehicle and license, mention it naturally. If they don't, flag it honestly.
 - If something is a genuine concern (far distance, insufficient weight carry, missing a needed language), mention it briefly and honestly — don't oversell a weak match.
 - Sound like a knowledgeable, warm care coordinator speaking to a family — not a list of attributes being read off. Make it feel personal and earned.`
 
@@ -169,6 +182,7 @@ Schedule: ${requestRow.frequency ?? 'unspecified'}, days: ${
     ?.map(s => `${s.day} ${s.startTime}–${s.endTime}`).join(', ') ?? 'unspecified'
 }
 Language preference: ${(requestRow.languagePref ?? []).join(', ') || 'none'}
+Transportation needed: ${requestRow.transportationNeeded ? 'yes' : 'no'}
 Budget: ${requestRow.budgetType ?? ''} ${requestRow.budgetAmount ?? ''}
 Notes: ${requestRow.title ?? ''}. ${requestRow.description ?? ''}
 
@@ -209,6 +223,10 @@ ${JSON.stringify(filteredCandidates.map((c) => {
     const specialNeedsHandled = Object.entries(
       (c.specialNeedsHandling as Record<string, boolean> | null) ?? {}
     ).filter(([, v]) => v).map(([k]) => k)
+    const transportationFit: 'meets' | 'does-not-meet' | 'not-required' =
+      requestRow.transportationNeeded
+        ? (c.hasVehicle && c.hasDriversLicense ? 'meets' : 'does-not-meet')
+        : 'not-required'
     return {
       id:                  c.id,
       careTypes:           typeMap.get(c.id) ?? [],
@@ -218,6 +236,10 @@ ${JSON.stringify(filteredCandidates.map((c) => {
       rating:              c.rating ? Number(c.rating) : null,
       completedJobs:       jobCountMap.get(c.id) ?? 0,
       maxCarryLbs:         c.maxCarryLbs ?? null,
+      hasVehicle:          c.hasVehicle ?? false,
+      hasDriversLicense:   c.hasDriversLicense ?? false,
+      willingToTravel:     c.willingToTravel ?? false,
+      transportationFit,
       proximityMiles,
       scheduleDayCoverage: scheduleOverlap,
       carePlanOverlap,
@@ -257,23 +279,28 @@ ${JSON.stringify(filteredCandidates.map((c) => {
       const c = filteredCandidates.find((x) => x.id === r.caregiverId)
       const cgLat = c?.lat ? Number(c.lat) : null
       const cgLng = c?.lng ? Number(c.lng) : null
-      const distanceLabel = reqLat && reqLng && cgLat && cgLng
-        ? formatMiles(haversineDistance(reqLat, reqLng, cgLat, cgLng))
+      const rawMiles = reqLat && reqLng && cgLat && cgLng
+        ? Math.round(haversineDistance(reqLat, reqLng, cgLat, cgLng))
         : null
+      const distanceLabel = rawMiles !== null ? formatMiles(rawMiles) : null
       return {
-        caregiverId:   r.caregiverId,
-        score:         r.score,
-        reason:        r.reason,
-        name:          c?.name ?? null,
-        image:         c?.image ?? null,
-        headline:      c?.headline ?? null,
-        careTypes:     typeMap.get(r.caregiverId) ?? [],
-        city:          c?.city ?? null,
-        state:         c?.state ?? null,
+        caregiverId:      r.caregiverId,
+        score:            r.score,
+        reason:           r.reason,
+        name:             c?.name ?? null,
+        image:            c?.image ?? null,
+        headline:         c?.headline ?? null,
+        careTypes:        typeMap.get(r.caregiverId) ?? [],
+        city:             c?.city ?? null,
+        state:            c?.state ?? null,
         distanceLabel,
-        rating:        c?.rating ?? null,
-        hourlyMin:     c?.hourlyMin ?? null,
-        hourlyMax:     c?.hourlyMax ?? null,
+        proximityMiles:   rawMiles,
+        rating:           c?.rating ?? null,
+        hourlyMin:        c?.hourlyMin ?? null,
+        hourlyMax:        c?.hourlyMax ?? null,
+        completedJobs:    jobCountMap.get(r.caregiverId) ?? 0,
+        hasVehicle:       c?.hasVehicle ?? false,
+        hasDriversLicense: c?.hasDriversLicense ?? false,
       }
     })
 }

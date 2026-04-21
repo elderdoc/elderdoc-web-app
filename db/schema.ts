@@ -46,6 +46,10 @@ export const caregiverProfiles = pgTable('caregiver_profiles', {
     overweightMobility?: boolean
   }>(),
   maxCarryLbs:          integer('max_carry_lbs'),
+  gender:               text('gender'),
+  hasVehicle:           boolean('has_vehicle').default(false),
+  hasDriversLicense:    boolean('has_drivers_license').default(false),
+  willingToTravel:      boolean('willing_to_travel').default(false),
   createdAt:                timestamp('created_at').defaultNow().notNull(),
 })
 
@@ -165,6 +169,7 @@ export const careRequests = pgTable('care_requests', {
     urinaryCath?: boolean; feedingTube?: boolean
     diabetic?: boolean; diet?: string; other?: string
   }>(),
+  transportationNeeded: boolean('transportation_needed').default(false),
   genderPref:   text('gender_pref'),
   languagePref: text('language_pref').array(),
   budgetType:   text('budget_type'),

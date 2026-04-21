@@ -24,6 +24,7 @@ export default async function CaregiverStep5() {
       initialHeadline={profile?.headline ?? ''}
       initialAbout={profile?.about ?? ''}
       initialPhotoUrl={profile?.photoUrl ?? null}
+      initialGender={profile?.gender ?? ''}
     />
   )
 }

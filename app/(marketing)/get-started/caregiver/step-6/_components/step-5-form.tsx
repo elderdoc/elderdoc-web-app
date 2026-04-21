@@ -17,15 +17,17 @@ interface Props {
   initialHeadline: string
   initialAbout: string
   initialPhotoUrl: string | null
+  initialGender: string
 }
 
 export function Step5Form({
-  initialName, initialPhone, initialHeadline, initialAbout, initialPhotoUrl,
+  initialName, initialPhone, initialHeadline, initialAbout, initialPhotoUrl, initialGender,
 }: Props) {
   const [name, setName] = useState(initialName)
   const [phone, setPhone] = useState(initialPhone)
   const [headline, setHeadline] = useState(initialHeadline)
   const [about, setAbout] = useState(initialAbout)
+  const [gender, setGender] = useState(initialGender)
   const [photoUrl, setPhotoUrl] = useState<string | null>(initialPhotoUrl)
   const [photoPreview, setPhotoPreview] = useState<string | null>(initialPhotoUrl)
   const [isUploading, setIsUploading] = useState(false)
@@ -51,7 +53,7 @@ export function Step5Form({
     }
   }
 
-  const isValid = name.trim().length > 0 && phone.trim().length > 0 && headline.trim().length > 0 && about.trim().length > 0
+  const isValid = name.trim().length > 0 && phone.trim().length > 0 && headline.trim().length > 0 && about.trim().length > 0 && gender.length > 0
 
   function handleComplete() {
     if (!isValid) return
@@ -61,6 +63,7 @@ export function Step5Form({
         phone,
         headline,
         about,
+        gender,
         photoUrl: photoUrl ?? undefined,
       })
     })
@@ -140,6 +143,31 @@ export function Step5Form({
             placeholder="(555) 123-4567"
             className={inputClass}
           />
+        </section>
+
+        {/* Gender */}
+        <section>
+          <p className={labelClass}>Gender</p>
+          <div className="flex gap-3">
+            {[
+              { value: 'male', label: 'Male' },
+              { value: 'female', label: 'Female' },
+              { value: 'other', label: 'Other' },
+            ].map(opt => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => setGender(opt.value)}
+                className={`flex-1 rounded-[8px] border px-4 py-2.5 text-sm font-medium transition-colors ${
+                  gender === opt.value
+                    ? 'border-primary bg-primary/5 text-primary'
+                    : 'border-input bg-background text-foreground hover:border-primary/50'
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
         </section>
 
         {/* Headline */}

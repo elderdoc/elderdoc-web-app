@@ -862,10 +862,18 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgHourl
               <div className="space-y-4">
                 {candidates.map((c, idx) => {
                   const initials = (c.name ?? '?').split(' ').map((p) => p[0]).slice(0, 2).join('').toUpperCase()
-                  const scoreBadge =
-                    c.score >= 80 ? { label: 'Strong match', cls: 'bg-green-100 text-green-700' } :
-                    c.score >= 60 ? { label: 'Good match',   cls: 'bg-blue-100 text-blue-700' } :
-                                    { label: 'Possible match', cls: 'bg-muted text-muted-foreground' }
+                  const ratingNum = c.rating ? Number(c.rating) : null
+                  const greenBadges: string[] = []
+                  const redBadges:   string[] = []
+                  if (c.proximityMiles !== null && c.proximityMiles <= 25)        greenBadges.push('Close to you')
+                  if (ratingNum && ratingNum >= 4.5)                              greenBadges.push('Highly rated')
+                  else if (ratingNum && ratingNum >= 4.0)                         greenBadges.push('Well rated')
+                  if (c.completedJobs >= 10)                                      greenBadges.push(`${c.completedJobs} jobs completed`)
+                  else if (c.completedJobs >= 3)                                  greenBadges.push(`${c.completedJobs} jobs done`)
+                  if (c.hasVehicle && c.hasDriversLicense)                       greenBadges.push('Has a vehicle')
+                  if (c.proximityMiles !== null && c.proximityMiles > 100)        redBadges.push('Far from you')
+                  if (!ratingNum)                                                  redBadges.push('No reviews yet')
+                  if (c.completedJobs === 0)                                      redBadges.push('No jobs on platform yet')
                   return (
                     <div key={c.caregiverId} className="rounded-xl border border-border bg-card p-5">
                       <div className="flex items-start gap-4">
@@ -885,14 +893,11 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgHourl
                           <div className="flex items-center justify-between gap-2 flex-wrap mb-1">
                             <div className="flex items-center gap-2 flex-wrap">
                               <p className="font-semibold">{c.name ?? 'Caregiver'}</p>
-                              {c.rating && (
+                              {ratingNum && (
                                 <span className="flex items-center gap-0.5 text-xs text-amber-500 font-medium">
-                                  ★ {Number(c.rating).toFixed(1)}
+                                  ★ {ratingNum.toFixed(1)}
                                 </span>
                               )}
-                              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${scoreBadge.cls}`}>
-                                {scoreBadge.label}
-                              </span>
                             </div>
                             <span className="text-sm font-semibold text-primary shrink-0">{c.score}% match</span>
                           </div>
@@ -903,6 +908,20 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgHourl
                             </p>
                           )}
                           {c.headline && <p className="text-sm text-muted-foreground mt-0.5">{c.headline}</p>}
+                          {(greenBadges.length > 0 || redBadges.length > 0) && (
+                            <div className="flex flex-wrap gap-1.5 mt-2">
+                              {greenBadges.map(b => (
+                                <span key={b} className="text-xs px-2 py-0.5 rounded-full font-medium bg-green-100 text-green-700">
+                                  {b}
+                                </span>
+                              ))}
+                              {redBadges.map(b => (
+                                <span key={b} className="text-xs px-2 py-0.5 rounded-full font-medium bg-red-100 text-red-600">
+                                  {b}
+                                </span>
+                              ))}
+                            </div>
+                          )}
                           {c.careTypes.length > 0 && (
                             <div className="flex flex-wrap gap-1 mt-2">
                               {c.careTypes.map((ct) => (
