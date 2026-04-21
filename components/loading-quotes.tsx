@@ -27,7 +27,7 @@ export function LoadingQuotes({ label = 'Loading…' }: Props) {
         setIdx((prev) => randomIndex(prev))
         setVisible(true)
       }, 400)
-    }, 3000)
+    }, 5000)
     return () => clearInterval(interval)
   }, [])
 
