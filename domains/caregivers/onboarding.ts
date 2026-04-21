@@ -127,6 +127,40 @@ export async function saveCaregiverStep3(data: {
   redirect('/get-started/caregiver/step-4')
 }
 
+export async function saveCaregiverCapabilities(data: {
+  careCapabilities: {
+    activityMobilitySafety: string[]
+    hygieneElimination:     string[]
+    homeManagement:         string[]
+    hydrationNutrition:     string[]
+    medicationReminders:    string[]
+  }
+  specialNeedsHandling: {
+    hardOfHearing?:      boolean
+    visionProblem?:      boolean
+    amputee?:            boolean
+    overweightMobility?: boolean
+  }
+  maxCarryLbs?: number
+}) {
+  const session = await auth()
+  if (!session?.user?.id) throw new Error('Unauthorized')
+
+  const profile = await getOrCreateProfile(session.user.id)
+
+  await db
+    .update(caregiverProfiles)
+    .set({
+      careCapabilities:    data.careCapabilities,
+      specialNeedsHandling: data.specialNeedsHandling,
+      maxCarryLbs:         data.maxCarryLbs ?? null,
+      completedStep:       4,
+    })
+    .where(eq(caregiverProfiles.id, profile.id))
+
+  redirect('/get-started/caregiver/step-5')
+}
+
 export async function saveCaregiverStep4(data: {
   address1: string
   address2: string
