@@ -3,10 +3,11 @@ import { getOpenAI } from '@/services/openai'
 import {
   careRequests, careRequestLocations, caregiverProfiles,
   caregiverLocations, caregiverCareTypes, caregiverCertifications,
-  caregiverLanguages, users,
+  caregiverLanguages, users, carePlans, careRecipients,
 } from '@/db/schema'
 import { eq, and, inArray } from 'drizzle-orm'
 import { haversineDistance, formatMiles } from '@/lib/geo'
+import { computeScheduleOverlap, computeCarePlanOverlap, computeSpecialNeedsMatch, parseWeightLbs } from './helpers'
 
 export type RankedCandidate = {
   caregiverId: string
@@ -39,6 +40,8 @@ export async function matchCaregivers(requestId: string): Promise<RankedCandidat
       state:         careRequestLocations.state,
       lat:           careRequestLocations.lat,
       lng:           careRequestLocations.lng,
+      clientStatus:  careRequests.clientStatus,
+      recipientId:   careRequests.recipientId,
     })
     .from(careRequests)
     .leftJoin(careRequestLocations, eq(careRequestLocations.requestId, careRequests.id))
@@ -46,6 +49,18 @@ export async function matchCaregivers(requestId: string): Promise<RankedCandidat
     .limit(1)
 
   if (!requestRow) return []
+
+  const [carePlanRow] = requestRow.recipientId
+    ? await db.select().from(carePlans).where(eq(carePlans.requestId, requestId)).limit(1)
+    : []
+
+  const [recipientRow] = requestRow.recipientId
+    ? await db
+        .select({ weight: careRecipients.weight, mobilityLevel: careRecipients.mobilityLevel })
+        .from(careRecipients)
+        .where(eq(careRecipients.id, requestRow.recipientId))
+        .limit(1)
+    : []
 
   // 2. Pre-filter candidates
   const candidates = await db
@@ -55,8 +70,11 @@ export async function matchCaregivers(requestId: string): Promise<RankedCandidat
       hourlyMin:    caregiverProfiles.hourlyMin,
       hourlyMax:    caregiverProfiles.hourlyMax,
       experience:   caregiverProfiles.experience,
-      availability: caregiverProfiles.availability,
-      name:         users.name,
+      availability:         caregiverProfiles.availability,
+      careCapabilities:     caregiverProfiles.careCapabilities,
+      specialNeedsHandling: caregiverProfiles.specialNeedsHandling,
+      maxCarryLbs:          caregiverProfiles.maxCarryLbs,
+      name:                 users.name,
       image:        users.image,
       city:         caregiverLocations.city,
       state:        caregiverLocations.state,
@@ -122,7 +140,13 @@ export async function matchCaregivers(requestId: string): Promise<RankedCandidat
   const systemPrompt = `You are a care coordinator matching caregivers to a care request.
 Rank the provided candidates by fit. Return valid JSON only — no prose, no markdown.
 Schema: { "rankings": [{ "caregiverId": string, "score": number (0-100), "reason": string (one warm sentence) }] }
-Include all candidates. Highest score = best fit.`
+Include all candidates. Highest score = best fit.
+
+Scoring guidance for new signals:
+- scheduleDayCoverage: A caregiver covering all requested days (covered === requested) is strongly preferred.
+- carePlanOverlap: High overlap across sections is a positive signal. Zero overlap in a section with many items should lower the ranking.
+- specialNeedsMatch: A caregiver covering all required special needs should rank higher. Note partial matches in the reason.
+- weightCarryFit: If "insufficient", note this as a concern. If "sufficient", it is a positive signal for mobility tasks.`
 
   const userPrompt = `CARE REQUEST
 Type: ${requestRow.careType}
@@ -135,15 +159,48 @@ Budget: ${requestRow.budgetType ?? ''} ${requestRow.budgetAmount ?? ''}
 Notes: ${requestRow.title ?? ''}. ${requestRow.description ?? ''}
 
 CANDIDATES
-${JSON.stringify(filteredCandidates.map((c) => ({
-    id:             c.id,
-    careTypes:      typeMap.get(c.id) ?? [],
-    certifications: certMap.get(c.id) ?? [],
-    languages:      langMap.get(c.id) ?? [],
-    experience:     c.experience ?? '',
-    hourlyMin:      c.hourlyMin ?? '',
-    hourlyMax:      c.hourlyMax ?? '',
-  })))}`
+${JSON.stringify(filteredCandidates.map((c) => {
+    const scheduleOverlap = computeScheduleOverlap(
+      requestRow.schedule as Array<{ day: string; startTime: string; endTime: string }> | null,
+      c.availability as Array<{ day: string; startTime: string; endTime: string }> | null,
+    )
+    const carePlanOverlap = carePlanRow
+      ? computeCarePlanOverlap(
+          {
+            activityMobilitySafety: (carePlanRow.activityMobilitySafety as import('@/db/schema').CareTaskEntry[] | null) ?? [],
+            hygieneElimination:     (carePlanRow.hygieneElimination as import('@/db/schema').CareTaskEntry[] | null) ?? [],
+            homeManagement:         (carePlanRow.homeManagement as import('@/db/schema').CareTaskEntry[] | null) ?? [],
+            hydrationNutrition:     (carePlanRow.hydrationNutrition as import('@/db/schema').CareTaskEntry[] | null) ?? [],
+            medicationReminders:    (carePlanRow.medicationReminders as import('@/db/schema').CareTaskEntry[] | null) ?? [],
+          },
+          c.careCapabilities as Record<string, string[]> | null,
+        )
+      : null
+    const specialNeedsMatch = computeSpecialNeedsMatch(
+      requestRow.clientStatus as Record<string, unknown> | null,
+      c.specialNeedsHandling as Record<string, boolean> | null,
+    )
+    const recipientWeightLbs = parseWeightLbs(recipientRow?.weight ?? null)
+    const needsMobilityHelp = recipientRow?.mobilityLevel === 'moderate-assistance'
+      || recipientRow?.mobilityLevel === 'full-assistance'
+    const weightCarryFit: 'sufficient' | 'insufficient' | 'unknown' =
+      recipientWeightLbs && needsMobilityHelp && c.maxCarryLbs != null
+        ? (c.maxCarryLbs >= recipientWeightLbs ? 'sufficient' : 'insufficient')
+        : 'unknown'
+    return {
+      id:                  c.id,
+      careTypes:           typeMap.get(c.id) ?? [],
+      certifications:      certMap.get(c.id) ?? [],
+      languages:           langMap.get(c.id) ?? [],
+      experience:          c.experience ?? '',
+      hourlyMin:           c.hourlyMin ?? '',
+      hourlyMax:           c.hourlyMax ?? '',
+      scheduleDayCoverage: scheduleOverlap,
+      carePlanOverlap,
+      specialNeedsMatch,
+      weightCarryFit,
+    }
+  }))}`
 
   // 5. Call OpenAI
   let rankings: { caregiverId: string; score: number; reason: string }[] = []
