@@ -38,27 +38,27 @@ beforeEach(() => {
 })
 
 describe('getClientCarePlans', () => {
-  it('returns [] when client has no active jobs', async () => {
+  it('returns [] when client has no recipients', async () => {
     mockSelectChain.offset.mockResolvedValueOnce([])
     const result = await getClientCarePlans('client-1')
     expect(result).toEqual([])
   })
 
-  it('returns jobs with care plan data when plans exist', async () => {
+  it('returns recipients with care plan data when plans exist', async () => {
     const updatedAt = new Date('2026-04-01T00:00:00Z')
     mockSelectChain.offset.mockResolvedValueOnce([
-      { jobId: 'job-1', requestId: 'req-1', careType: 'personal-care', caregiverName: 'Alice', carePlanId: 'plan-1', updatedAt },
+      { recipientId: 'rec-1', recipientName: 'Alice', carePlanId: 'plan-1', updatedAt },
     ])
     const result = await getClientCarePlans('client-1')
     expect(result).toHaveLength(1)
-    expect(result[0].jobId).toBe('job-1')
+    expect(result[0].recipientId).toBe('rec-1')
     expect(result[0].carePlanId).toBe('plan-1')
     expect(result[0].updatedAt).toBe(updatedAt)
   })
 
-  it('returns jobs without care plans (carePlanId null)', async () => {
+  it('returns recipients without care plans (carePlanId null)', async () => {
     mockSelectChain.offset.mockResolvedValueOnce([
-      { jobId: 'job-2', requestId: 'req-2', careType: 'companion-care', caregiverName: 'Bob', carePlanId: null, updatedAt: null },
+      { recipientId: 'rec-2', recipientName: 'Bob', carePlanId: null, updatedAt: null },
     ])
     const result = await getClientCarePlans('client-2')
     expect(result).toHaveLength(1)
@@ -73,10 +73,10 @@ describe('getClientCarePlans', () => {
     expect(mockSelectChain.offset).toHaveBeenCalledWith(0)
   })
 
-  it('returns [] when DB returns rows with null carePlanId only', async () => {
+  it('returns multiple rows with null carePlanId', async () => {
     mockSelectChain.offset.mockResolvedValueOnce([
-      { jobId: 'job-3', requestId: 'req-3', careType: 'live-in', caregiverName: 'Carol', carePlanId: null, updatedAt: null },
-      { jobId: 'job-4', requestId: 'req-4', careType: 'personal-care', caregiverName: 'Dave', carePlanId: null, updatedAt: null },
+      { recipientId: 'rec-3', recipientName: 'Carol', carePlanId: null, updatedAt: null },
+      { recipientId: 'rec-4', recipientName: 'Dave', carePlanId: null, updatedAt: null },
     ])
     const result = await getClientCarePlans('client-3')
     expect(result).toHaveLength(2)
@@ -85,40 +85,40 @@ describe('getClientCarePlans', () => {
 })
 
 describe('getCarePlanByJob', () => {
-  it('returns null when job does not exist or not owned by client', async () => {
+  it('returns null when job does not exist or not owned by caregiver', async () => {
     mockSelectChain.offset.mockResolvedValueOnce([])
-    const result = await getCarePlanByJob('job-1', 'wrong-client')
+    const result = await getCarePlanByJob('job-1', 'wrong-caregiver')
     expect(result).toBeNull()
   })
 
   it('returns null when job exists but has no care plan', async () => {
-    mockSelectChain.offset.mockResolvedValueOnce([{ jobId: 'job-1' }])  // ownership found
-    mockSelectChain.offset.mockResolvedValueOnce([])                     // no plan
-    const result = await getCarePlanByJob('job-1', 'client-1')
+    mockSelectChain.offset.mockResolvedValueOnce([{ recipientId: 'rec-1' }])  // ownership found
+    mockSelectChain.offset.mockResolvedValueOnce([])                            // no plan
+    const result = await getCarePlanByJob('job-1', 'caregiver-1')
     expect(result).toBeNull()
   })
 
   it('returns care plan detail when job is owned and plan exists', async () => {
     const updatedAt = new Date('2026-04-01T00:00:00Z')
-    mockSelectChain.offset.mockResolvedValueOnce([{ jobId: 'job-1' }])  // ownership found
-    mockSelectChain.offset.mockResolvedValueOnce([                       // plan found
+    mockSelectChain.offset.mockResolvedValueOnce([{ recipientId: 'rec-1' }])  // ownership found
+    mockSelectChain.offset.mockResolvedValueOnce([                              // plan found
       {
         id: 'plan-1',
-        jobId: 'job-1',
-        dailySchedule: [{ time: '08:00', activity: 'Breakfast' }],
-        medications: [{ name: 'Aspirin', dosage: '81mg', frequency: 'daily' }],
-        dietaryRestrictions: ['no peanuts'],
-        emergencyContacts: [{ name: 'Son', relationship: 'son', phone: '555-1234' }],
-        specialInstructions: 'Keep warm',
+        requestId: 'req-1',
+        recipientId: 'rec-1',
+        activityMobilitySafety: [{ key: 'companionship', frequency: 'every-visit' }],
+        hygieneElimination:     [{ key: 'bathShower', frequency: 'every-visit', notes: 'morning' }],
+        homeManagement:         null,
+        hydrationNutrition:     null,
+        medicationReminders:    [{ key: 'medMorning', frequency: 'every-visit' }],
         updatedAt,
       },
     ])
-    const result = await getCarePlanByJob('job-1', 'client-1')
+    const result = await getCarePlanByJob('job-1', 'caregiver-1')
     expect(result).not.toBeNull()
     expect(result!.id).toBe('plan-1')
-    expect(result!.dailySchedule).toEqual([{ time: '08:00', activity: 'Breakfast' }])
-    expect(result!.medications).toEqual([{ name: 'Aspirin', dosage: '81mg', frequency: 'daily' }])
-    expect(result!.dietaryRestrictions).toEqual(['no peanuts'])
+    expect(result!.activityMobilitySafety).toEqual([{ key: 'companionship', frequency: 'every-visit' }])
+    expect(result!.hygieneElimination).toEqual([{ key: 'bathShower', frequency: 'every-visit', notes: 'morning' }])
     expect(result!.updatedAt).toBe(updatedAt)
   })
 })

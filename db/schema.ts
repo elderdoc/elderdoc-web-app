@@ -214,20 +214,22 @@ export const shifts = pgTable('shifts', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
 })
 
+export type CareTaskEntry = {
+  key: string
+  frequency: 'every-visit' | 'as-needed'
+  notes?: string
+}
+
 export const carePlans = pgTable('care_plans', {
-  id:                  uuid('id').defaultRandom().primaryKey(),
-  recipientId:         uuid('recipient_id').notNull().unique().references(() => careRecipients.id, { onDelete: 'cascade' }),
-  jobId:               uuid('job_id').references(() => jobs.id, { onDelete: 'set null' }),
-  dailySchedule:       jsonb('daily_schedule').$type<Array<{ time: string; activity: string }>>(),
-  medications:         jsonb('medications').$type<Array<{
-    name: string; dosage: string; frequency: string; notes?: string
-  }>>(),
-  dietaryRestrictions: text('dietary_restrictions').array(),
-  emergencyContacts:   jsonb('emergency_contacts').$type<Array<{
-    name: string; relationship: string; phone: string
-  }>>(),
-  specialInstructions: text('special_instructions'),
-  updatedAt:           timestamp('updated_at').defaultNow().notNull(),
+  id:                     uuid('id').defaultRandom().primaryKey(),
+  requestId:              uuid('request_id').references(() => careRequests.id, { onDelete: 'cascade' }).unique(),
+  recipientId:            uuid('recipient_id').references(() => careRecipients.id, { onDelete: 'set null' }),
+  activityMobilitySafety: jsonb('activity_mobility_safety').$type<CareTaskEntry[]>(),
+  hygieneElimination:     jsonb('hygiene_elimination').$type<CareTaskEntry[]>(),
+  homeManagement:         jsonb('home_management').$type<CareTaskEntry[]>(),
+  hydrationNutrition:     jsonb('hydration_nutrition').$type<CareTaskEntry[]>(),
+  medicationReminders:    jsonb('medication_reminders').$type<CareTaskEntry[]>(),
+  updatedAt:              timestamp('updated_at').defaultNow(),
 })
 
 export const messages = pgTable('messages', {
@@ -323,7 +325,6 @@ export const jobsRelations = relations(jobs, ({ one, many }) => ({
   match:       one(matches, { fields: [jobs.matchId], references: [matches.id] }),
   application: one(jobApplications, { fields: [jobs.applicationId], references: [jobApplications.id] }),
   shifts:      many(shifts),
-  carePlan:    one(carePlans, { fields: [jobs.id], references: [carePlans.jobId] }),
   messages:    many(messages),
   payments:    many(payments),
   disputes:    many(disputes),
@@ -334,8 +335,8 @@ export const shiftsRelations = relations(shifts, ({ one }) => ({
 }))
 
 export const carePlansRelations = relations(carePlans, ({ one }) => ({
+  request:   one(careRequests, { fields: [carePlans.requestId], references: [careRequests.id] }),
   recipient: one(careRecipients, { fields: [carePlans.recipientId], references: [careRecipients.id] }),
-  job:       one(jobs, { fields: [carePlans.jobId], references: [jobs.id] }),
 }))
 
 export const messagesRelations = relations(messages, ({ one }) => ({

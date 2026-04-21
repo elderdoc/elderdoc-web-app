@@ -1,11 +1,19 @@
 import { requireRole } from '@/domains/auth/session'
 import { db } from '@/services/db'
-import { jobs, careRequests, caregiverProfiles, carePlans, users, careRecipients } from '@/db/schema'
+import { jobs, careRequests, caregiverProfiles, carePlans, careRecipients } from '@/db/schema'
 import { eq, and, desc } from 'drizzle-orm'
-import { CARE_TYPES } from '@/lib/constants'
+import { CARE_TYPES, CARE_PLAN_SECTIONS } from '@/lib/constants'
+import type { CareTaskEntry } from '@/db/schema'
 
 const CARE_TYPE_LABELS: Record<string, string> = Object.fromEntries(
   CARE_TYPES.map((c) => [c.key, c.label])
+)
+
+const SECTION_ITEM_LABELS: Record<string, Record<string, string>> = Object.fromEntries(
+  CARE_PLAN_SECTIONS.map((section) => [
+    section.key,
+    Object.fromEntries(section.items.map((item) => [item.key, item.label])),
+  ])
 )
 
 export default async function CaregiverCarePlansPage() {
@@ -26,25 +34,52 @@ export default async function CaregiverCarePlansPage() {
 
   const rows = await db
     .select({
-      jobId:               jobs.id,
-      careType:            careRequests.careType,
-      recipientName:       careRecipients.name,
-      carePlanId:          carePlans.id,
-      dailySchedule:       carePlans.dailySchedule,
-      medications:         carePlans.medications,
-      dietaryRestrictions: carePlans.dietaryRestrictions,
-      emergencyContacts:   carePlans.emergencyContacts,
-      specialInstructions: carePlans.specialInstructions,
-      updatedAt:           carePlans.updatedAt,
+      jobId:                  jobs.id,
+      careType:               careRequests.careType,
+      recipientName:          careRecipients.name,
+      carePlanId:             carePlans.id,
+      activityMobilitySafety: carePlans.activityMobilitySafety,
+      hygieneElimination:     carePlans.hygieneElimination,
+      homeManagement:         carePlans.homeManagement,
+      hydrationNutrition:     carePlans.hydrationNutrition,
+      medicationReminders:    carePlans.medicationReminders,
+      updatedAt:              carePlans.updatedAt,
     })
     .from(jobs)
     .innerJoin(careRequests, eq(jobs.requestId, careRequests.id))
     .leftJoin(careRecipients, eq(careRequests.recipientId, careRecipients.id))
-    .leftJoin(carePlans, eq(carePlans.recipientId, careRequests.recipientId))
+    .leftJoin(carePlans, eq(carePlans.requestId, jobs.requestId))
     .where(and(eq(jobs.caregiverId, profile.id), eq(jobs.status, 'active')))
     .orderBy(desc(jobs.createdAt))
     .limit(50)
     .offset(0)
+
+  function renderSection(
+    sectionKey: string,
+    sectionLabel: string,
+    entries: CareTaskEntry[] | null | undefined,
+  ) {
+    if (!entries || entries.length === 0) return null
+    const itemLabels = SECTION_ITEM_LABELS[sectionKey] ?? {}
+    return (
+      <div>
+        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
+          {sectionLabel}
+        </p>
+        <ul className="space-y-1">
+          {entries.map((entry, i) => (
+            <li key={i} className="text-sm flex gap-2 items-start">
+              <span className="font-medium">{itemLabels[entry.key] ?? entry.key}</span>
+              <span className="text-muted-foreground text-xs">({entry.frequency})</span>
+              {entry.notes && (
+                <span className="text-muted-foreground text-xs">— {entry.notes}</span>
+              )}
+            </li>
+          ))}
+        </ul>
+      </div>
+    )
+  }
 
   return (
     <div className="p-4 lg:p-8">
@@ -75,78 +110,11 @@ export default async function CaregiverCarePlansPage() {
                 <p className="text-sm text-muted-foreground">No care plan added yet.</p>
               ) : (
                 <div className="space-y-4">
-                  {row.dailySchedule && row.dailySchedule.length > 0 && (
-                    <div>
-                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
-                        Daily Schedule
-                      </p>
-                      <ul className="space-y-1">
-                        {row.dailySchedule.map((item, i) => (
-                          <li key={i} className="text-sm flex gap-4">
-                            <span className="font-mono text-muted-foreground w-16 shrink-0 whitespace-nowrap">{item.time}</span>
-                            <span>{item.activity}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-
-                  {row.medications && row.medications.length > 0 && (
-                    <div>
-                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
-                        Medications
-                      </p>
-                      <ul className="space-y-1">
-                        {row.medications.map((med, i) => (
-                          <li key={i} className="text-sm">
-                            <span className="font-medium">{med.name}</span>
-                            <span className="text-muted-foreground"> — {med.dosage}, {med.frequency}</span>
-                            {med.notes && <span className="text-muted-foreground"> ({med.notes})</span>}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-
-                  {row.dietaryRestrictions && row.dietaryRestrictions.length > 0 && (
-                    <div>
-                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
-                        Dietary Restrictions
-                      </p>
-                      <ul className="flex flex-wrap gap-2">
-                        {row.dietaryRestrictions.map((r, i) => (
-                          <li key={i} className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
-                            {r}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-
-                  {row.emergencyContacts && row.emergencyContacts.length > 0 && (
-                    <div>
-                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
-                        Emergency Contacts
-                      </p>
-                      <ul className="space-y-1">
-                        {row.emergencyContacts.map((contact, i) => (
-                          <li key={i} className="text-sm">
-                            <span className="font-medium">{contact.name}</span>
-                            <span className="text-muted-foreground"> ({contact.relationship}) — {contact.phone}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-
-                  {row.specialInstructions && (
-                    <div>
-                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
-                        Special Instructions
-                      </p>
-                      <p className="text-sm whitespace-pre-wrap">{row.specialInstructions}</p>
-                    </div>
-                  )}
+                  {renderSection('activityMobilitySafety', 'Activity, Mobility & Safety', row.activityMobilitySafety)}
+                  {renderSection('hygieneElimination', 'Hygiene & Elimination', row.hygieneElimination)}
+                  {renderSection('homeManagement', 'Home Management', row.homeManagement)}
+                  {renderSection('hydrationNutrition', 'Hydration & Nutrition', row.hydrationNutrition)}
+                  {renderSection('medicationReminders', 'Medication Reminders', row.medicationReminders)}
                 </div>
               )}
             </div>

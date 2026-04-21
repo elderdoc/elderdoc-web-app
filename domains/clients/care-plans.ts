@@ -1,5 +1,6 @@
 import { db } from '@/services/db'
 import { jobs, careRequests, caregiverProfiles, users, carePlans, careRecipients } from '@/db/schema'
+import { type CareTaskEntry } from '@/db/schema'
 import { eq, and, desc } from 'drizzle-orm'
 
 export type ClientCarePlanRow = {
@@ -10,14 +11,15 @@ export type ClientCarePlanRow = {
 }
 
 export type CarePlanDetail = {
-  id:                  string
-  recipientId:         string
-  dailySchedule:       Array<{ time: string; activity: string }> | null
-  medications:         Array<{ name: string; dosage: string; frequency: string; notes?: string }> | null
-  dietaryRestrictions: string[] | null
-  emergencyContacts:   Array<{ name: string; relationship: string; phone: string }> | null
-  specialInstructions: string | null
-  updatedAt:           Date
+  id:                     string
+  requestId:              string | null
+  recipientId:            string | null
+  activityMobilitySafety: CareTaskEntry[] | null
+  hygieneElimination:     CareTaskEntry[] | null
+  homeManagement:         CareTaskEntry[] | null
+  hydrationNutrition:     CareTaskEntry[] | null
+  medicationReminders:    CareTaskEntry[] | null
+  updatedAt:              Date | null
 }
 
 export async function getClientCarePlans(clientId: string): Promise<ClientCarePlanRow[]> {
@@ -53,14 +55,15 @@ export async function getCarePlanByRecipient(
 
   const rows = await db
     .select({
-      id:                  carePlans.id,
-      recipientId:         carePlans.recipientId,
-      dailySchedule:       carePlans.dailySchedule,
-      medications:         carePlans.medications,
-      dietaryRestrictions: carePlans.dietaryRestrictions,
-      emergencyContacts:   carePlans.emergencyContacts,
-      specialInstructions: carePlans.specialInstructions,
-      updatedAt:           carePlans.updatedAt,
+      id:                     carePlans.id,
+      requestId:              carePlans.requestId,
+      recipientId:            carePlans.recipientId,
+      activityMobilitySafety: carePlans.activityMobilitySafety,
+      hygieneElimination:     carePlans.hygieneElimination,
+      homeManagement:         carePlans.homeManagement,
+      hydrationNutrition:     carePlans.hydrationNutrition,
+      medicationReminders:    carePlans.medicationReminders,
+      updatedAt:              carePlans.updatedAt,
     })
     .from(carePlans)
     .where(eq(carePlans.recipientId, recipientId))
@@ -88,14 +91,15 @@ export async function getCarePlanByJob(
 
   const rows = await db
     .select({
-      id:                  carePlans.id,
-      recipientId:         carePlans.recipientId,
-      dailySchedule:       carePlans.dailySchedule,
-      medications:         carePlans.medications,
-      dietaryRestrictions: carePlans.dietaryRestrictions,
-      emergencyContacts:   carePlans.emergencyContacts,
-      specialInstructions: carePlans.specialInstructions,
-      updatedAt:           carePlans.updatedAt,
+      id:                     carePlans.id,
+      requestId:              carePlans.requestId,
+      recipientId:            carePlans.recipientId,
+      activityMobilitySafety: carePlans.activityMobilitySafety,
+      hygieneElimination:     carePlans.hygieneElimination,
+      homeManagement:         carePlans.homeManagement,
+      hydrationNutrition:     carePlans.hydrationNutrition,
+      medicationReminders:    carePlans.medicationReminders,
+      updatedAt:              carePlans.updatedAt,
     })
     .from(carePlans)
     .where(eq(carePlans.recipientId, recipientId))

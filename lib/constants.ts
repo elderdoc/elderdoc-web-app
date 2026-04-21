@@ -162,6 +162,83 @@ export const CLIENT_STATUS_GROUPS = [
   },
 ] as const
 
+export const CARE_PLAN_SECTIONS = [
+  {
+    key: 'activityMobilitySafety',
+    label: 'Activity, Mobility & Safety',
+    items: [
+      { key: 'companionship',  label: 'Companionship' },
+      { key: 'rom',            label: 'ROM (Range of Motion)' },
+      { key: 'repositioning',  label: 'Repositioning' },
+      { key: 'transfers',      label: 'Transfers' },
+      { key: 'walkerCane',     label: 'Walker / Cane' },
+      { key: 'transportation', label: 'Transportation' },
+      { key: 'escort',         label: 'Escort' },
+      { key: 'wheelchair',     label: 'Wheelchair' },
+    ],
+  },
+  {
+    key: 'hygieneElimination',
+    label: 'Hygiene & Elimination',
+    items: [
+      { key: 'bathShower',        label: 'Bath / Shower' },
+      { key: 'bedBath',           label: 'Bed Bath' },
+      { key: 'oralHygiene',       label: 'Oral Hygiene' },
+      { key: 'hairCare',          label: 'Hair Care' },
+      { key: 'shaving',           label: 'Shaving' },
+      { key: 'nailCare',          label: 'Nail Care / File Only' },
+      { key: 'dressing',          label: 'Dressing' },
+      { key: 'toiletBsc',         label: 'Toilet / BSC' },
+      { key: 'diaperIncontinent', label: 'Diaper / Incontinent' },
+      { key: 'hygieneOther',      label: 'Other' },
+    ],
+  },
+  {
+    key: 'homeManagement',
+    label: 'Home Management',
+    items: [
+      { key: 'vacuumSweep',     label: 'Vacuum / Sweep' },
+      { key: 'mopFloors',       label: 'Mop Floors' },
+      { key: 'dusting',         label: 'Dusting' },
+      { key: 'cleanKitchen',    label: 'Clean Kitchen' },
+      { key: 'emptyGarbage',    label: 'Empty Garbage' },
+      { key: 'washDishes',      label: 'Wash Dishes' },
+      { key: 'cleanBedroom',    label: 'Clean Bedroom' },
+      { key: 'makeBed',         label: 'Make Bed' },
+      { key: 'changeLinens',    label: 'Change Linens' },
+      { key: 'laundry',         label: 'Laundry' },
+      { key: 'cleanBathroom',   label: 'Clean Bathroom' },
+      { key: 'errandsShopping', label: 'Errands / Shopping' },
+    ],
+  },
+  {
+    key: 'hydrationNutrition',
+    label: 'Hydration & Nutrition',
+    items: [
+      { key: 'assistFeeding',   label: 'Assist w/ Feeding' },
+      { key: 'encourageEating', label: 'Encouraged Eating' },
+      { key: 'encourageFluids', label: 'Encouraged Fluids' },
+      { key: 'preparedMeals',   label: 'Prepared Meals' },
+      { key: 'prepBreakfast',   label: 'Prep Breakfast' },
+      { key: 'prepLunch',       label: 'Prep Lunch' },
+      { key: 'prepDinner',      label: 'Prep Dinner' },
+      { key: 'prepSnacks',      label: 'Prep Snacks' },
+      { key: 'npo',             label: 'NPO (Nothing by Mouth)' },
+    ],
+  },
+  {
+    key: 'medicationReminders',
+    label: 'Medication Reminders',
+    items: [
+      { key: 'medMorning',   label: 'Morning' },
+      { key: 'medAfternoon', label: 'Afternoon' },
+      { key: 'medEvening',   label: 'Evening' },
+      { key: 'medBedtime',   label: 'Bed Time' },
+      { key: 'medSnackTime', label: 'Snack Time' },
+    ],
+  },
+] as const
+
 export const INFECTION_CONTROL_ITEMS = [
   { key: 'gloves',        label: 'Gloves' },
   { key: 'handWashing',   label: 'Hand washing' },
