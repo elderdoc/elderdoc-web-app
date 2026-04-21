@@ -56,6 +56,10 @@ export async function createCareRequest(data: {
   budgetAmount?: string
   title: string
   description: string
+  suppliesNeeded?: string
+  infectionControl?: { enabled: boolean; gloves?: boolean; handWashing?: boolean; wasteDisposal?: boolean }
+  safetyMeasures?: { enabled: boolean; clearPathways?: boolean; electricCords?: boolean; pets?: boolean }
+  clientStatus?: Record<string, boolean | string>
 }): Promise<{ id: string }> {
   const session = await auth()
   if (!session?.user?.id) throw new Error('Unauthorized')
@@ -72,9 +76,13 @@ export async function createCareRequest(data: {
       languagePref: data.languagePref,
       budgetType:   data.budgetType,
       budgetAmount: data.budgetAmount?.trim() && Number.isFinite(Number(data.budgetAmount.trim())) ? data.budgetAmount.trim() : undefined,
-      title:        data.title,
-      description:  data.description,
-      status:       'active',
+      title:           data.title,
+      description:     data.description,
+      status:          'active',
+      suppliesNeeded:  data.suppliesNeeded,
+      infectionControl:data.infectionControl,
+      safetyMeasures:  data.safetyMeasures,
+      clientStatus:    data.clientStatus,
     }).returning({ id: careRequests.id })
 
     await tx.insert(careRequestLocations).values({
@@ -138,6 +146,10 @@ export async function updateCareRequest(id: string, data: {
   languagePref?: string[]
   budgetType?: string
   budgetAmount?: string
+  suppliesNeeded?: string
+  infectionControl?: { enabled: boolean; gloves?: boolean; handWashing?: boolean; wasteDisposal?: boolean }
+  safetyMeasures?: { enabled: boolean; clearPathways?: boolean; electricCords?: boolean; pets?: boolean }
+  clientStatus?: Record<string, boolean | string>
 }): Promise<void> {
   const session = await auth()
   if (!session?.user?.id) throw new Error('Unauthorized')
@@ -152,7 +164,11 @@ export async function updateCareRequest(id: string, data: {
       genderPref:    data.genderPref,
       languagePref:  data.languagePref,
       budgetType:    data.budgetType,
-      budgetAmount:  data.budgetAmount?.trim() && Number.isFinite(Number(data.budgetAmount.trim())) ? data.budgetAmount.trim() : undefined,
+      budgetAmount:    data.budgetAmount?.trim() && Number.isFinite(Number(data.budgetAmount.trim())) ? data.budgetAmount.trim() : undefined,
+      suppliesNeeded:  data.suppliesNeeded,
+      infectionControl:data.infectionControl,
+      safetyMeasures:  data.safetyMeasures,
+      clientStatus:    data.clientStatus,
     })
     .where(and(eq(careRequests.id, id), eq(careRequests.clientId, session.user.id)))
 }
