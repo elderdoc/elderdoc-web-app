@@ -1,5 +1,5 @@
-import Link from 'next/link'
 import { notFound } from 'next/navigation'
+import { BackButton } from '@/components/back-button'
 import { requireRole } from '@/domains/auth/session'
 import { getCarePlanByRecipient } from '@/domains/clients/care-plans'
 import { db } from '@/services/db'
@@ -30,12 +30,7 @@ export default async function CarePlanDetailPage({ params }: PageProps) {
 
   return (
     <div className="p-8">
-      <Link
-        href="/client/dashboard/care-plans"
-        className="text-xs text-muted-foreground hover:text-foreground mb-6 inline-block"
-      >
-        ← Back to Care Plans
-      </Link>
+      <BackButton label="← Back to Care Plans" />
       <h1 className="text-2xl font-semibold mb-1">
         {recipientName}&apos;s Care Plan
       </h1>

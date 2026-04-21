@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { requireRole } from '@/domains/auth/session'
+import { BackButton } from '@/components/back-button'
 import { db } from '@/services/db'
 import { careRequests, careRecipients, careRequestLocations, jobs, caregiverProfiles, users } from '@/db/schema'
 import { eq, and } from 'drizzle-orm'
@@ -104,12 +105,7 @@ export default async function CareRequestDetailPage({ params }: PageProps) {
 
   return (
     <div className="p-8">
-      <Link
-        href="/client/dashboard/requests"
-        className="text-xs text-muted-foreground hover:text-foreground mb-6 inline-flex items-center gap-1"
-      >
-        ← Back to Care Requests
-      </Link>
+      <BackButton label="← Back to Care Requests" />
 
       {/* Header */}
       <div className="flex items-start justify-between gap-4 mt-4 mb-2">

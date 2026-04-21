@@ -137,8 +137,8 @@ export default async function ClientDashboard() {
             <p className="text-sm text-muted-foreground">No activity yet.</p>
           ) : (
             <ol className="space-y-3">
-              {activity.map((item) => (
-                <li key={`${item.type}-${item.createdAt.getTime()}`} className="flex items-start gap-3 text-sm">
+              {activity.map((item, i) => (
+                <li key={`${i}-${item.type}-${item.createdAt.getTime()}`} className="flex items-start gap-3 text-sm">
                   <span className="mt-0.5 h-2 w-2 shrink-0 rounded-full bg-primary/60" />
                   <div>
                     <p>

@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { requireRole } from '@/domains/auth/session'
+import { BackButton } from '@/components/back-button'
 import { db } from '@/services/db'
 import { careRecipients } from '@/db/schema'
 import { and, eq } from 'drizzle-orm'
@@ -38,16 +39,11 @@ export default async function RecipientDetailPage({ params }: PageProps) {
   if (!r) notFound()
 
   const initials = r.name.split(' ').map((p) => p[0]).slice(0, 2).join('').toUpperCase()
-  const location = [r.address?.city, r.address?.state].filter(Boolean).join(', ')
+  const location = [r.address?.city, r.address?.state, r.address?.zip].filter(Boolean).join(', ')
 
   return (
     <div className="p-8">
-      <Link
-        href="/client/dashboard/recipients"
-        className="text-xs text-muted-foreground hover:text-foreground mb-6 inline-flex items-center gap-1"
-      >
-        ← Back to Care Recipients
-      </Link>
+      <BackButton label="← Back to Care Recipients" />
 
       <div className="flex items-start gap-5 mt-4 mb-8">
         {r.photoUrl ? (
@@ -92,34 +88,34 @@ export default async function RecipientDetailPage({ params }: PageProps) {
         <section>
           <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-3">Personal Info</h2>
           <dl className="space-y-3">
-            {r.dob && <Row label="Date of Birth" value={r.dob} />}
-            {r.gender && <Row label="Gender" value={<span className="capitalize">{r.gender}</span>} />}
-            {r.phone && <Row label="Phone" value={r.phone} />}
-            {r.mobilityLevel && (
-              <Row label="Mobility" value={<span className="capitalize">{r.mobilityLevel.replace(/-/g, ' ')}</span>} />
-            )}
+            <Row label="Date of Birth" value={r.dob ?? <span className="text-muted-foreground">—</span>} />
+            <Row label="Gender" value={r.gender ? <span className="capitalize">{r.gender}</span> : <span className="text-muted-foreground">—</span>} />
+            <Row label="Phone" value={r.phone ?? <span className="text-muted-foreground">—</span>} />
+            <Row label="Mobility" value={r.mobilityLevel ? <span className="capitalize">{r.mobilityLevel.replace(/-/g, ' ')}</span> : <span className="text-muted-foreground">—</span>} />
           </dl>
         </section>
 
-        {(r.address?.address1 || location) && (
-          <>
-            <hr className="border-border" />
-            <section>
-              <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-3">Address</h2>
+        <>
+          <hr className="border-border" />
+          <section>
+            <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-3">Address</h2>
+            {(r.address?.address1 || location) ? (
               <dl className="space-y-3">
                 {r.address?.address1 && <Row label="Street" value={r.address.address1} />}
                 {r.address?.address2 && <Row label="Unit" value={r.address.address2} />}
                 {location && <Row label="City / State" value={location} />}
               </dl>
-            </section>
-          </>
-        )}
+            ) : (
+              <p className="text-sm text-muted-foreground">No address on file.</p>
+            )}
+          </section>
+        </>
 
-        {r.conditions && r.conditions.length > 0 && (
-          <>
-            <hr className="border-border" />
-            <section>
-              <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-3">Conditions</h2>
+        <>
+          <hr className="border-border" />
+          <section>
+            <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-3">Conditions</h2>
+            {r.conditions && r.conditions.length > 0 ? (
               <div className="flex flex-wrap gap-2">
                 {r.conditions.map((c) => (
                   <span key={c} className="rounded bg-muted px-2.5 py-1 text-xs font-medium">
@@ -127,19 +123,23 @@ export default async function RecipientDetailPage({ params }: PageProps) {
                   </span>
                 ))}
               </div>
-            </section>
-          </>
-        )}
+            ) : (
+              <p className="text-sm text-muted-foreground">No conditions recorded.</p>
+            )}
+          </section>
+        </>
 
-        {r.notes && (
-          <>
-            <hr className="border-border" />
-            <section>
-              <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-3">Notes</h2>
+        <>
+          <hr className="border-border" />
+          <section>
+            <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-3">Notes</h2>
+            {r.notes ? (
               <p className="text-sm leading-relaxed whitespace-pre-line">{r.notes}</p>
-            </section>
-          </>
-        )}
+            ) : (
+              <p className="text-sm text-muted-foreground">No notes added.</p>
+            )}
+          </section>
+        </>
       </div>
     </div>
   )

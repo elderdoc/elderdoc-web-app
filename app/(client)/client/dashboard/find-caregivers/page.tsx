@@ -4,12 +4,8 @@ import { careRequests, careRequestLocations, clientLocations, caregiverFavorites
 import { and, eq } from 'drizzle-orm'
 import { getMatchesForRequest, searchCaregivers } from '@/domains/clients/find-caregivers'
 import { FilterForm } from './_components/filter-form'
-import { SendOfferModal } from './_components/send-offer-modal'
-import { FavoriteButton } from './_components/favorite-button'
-import { CARE_TYPES } from '@/lib/constants'
-import { haversineDistance, formatMiles } from '@/lib/geo'
-import { MapPin } from 'lucide-react'
-import Link from 'next/link'
+import { FindCaregiverCard } from './_components/find-caregiver-card'
+import { haversineDistance } from '@/lib/geo'
 
 interface PageProps {
   searchParams: Promise<Record<string, string | string[] | undefined>>
@@ -177,86 +173,41 @@ export default async function FindCaregiversPage({ searchParams }: PageProps) {
           </p>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {myMatches.map((m) => {
+            {myMatches.map((m, i) => {
               const badge = scoreBadge(m.score)
               const cgLat = m.lat ? Number(m.lat) : null
               const cgLng = m.lng ? Number(m.lng) : null
-              const distLabel = reqLat && reqLng && cgLat && cgLng
-                ? `${formatMiles(haversineDistance(reqLat, reqLng, cgLat, cgLng))} away`
+              const distanceMiles = reqLat && reqLng && cgLat && cgLng
+                ? haversineDistance(reqLat, reqLng, cgLat, cgLng)
                 : null
-              const DistLine = distLabel && (
-                <p className="text-xs text-muted-foreground flex items-center gap-1">
-                  <MapPin className="h-3 w-3 shrink-0" />
-                  {distLabel}
-                </p>
-              )
               return (
-                <div key={m.matchId} className="rounded-xl border border-border bg-card p-5 space-y-3">
-                  <div className="flex items-center gap-3">
-                    {m.image ? (
-                      <img src={m.image} alt={m.name ?? ''} className="w-10 h-10 rounded-full object-cover" />
-                    ) : (
-                      <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-sm font-medium">
-                        {(m.name ?? '?').charAt(0).toUpperCase()}
-                      </div>
-                    )}
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-1.5">
-                        <p className="font-medium text-sm truncate">{m.name}</p>
-                        {m.rating && (
-                          <span className="flex items-center gap-0.5 text-xs text-amber-500 shrink-0">
-                            ★ {Number(m.rating).toFixed(1)}
-                          </span>
-                        )}
-                      </div>
-                      {DistLine}
-                    </div>
-                  </div>
-
-                  {m.headline && (
-                    <p className="text-xs text-muted-foreground line-clamp-2">{m.headline}</p>
-                  )}
-
-                  {m.careTypes.length > 0 && (
-                    <div className="flex flex-wrap gap-1">
-                      {m.careTypes.map((ct) => (
-                        <span key={ct} className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
-                          {CARE_TYPES.find((c) => c.key === ct)?.label ?? ct}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-
-                  {(m.hourlyMin || m.hourlyMax) && (
-                    <p className="text-xs text-muted-foreground">
-                      ${m.hourlyMin ?? '?'}–${m.hourlyMax ?? '?'}/hr
-                    </p>
-                  )}
-
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className={`whitespace-nowrap text-xs px-2 py-0.5 rounded-full font-medium ${badge.classes}`}>
+                <FindCaregiverCard
+                  key={m.matchId}
+                  rank={i + 1}
+                  caregiver={{
+                    id:           m.caregiverId,
+                    name:         m.name,
+                    image:        m.image,
+                    headline:     m.headline,
+                    careTypes:    m.careTypes,
+                    city:         m.city,
+                    state:        m.state,
+                    distanceMiles,
+                    hourlyMin:    m.hourlyMin,
+                    hourlyMax:    m.hourlyMax,
+                    rating:       m.rating,
+                    matchScore:   Math.round(m.score / 20),
+                    matchReason:  m.reason,
+                  }}
+                  statusBadge={
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${badge.classes}`}>
                       {badge.label}
                     </span>
-                    <div className="flex items-center gap-2 ml-auto">
-                      <FavoriteButton caregiverId={m.caregiverId} initialFavorited={favoriteSet.has(m.caregiverId)} size="sm" />
-                      <Link
-                        href={`/client/dashboard/find-caregivers/${m.caregiverId}`}
-                        className="whitespace-nowrap px-3 py-1.5 rounded-md border border-border text-xs font-medium hover:bg-muted transition-colors"
-                      >
-                        View Profile
-                      </Link>
-                      <SendOfferModal
-                        caregiverId={m.caregiverId}
-                        activeRequests={activeRequests}
-                        alreadyOffered={offeredSet.has(m.caregiverId)}
-                      />
-                    </div>
-                  </div>
-
-                  {m.reason && (
-                    <p className="text-xs italic text-muted-foreground">{m.reason}</p>
-                  )}
-                </div>
+                  }
+                  activeRequests={activeRequests}
+                  isFavorited={favoriteSet.has(m.caregiverId)}
+                  alreadyOffered={offeredSet.has(m.caregiverId)}
+                />
               )
             })}
           </div>
@@ -276,78 +227,28 @@ export default async function FindCaregiversPage({ searchParams }: PageProps) {
           <p className="text-sm text-muted-foreground">No caregivers match the current filters.</p>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {caregiversWithDistance.map((cg) => {
-              const distLabel = cg.distanceMiles != null
-                ? `${formatMiles(cg.distanceMiles)} away`
-                : null
-              return (
-              <div key={cg.caregiverId} className="rounded-xl border border-border bg-card p-5 space-y-3">
-                <div className="flex items-center gap-3">
-                  {cg.image ? (
-                    <img src={cg.image} alt={cg.name ?? ''} className="w-10 h-10 rounded-full object-cover" />
-                  ) : (
-                    <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-sm font-medium">
-                      {(cg.name ?? '?').charAt(0).toUpperCase()}
-                    </div>
-                  )}
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-1.5">
-                      <p className="font-medium text-sm truncate">{cg.name}</p>
-                      {cg.rating && (
-                        <span className="flex items-center gap-0.5 text-xs text-amber-500 shrink-0">
-                          ★ {Number(cg.rating).toFixed(1)}
-                        </span>
-                      )}
-                    </div>
-                    {distLabel && (
-                      <p className="text-xs text-muted-foreground flex items-center gap-1">
-                        <MapPin className="h-3 w-3 shrink-0" />
-                        {distLabel}
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                {cg.headline && (
-                  <p className="text-xs text-muted-foreground line-clamp-2">{cg.headline}</p>
-                )}
-
-                {cg.careTypes.length > 0 && (
-                  <div className="flex flex-wrap gap-1">
-                    {cg.careTypes.map((ct) => (
-                      <span key={ct} className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
-                        {CARE_TYPES.find((c) => c.key === ct)?.label ?? ct}
-                      </span>
-                    ))}
-                  </div>
-                )}
-
-                {(cg.hourlyMin || cg.hourlyMax) && (
-                  <p className="text-xs text-muted-foreground">
-                    ${cg.hourlyMin ?? '?'}–${cg.hourlyMax ?? '?'}/hr
-                  </p>
-                )}
-
-                {cg.experience && (
-                  <p className="text-xs text-muted-foreground">{cg.experience} experience</p>
-                )}
-
-                <div className="flex items-center justify-end gap-2 flex-wrap">
-                  <FavoriteButton caregiverId={cg.caregiverId} initialFavorited={favoriteSet.has(cg.caregiverId)} size="sm" />
-                  <Link
-                    href={`/client/dashboard/find-caregivers/${cg.caregiverId}`}
-                    className="whitespace-nowrap px-3 py-1.5 rounded-md border border-border text-xs font-medium hover:bg-muted transition-colors"
-                  >
-                    View Profile
-                  </Link>
-                  <SendOfferModal
-                    caregiverId={cg.caregiverId}
-                    activeRequests={activeRequests}
-                    alreadyOffered={offeredSet.has(cg.caregiverId)}
-                  />
-                </div>
-              </div>
-            )})}
+            {caregiversWithDistance.map((cg) => (
+              <FindCaregiverCard
+                key={cg.caregiverId}
+                caregiver={{
+                  id:           cg.caregiverId,
+                  name:         cg.name,
+                  image:        cg.image,
+                  headline:     cg.headline,
+                  careTypes:    cg.careTypes,
+                  city:         cg.city,
+                  state:        cg.state,
+                  distanceMiles: cg.distanceMiles,
+                  hourlyMin:    cg.hourlyMin,
+                  hourlyMax:    cg.hourlyMax,
+                  experience:   cg.experience,
+                  rating:       cg.rating,
+                }}
+                activeRequests={activeRequests}
+                isFavorited={favoriteSet.has(cg.caregiverId)}
+                alreadyOffered={offeredSet.has(cg.caregiverId)}
+              />
+            ))}
           </div>
         )}
 

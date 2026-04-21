@@ -225,12 +225,13 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgHourl
   return (
     <div className="p-8 max-w-2xl mx-auto">
       {!isFinalStep && (
-        <Link
-          href="/client/dashboard/requests"
+        <button
+          type="button"
+          onClick={() => router.back()}
           className="text-xs text-muted-foreground hover:text-foreground mb-6 inline-block"
         >
           ← Back to Requests
-        </Link>
+        </button>
       )}
 
       {/* Progress */}

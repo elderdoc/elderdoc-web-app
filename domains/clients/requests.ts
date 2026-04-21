@@ -15,7 +15,7 @@ export async function createCareRecipient(data: {
   conditions: string[]
   mobilityLevel?: string
   notes?: string
-  address?: { address1?: string; address2?: string; city?: string; state?: string }
+  address?: { address1?: string; address2?: string; city?: string; state?: string; zip?: string }
 }): Promise<{ id: string }> {
   const session = await auth()
   if (!session?.user?.id) throw new Error('Unauthorized')
@@ -99,7 +99,7 @@ export async function updateCareRecipient(id: string, data: {
   conditions: string[]
   mobilityLevel?: string
   notes?: string
-  address?: { address1?: string; address2?: string; city?: string; state?: string }
+  address?: { address1?: string; address2?: string; city?: string; state?: string; zip?: string }
 }): Promise<void> {
   const session = await auth()
   if (!session?.user?.id) throw new Error('Unauthorized')

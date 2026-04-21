@@ -1,10 +1,10 @@
 import { notFound } from 'next/navigation'
-import Link from 'next/link'
 import { requireRole } from '@/domains/auth/session'
 import { db } from '@/services/db'
 import { jobs, caregiverProfiles, users } from '@/db/schema'
 import { and, eq } from 'drizzle-orm'
 import { ChatWindow } from '@/components/messaging/chat-window'
+import { BackButton } from '@/components/back-button'
 
 interface PageProps {
   params: Promise<{ jobId: string }>
@@ -27,12 +27,7 @@ export default async function ClientMessagePage({ params }: PageProps) {
 
   return (
     <div className="p-4 lg:p-8">
-      <Link
-        href="/client/dashboard/requests"
-        className="text-xs text-muted-foreground hover:text-foreground mb-6 inline-flex items-center gap-1"
-      >
-        ← Back to Care Requests
-      </Link>
+      <BackButton label="← Back to Care Requests" />
       <div className="mt-4">
         <ChatWindow jobId={jobId} otherPartyName={job.caregiverName ?? 'Caregiver'} />
       </div>

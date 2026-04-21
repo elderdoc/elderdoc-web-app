@@ -1,5 +1,7 @@
 'use client'
 
+import Link from 'next/link'
+import { Heart, MapPin } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { CARE_TYPES } from '@/lib/constants'
 
@@ -15,6 +17,7 @@ export interface CaregiverPreview {
   hourlyMin: string | null
   hourlyMax: string | null
   experience?: string | null
+  rating?: string | number | null
   matchScore?: number
   matchReason?: string
 }
@@ -23,10 +26,20 @@ interface CaregiverCardProps {
   caregiver: CaregiverPreview
   rank?: number
   onSendOffer?: () => void
+  /** Show a "View Profile" link instead of Send Offer */
+  viewProfileHref?: string
+  /** Favorite toggle — show heart button when provided */
+  isFavorited?: boolean
+  onToggleFavorite?: () => void
+  favoriteIsPending?: boolean
+  /** Optional status badge node rendered next to the name */
+  statusBadge?: React.ReactNode
+  /** Replaces the default Send Offer button — use to pass a modal trigger */
+  sendOfferNode?: React.ReactNode
   className?: string
 }
 
-export function CaregiverCard({ caregiver, rank, onSendOffer, className }: CaregiverCardProps) {
+export function CaregiverCard({ caregiver, rank, onSendOffer, viewProfileHref, isFavorited, onToggleFavorite, favoriteIsPending, statusBadge, sendOfferNode, className }: CaregiverCardProps) {
   const initials = caregiver.name
     ? caregiver.name.split(' ').filter(Boolean).map(n => n[0].toUpperCase()).slice(0, 2).join('')
     : '?'
@@ -36,6 +49,8 @@ export function CaregiverCard({ caregiver, rank, onSendOffer, className }: Careg
   )
 
   const score = caregiver.matchScore ?? null
+
+  const hasActions = onToggleFavorite !== undefined || viewProfileHref || sendOfferNode || onSendOffer
 
   return (
     <div className={cn('rounded-[12px] border border-border bg-card p-5', className)}>
@@ -61,10 +76,18 @@ export function CaregiverCard({ caregiver, rank, onSendOffer, className }: Careg
         {/* Main content */}
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-2 flex-wrap">
-            <div>
-              <p className="text-[15px] font-semibold text-foreground">
-                {caregiver.name ?? 'Anonymous Caregiver'}
-              </p>
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <p className="text-[15px] font-semibold text-foreground">
+                  {caregiver.name ?? 'Anonymous Caregiver'}
+                </p>
+                {caregiver.rating != null && (
+                  <span className="flex items-center gap-0.5 text-xs text-amber-500 shrink-0 font-medium">
+                    ★ {Number(caregiver.rating).toFixed(1)}
+                  </span>
+                )}
+                {statusBadge}
+              </div>
               {caregiver.headline && (
                 <p className="mt-0.5 text-sm text-muted-foreground line-clamp-1">
                   {caregiver.headline}
@@ -100,9 +123,9 @@ export function CaregiverCard({ caregiver, rank, onSendOffer, className }: Careg
           {/* Details row */}
           <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground">
             {caregiver.distanceMiles != null ? (
-              <span>📍 {caregiver.distanceMiles < 1 ? '<1 mi' : `${Math.round(caregiver.distanceMiles)} mi`} away</span>
+              <span className="flex items-center gap-1"><MapPin className="h-3 w-3 shrink-0" />{caregiver.distanceMiles < 1 ? '<1 mi' : `${Math.round(caregiver.distanceMiles)} mi`} away</span>
             ) : caregiver.city && caregiver.state ? (
-              <span>📍 {caregiver.city}, {caregiver.state}</span>
+              <span className="flex items-center gap-1"><MapPin className="h-3 w-3 shrink-0" />{caregiver.city}, {caregiver.state}</span>
             ) : null}
             {caregiver.experience && (
               <span>🕐 {caregiver.experience}</span>
@@ -128,18 +151,44 @@ export function CaregiverCard({ caregiver, rank, onSendOffer, className }: Careg
             )}
           </div>
         </div>
-
-        {/* CTA */}
-        <div className="flex items-center shrink-0">
-          <button
-            type="button"
-            onClick={onSendOffer}
-            className="rounded-[8px] bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90 whitespace-nowrap"
-          >
-            Send Offer
-          </button>
-        </div>
       </div>
+
+      {/* Actions */}
+      {hasActions && (
+        <>
+          <hr className="border-border mt-4" />
+          <div className="flex items-center justify-end gap-2 pt-4">
+            {onToggleFavorite !== undefined && (
+              <button
+                type="button"
+                onClick={onToggleFavorite}
+                disabled={favoriteIsPending}
+                title={isFavorited ? 'Remove from favorites' : 'Add to favorites'}
+                className="inline-flex items-center justify-center h-8 w-8 rounded-md border border-border hover:bg-muted transition-colors"
+              >
+                <Heart className={cn('h-4 w-4', isFavorited ? 'fill-red-500 text-red-500' : 'text-muted-foreground')} />
+              </button>
+            )}
+            {viewProfileHref && (
+              <Link
+                href={viewProfileHref}
+                className="rounded-[8px] border border-border px-4 py-2 text-sm font-medium hover:bg-muted transition-colors whitespace-nowrap"
+              >
+                View Profile
+              </Link>
+            )}
+            {sendOfferNode ?? (onSendOffer ? (
+              <button
+                type="button"
+                onClick={onSendOffer}
+                className="rounded-[8px] bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90 whitespace-nowrap"
+              >
+                Send Offer
+              </button>
+            ) : null)}
+          </div>
+        </>
+      )}
     </div>
   )
 }

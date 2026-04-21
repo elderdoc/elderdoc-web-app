@@ -81,12 +81,13 @@ export function EditRequestForm({ request: req, location }: { request: Request; 
 
   return (
     <div className="p-8">
-      <Link
-        href={`/client/dashboard/requests/${req.id}`}
+      <button
+        type="button"
+        onClick={() => router.back()}
         className="text-xs text-muted-foreground hover:text-foreground mb-6 inline-flex items-center gap-1"
       >
         ← Back
-      </Link>
+      </button>
       <h1 className="text-2xl font-semibold mt-4 mb-8">Edit Care Request</h1>
 
       <div className="space-y-6">

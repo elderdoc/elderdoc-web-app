@@ -14,6 +14,11 @@ interface RecipientForm {
   phone: string
   gender: string
   photoUrl: string
+  address1: string
+  address2: string
+  city: string
+  state: string
+  zip: string
   conditions: string[]
   mobilityLevel: string
   notes: string
@@ -21,7 +26,8 @@ interface RecipientForm {
 
 const EMPTY: RecipientForm = {
   relationship: '', name: '', dob: '', phone: '', gender: '',
-  photoUrl: '', conditions: [], mobilityLevel: '', notes: '',
+  photoUrl: '', address1: '', address2: '', city: '', state: '', zip: '',
+  conditions: [], mobilityLevel: '', notes: '',
 }
 
 const STEPS = ['Who are you caring for?', 'Basic information', 'Health & mobility', 'Additional notes']
@@ -84,6 +90,13 @@ export default function NewRecipientPage() {
         phone:         form.phone || undefined,
         gender:        form.gender || undefined,
         photoUrl:      form.photoUrl || undefined,
+        address: (form.address1 || form.city) ? {
+          address1: form.address1 || undefined,
+          address2: form.address2 || undefined,
+          city:     form.city || undefined,
+          state:    form.state || undefined,
+          zip:      form.zip || undefined,
+        } : undefined,
         conditions:    form.conditions,
         mobilityLevel: form.mobilityLevel || undefined,
         notes:         form.notes || undefined,
@@ -103,12 +116,13 @@ export default function NewRecipientPage() {
 
   return (
     <div className="p-8 max-w-2xl mx-auto">
-      <Link
-        href="/client/dashboard/recipients"
+      <button
+        type="button"
+        onClick={() => router.back()}
         className="text-xs text-muted-foreground hover:text-foreground mb-6 inline-block"
       >
         ← Back to Recipients
-      </Link>
+      </button>
 
       {/* Progress */}
       <div className="flex items-center gap-2 mb-8">
@@ -212,6 +226,48 @@ export default function NewRecipientPage() {
                   {g.label}
                 </button>
               ))}
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-2">Address</label>
+            <div className="space-y-3">
+              <input
+                type="text"
+                value={form.address1}
+                onChange={(e) => setForm((f) => ({ ...f, address1: e.target.value }))}
+                className="w-full rounded-lg border border-border px-4 py-3 text-sm focus:border-primary focus:outline-none"
+                placeholder="Street address line 1"
+              />
+              <input
+                type="text"
+                value={form.address2}
+                onChange={(e) => setForm((f) => ({ ...f, address2: e.target.value }))}
+                className="w-full rounded-lg border border-border px-4 py-3 text-sm focus:border-primary focus:outline-none"
+                placeholder="Apt, suite, unit (optional)"
+              />
+              <div className="grid grid-cols-3 gap-3">
+                <input
+                  type="text"
+                  value={form.city}
+                  onChange={(e) => setForm((f) => ({ ...f, city: e.target.value }))}
+                  className="w-full rounded-lg border border-border px-4 py-3 text-sm focus:border-primary focus:outline-none"
+                  placeholder="City"
+                />
+                <input
+                  type="text"
+                  value={form.state}
+                  onChange={(e) => setForm((f) => ({ ...f, state: e.target.value }))}
+                  className="w-full rounded-lg border border-border px-4 py-3 text-sm focus:border-primary focus:outline-none"
+                  placeholder="State"
+                />
+                <input
+                  type="text"
+                  value={form.zip}
+                  onChange={(e) => setForm((f) => ({ ...f, zip: e.target.value }))}
+                  className="w-full rounded-lg border border-border px-4 py-3 text-sm focus:border-primary focus:outline-none"
+                  placeholder="ZIP"
+                />
+              </div>
             </div>
           </div>
         </div>

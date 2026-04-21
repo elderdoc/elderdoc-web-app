@@ -3,6 +3,7 @@
 import { useState, useTransition, Suspense } from 'react'
 import { signIn } from 'next-auth/react'
 import Link from 'next/link'
+import { Eye, EyeOff } from 'lucide-react'
 import { registerUser } from '@/domains/auth/register'
 import { useRouter, useSearchParams } from 'next/navigation'
 
@@ -18,6 +19,7 @@ function SignInInner() {
   const [password, setPassword] = useState('')
   const [name, setName] = useState('')
   const [role, setRole] = useState<'client' | 'caregiver' | ''>(defaultRole)
+  const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
 
@@ -113,8 +115,14 @@ function SignInInner() {
               </div>
               <div>
                 <label className={labelClass}>Password</label>
-                <input type="password" autoComplete="current-password" placeholder="••••••••"
-                  value={password} onChange={e => setPassword(e.target.value)} className={inputClass} required />
+                <div className="relative">
+                  <input type={showPassword ? 'text' : 'password'} autoComplete="current-password" placeholder="••••••••"
+                    value={password} onChange={e => setPassword(e.target.value)} className={`${inputClass} pr-10`} required />
+                  <button type="button" onClick={() => setShowPassword(v => !v)}
+                    className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-foreground">
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
               </div>
               {error && <p className="text-xs text-destructive">{error}</p>}
               <button type="submit" disabled={isPending}
@@ -155,8 +163,14 @@ function SignInInner() {
               </div>
               <div>
                 <label className={labelClass}>Password</label>
-                <input type="password" autoComplete="new-password" placeholder="Min. 8 characters"
-                  value={password} onChange={e => setPassword(e.target.value)} className={inputClass} required />
+                <div className="relative">
+                  <input type={showPassword ? 'text' : 'password'} autoComplete="new-password" placeholder="Min. 8 characters"
+                    value={password} onChange={e => setPassword(e.target.value)} className={`${inputClass} pr-10`} required />
+                  <button type="button" onClick={() => setShowPassword(v => !v)}
+                    className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-foreground">
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
               </div>
               {error && <p className="text-xs text-destructive">{error}</p>}
               <button type="submit" disabled={isPending}

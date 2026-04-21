@@ -17,7 +17,7 @@ interface Recipient {
   conditions: string[] | null
   mobilityLevel: string | null
   notes: string | null
-  address: { address1?: string; address2?: string; city?: string; state?: string } | null
+  address: { address1?: string; address2?: string; city?: string; state?: string; zip?: string } | null
 }
 
 export function EditRecipientForm({ recipient: r }: { recipient: Recipient }) {
@@ -36,6 +36,7 @@ export function EditRecipientForm({ recipient: r }: { recipient: Recipient }) {
     address2:      r.address?.address2 ?? '',
     city:          r.address?.city ?? '',
     state:         r.address?.state ?? '',
+    zip:           r.address?.zip ?? '',
   })
 
   function toggleCondition(key: string) {
@@ -63,6 +64,7 @@ export function EditRecipientForm({ recipient: r }: { recipient: Recipient }) {
           address2: form.address2 || undefined,
           city:     form.city || undefined,
           state:    form.state || undefined,
+          zip:      form.zip || undefined,
         } : undefined,
       })
       router.push(`/client/dashboard/recipients/${r.id}`)
@@ -72,12 +74,13 @@ export function EditRecipientForm({ recipient: r }: { recipient: Recipient }) {
 
   return (
     <div className="p-8">
-      <Link
-        href={`/client/dashboard/recipients/${r.id}`}
+      <button
+        type="button"
+        onClick={() => router.back()}
         className="text-xs text-muted-foreground hover:text-foreground mb-6 inline-flex items-center gap-1"
       >
         ← Back
-      </Link>
+      </button>
       <h1 className="text-2xl font-semibold mt-4 mb-8">Edit Care Recipient</h1>
 
       <div className="space-y-6">
@@ -194,9 +197,16 @@ export function EditRecipientForm({ recipient: r }: { recipient: Recipient }) {
               value={form.address1}
               onChange={e => setForm(f => ({ ...f, address1: e.target.value }))}
               className="w-full rounded-lg border border-border px-4 py-3 text-sm focus:border-primary focus:outline-none"
-              placeholder="Street address"
+              placeholder="Street address line 1"
             />
-            <div className="grid grid-cols-2 gap-3">
+            <input
+              type="text"
+              value={form.address2}
+              onChange={e => setForm(f => ({ ...f, address2: e.target.value }))}
+              className="w-full rounded-lg border border-border px-4 py-3 text-sm focus:border-primary focus:outline-none"
+              placeholder="Apt, suite, unit (optional)"
+            />
+            <div className="grid grid-cols-3 gap-3">
               <input
                 type="text"
                 value={form.city}
@@ -210,6 +220,13 @@ export function EditRecipientForm({ recipient: r }: { recipient: Recipient }) {
                 onChange={e => setForm(f => ({ ...f, state: e.target.value }))}
                 className="w-full rounded-lg border border-border px-4 py-3 text-sm focus:border-primary focus:outline-none"
                 placeholder="State"
+              />
+              <input
+                type="text"
+                value={form.zip}
+                onChange={e => setForm(f => ({ ...f, zip: e.target.value }))}
+                className="w-full rounded-lg border border-border px-4 py-3 text-sm focus:border-primary focus:outline-none"
+                placeholder="ZIP"
               />
             </div>
           </div>
