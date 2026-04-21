@@ -28,10 +28,12 @@ interface RequestForm {
   recipientName: string
   address: { address1: string; address2: string; city: string; state: string }
   frequency: string
-  days: string[]
-  shifts: string[]
+  schedule: Array<{ day: string; startTime: string; endTime: string }>
   startDate: string
-  durationHours: number
+  sameTimeEveryDay: boolean
+  sharedStartTime: string
+  sharedEndTime: string
+  dayTimes: Record<string, { startTime: string; endTime: string }>
   genderPref: string
   languagePref: string[]
   budgetType: string
@@ -43,7 +45,7 @@ interface RequestForm {
 const EMPTY: RequestForm = {
   careTypes: [], recipientId: '', recipientName: '',
   address: { address1: '', address2: '', city: '', state: '' },
-  frequency: '', days: [], shifts: [], startDate: '', durationHours: 0,
+  frequency: '', schedule: [], startDate: '', sameTimeEveryDay: true, sharedStartTime: '', sharedEndTime: '', dayTimes: {},
   genderPref: '', languagePref: [], budgetType: '', budgetAmount: '',
   title: '', description: '',
 }
@@ -95,13 +97,25 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgHourl
   const [candidates, setCandidates] = useState<RankedCandidate[]>([])
   const [matchRequestId, setMatchRequestId] = useState<string | null>(null)
 
-  function toggleMulti(field: 'careTypes' | 'days' | 'shifts' | 'languagePref', key: string) {
+  function toggleMulti(field: 'careTypes' | 'languagePref', key: string) {
     setForm((f) => ({
       ...f,
       [field]: (f[field] as string[]).includes(key)
         ? (f[field] as string[]).filter((v) => v !== key)
         : [...(f[field] as string[]), key],
     }))
+  }
+
+  function toggleDay(day: string) {
+    setForm(f => {
+      const selected = f.schedule.map(s => s.day)
+      if (selected.includes(day)) {
+        const updated = { ...f.dayTimes }
+        delete updated[day]
+        return { ...f, schedule: f.schedule.filter(s => s.day !== day), dayTimes: updated }
+      }
+      return { ...f, schedule: [...f.schedule, { day, startTime: '', endTime: '' }] }
+    })
   }
 
   function handleNewRecipientCreated(id: string, name: string) {
@@ -137,8 +151,9 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgHourl
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           careType: form.careTypes[0] ?? '',
-          conditions: [], frequency: form.frequency, days: form.days,
-          shifts: form.shifts, duration: String(form.durationHours),
+          conditions: [], frequency: form.frequency,
+          days: form.schedule.map(s => s.day),
+          shifts: form.schedule.map(s => `${form.sameTimeEveryDay ? form.sharedStartTime : (form.dayTimes[s.day]?.startTime ?? '')}–${form.sameTimeEveryDay ? form.sharedEndTime : (form.dayTimes[s.day]?.endTime ?? '')}`),
           languages: form.languagePref,
           budgetType: form.budgetType || undefined,
           budgetAmount: form.budgetAmount || undefined,
@@ -172,10 +187,12 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgHourl
           careType:      form.careTypes[0] ?? '',
           address:       form.address,
           frequency:     form.frequency,
-          days:          form.days,
-          shifts:        form.shifts,
+          schedule:      form.schedule.map(s => ({
+            day:       s.day,
+            startTime: form.sameTimeEveryDay ? form.sharedStartTime : (form.dayTimes[s.day]?.startTime ?? ''),
+            endTime:   form.sameTimeEveryDay ? form.sharedEndTime   : (form.dayTimes[s.day]?.endTime ?? ''),
+          })),
           startDate:     form.startDate,
-          durationHours: form.durationHours,
           genderPref:    form.genderPref || undefined,
           languagePref:  form.languagePref,
           budgetType:    form.budgetType || undefined,
@@ -214,7 +231,13 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgHourl
     form.careTypes.length > 0,
     form.recipientId.length > 0,
     form.address.address1.trim().length > 0 && form.address.city.trim().length > 0 && form.address.state.length > 0,
-    form.frequency.length > 0 && form.days.length > 0 && form.shifts.length > 0 && form.startDate.length > 0,
+    (() => {
+      if (!form.frequency || form.schedule.length === 0 || !form.startDate) return false
+      const timesOk = form.sameTimeEveryDay
+        ? form.sharedStartTime.length > 0 && form.sharedEndTime.length > 0
+        : form.schedule.every(s => form.dayTimes[s.day]?.startTime && form.dayTimes[s.day]?.endTime)
+      return timesOk
+    })(),
     form.genderPref.length > 0,
     form.title.trim().length > 0 && form.description.trim().length > 0,
   ]
@@ -383,45 +406,65 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgHourl
             <div className="flex flex-wrap gap-2">
               {DAYS_OF_WEEK.map((d) => (
                 <button key={d.key} type="button"
-                  onClick={() => toggleMulti('days', d.key)}
-                  className={['rounded-xl border-2 px-4 py-2.5 text-sm font-medium transition-colors', form.days.includes(d.key) ? 'border-primary bg-primary/5 text-primary' : 'border-border hover:border-primary/50'].join(' ')}>
+                  onClick={() => toggleDay(d.key)}
+                  className={['rounded-xl border-2 px-4 py-2.5 text-sm font-medium transition-colors', form.schedule.some(s => s.day === d.key) ? 'border-primary bg-primary/5 text-primary' : 'border-border hover:border-primary/50'].join(' ')}>
                   {d.label.slice(0, 3)}
                 </button>
               ))}
             </div>
           </div>
-          <div>
-            <label className="block text-sm font-medium mb-3">Shift Time *</label>
-            <div className="flex items-center gap-3">
-              <div className="flex-1">
-                <label className="block text-xs text-muted-foreground mb-1">From</label>
+          {form.schedule.length > 0 && (
+            <div>
+              <label className="block text-sm font-medium mb-3">Shift Time *</label>
+              <label className="flex items-center gap-2 text-sm mb-4 cursor-pointer">
                 <input
-                  type="time"
-                  value={form.shifts[0]?.split('–')[0]?.trim() ?? ''}
-                  onChange={(e) => {
-                    const to = form.shifts[0]?.split('–')[1]?.trim() ?? ''
-                    const val = e.target.value ? `${e.target.value}–${to}` : ''
-                    setForm((f) => ({ ...f, shifts: val ? [val] : [] }))
-                  }}
-                  className="w-full rounded-lg border border-border px-3 py-3 text-sm focus:border-primary focus:outline-none"
+                  type="checkbox"
+                  checked={form.sameTimeEveryDay}
+                  onChange={e => setForm(f => ({ ...f, sameTimeEveryDay: e.target.checked }))}
+                  className="rounded border-border"
                 />
-              </div>
-              <span className="text-muted-foreground mt-5">–</span>
-              <div className="flex-1">
-                <label className="block text-xs text-muted-foreground mb-1">To</label>
-                <input
-                  type="time"
-                  value={form.shifts[0]?.split('–')[1]?.trim() ?? ''}
-                  onChange={(e) => {
-                    const from = form.shifts[0]?.split('–')[0]?.trim() ?? ''
-                    const val = e.target.value ? `${from}–${e.target.value}` : ''
-                    setForm((f) => ({ ...f, shifts: val ? [val] : [] }))
-                  }}
-                  className="w-full rounded-lg border border-border px-3 py-3 text-sm focus:border-primary focus:outline-none"
-                />
-              </div>
+                Same time every day
+              </label>
+              {form.sameTimeEveryDay ? (
+                <div className="flex items-center gap-3">
+                  <div className="flex-1">
+                    <label className="block text-xs text-muted-foreground mb-1">From</label>
+                    <input type="time" value={form.sharedStartTime}
+                      onChange={e => setForm(f => ({ ...f, sharedStartTime: e.target.value }))}
+                      className="w-full rounded-lg border border-border px-3 py-3 text-sm focus:border-primary focus:outline-none" />
+                  </div>
+                  <span className="text-muted-foreground mt-5">–</span>
+                  <div className="flex-1">
+                    <label className="block text-xs text-muted-foreground mb-1">To</label>
+                    <input type="time" value={form.sharedEndTime}
+                      onChange={e => setForm(f => ({ ...f, sharedEndTime: e.target.value }))}
+                      className="w-full rounded-lg border border-border px-3 py-3 text-sm focus:border-primary focus:outline-none" />
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {form.schedule.map(s => (
+                    <div key={s.day} className="flex items-center gap-3">
+                      <span className="w-28 text-sm capitalize">{s.day}</span>
+                      <div className="flex-1">
+                        <input type="time"
+                          value={form.dayTimes[s.day]?.startTime ?? ''}
+                          onChange={e => setForm(f => ({ ...f, dayTimes: { ...f.dayTimes, [s.day]: { ...f.dayTimes[s.day], startTime: e.target.value } } }))}
+                          className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:border-primary focus:outline-none" />
+                      </div>
+                      <span className="text-muted-foreground">–</span>
+                      <div className="flex-1">
+                        <input type="time"
+                          value={form.dayTimes[s.day]?.endTime ?? ''}
+                          onChange={e => setForm(f => ({ ...f, dayTimes: { ...f.dayTimes, [s.day]: { ...f.dayTimes[s.day], endTime: e.target.value } } }))}
+                          className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:border-primary focus:outline-none" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
-          </div>
+          )}
           <div>
             <label className="block text-sm font-medium mb-1">Start Date *</label>
             <DatePicker
