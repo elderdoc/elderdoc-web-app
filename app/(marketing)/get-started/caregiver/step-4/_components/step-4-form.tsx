@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { SelectableCard } from '@/components/selectable-card'
 import { CaregiverStepShell } from '../../_components/caregiver-step-shell'
 import { CARE_PLAN_SECTIONS, SPECIAL_NEEDS_HANDLING } from '@/lib/constants'
 import { saveCaregiverCapabilities } from '@/domains/caregivers/onboarding'
@@ -64,19 +65,13 @@ export function Step4Form({ initialCapabilities, initialSpecialNeeds, initialMax
               <p className={labelClass}>{section.label}</p>
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
                 {section.items.map(item => (
-                  <button
+                  <SelectableCard
                     key={item.key}
-                    type="button"
-                    onClick={() => toggleCapability(sKey, item.key)}
-                    className={[
-                      'rounded-xl border-2 px-3 py-2.5 text-sm font-medium text-left transition-colors',
-                      capabilities[sKey].includes(item.key)
-                        ? 'border-primary bg-primary/5 text-primary'
-                        : 'border-border hover:border-primary/50',
-                    ].join(' ')}
+                    selected={capabilities[sKey].includes(item.key)}
+                    onSelect={() => toggleCapability(sKey, item.key)}
                   >
-                    {item.label}
-                  </button>
+                    <span className="text-[13px] font-medium">{item.label}</span>
+                  </SelectableCard>
                 ))}
               </div>
             </section>
@@ -87,19 +82,13 @@ export function Step4Form({ initialCapabilities, initialSpecialNeeds, initialMax
           <p className={labelClass}>Special needs clients you can work with</p>
           <div className="grid grid-cols-2 gap-2">
             {SPECIAL_NEEDS_HANDLING.map(item => (
-              <button
+              <SelectableCard
                 key={item.key}
-                type="button"
-                onClick={() => toggleSpecialNeed(item.key)}
-                className={[
-                  'rounded-xl border-2 px-4 py-3 text-sm font-medium text-left transition-colors',
-                  specialNeeds[item.key]
-                    ? 'border-primary bg-primary/5 text-primary'
-                    : 'border-border hover:border-primary/50',
-                ].join(' ')}
+                selected={!!specialNeeds[item.key]}
+                onSelect={() => toggleSpecialNeed(item.key)}
               >
-                {item.label}
-              </button>
+                <span className="text-sm font-medium">{item.label}</span>
+              </SelectableCard>
             ))}
           </div>
         </section>
