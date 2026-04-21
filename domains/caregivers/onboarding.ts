@@ -91,8 +91,7 @@ export async function saveCaregiverStep2(data: {
 
 export async function saveCaregiverStep3(data: {
   workTypes: string[]
-  days: string[]
-  shifts: string[]
+  availability: Array<{ day: string; startTime: string; endTime: string }>
   startAvailability: string
 }) {
   const session = await auth()
@@ -111,8 +110,6 @@ export async function saveCaregiverStep3(data: {
 
   const rows: (typeof caregiverWorkPrefs.$inferInsert)[] = [
     ...data.workTypes.map(workType => ({ caregiverId: profile.id, workType })),
-    ...data.days.map(day => ({ caregiverId: profile.id, day })),
-    ...data.shifts.map(shift => ({ caregiverId: profile.id, shift })),
     ...(data.startAvailability
       ? [{ caregiverId: profile.id, startAvailability: data.startAvailability }]
       : []),
@@ -124,7 +121,7 @@ export async function saveCaregiverStep3(data: {
 
   await db
     .update(caregiverProfiles)
-    .set({ completedStep: 3 })
+    .set({ availability: data.availability, completedStep: 3 })
     .where(eq(caregiverProfiles.id, profile.id))
 
   redirect('/get-started/caregiver/step-4')
