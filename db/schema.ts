@@ -97,7 +97,7 @@ export const careRecipients = pgTable('care_recipients', {
   gender:       text('gender'),
   photoUrl:     text('photo_url'),
   address:      jsonb('address').$type<{
-    address1?: string; address2?: string; city?: string; state?: string
+    address1?: string; address2?: string; city?: string; state?: string; zip?: string
   }>(),
   conditions:   text('conditions').array(),
   mobilityLevel:text('mobility_level'),
