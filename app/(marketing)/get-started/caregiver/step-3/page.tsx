@@ -24,12 +24,15 @@ export default async function CaregiverStep3() {
         )
     : []
 
+  const initialWorkTypes = workPrefRows.filter(r => r.workType).map(r => r.workType!)
+  const initialStart = workPrefRows.find(r => r.startAvailability)?.startAvailability ?? ''
+  const initialAvailability = (profile?.availability as Array<{ day: string; startTime: string; endTime: string }> | null) ?? []
+
   return (
     <Step3Form
-      initialWorkTypes={workPrefRows.filter(r => r.workType).map(r => r.workType!)}
-      initialDays={workPrefRows.filter(r => r.day).map(r => r.day!)}
-      initialShifts={workPrefRows.filter(r => r.shift).map(r => r.shift!)}
-      initialStart={workPrefRows.find(r => r.startAvailability)?.startAvailability ?? ''}
+      initialWorkTypes={initialWorkTypes}
+      initialAvailability={initialAvailability}
+      initialStart={initialStart}
     />
   )
 }
