@@ -289,9 +289,40 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgHourl
         : form.schedule.every(s => form.dayTimes[s.day]?.startTime && form.dayTimes[s.day]?.endTime)
     })(),
     true, // step 5 — Care Details is optional
-    form.genderPref.length > 0,
+    form.genderPref.length > 0 && form.budgetType.length > 0 && form.budgetAmount.trim().length > 0,
     true, // step 7 — Care Plan is optional
     form.title.trim().length > 0 && form.description.trim().length > 0,
+  ]
+
+  const stepHint = [
+    'Select at least one care type to continue.',
+    'Select a care recipient to continue.',
+    'Fill in address, city, and state to continue.',
+    (() => {
+      if (!form.frequency) return 'Select how often care is needed.'
+      if (!form.startDate) return 'Select a start date.'
+      if (form.frequency === 'as-needed') return null
+      const timesOk = form.sharedStartTime.length > 0 && form.sharedEndTime.length > 0
+      if ((form.frequency === 'weekly' || form.frequency === 'bi-weekly') && form.schedule.length === 0) return 'Select at least one day.'
+      if (!form.sameTimeEveryDay) {
+        const missing = form.schedule.some(s => !form.dayTimes[s.day]?.startTime || !form.dayTimes[s.day]?.endTime)
+        if (missing) return 'Set shift times for all selected days.'
+      } else if (!timesOk) return 'Set shift start and end times.'
+      return null
+    })(),
+    null,
+    (() => {
+      if (!form.genderPref) return 'Select a caregiver gender preference.'
+      if (!form.budgetType) return 'Select a budget type.'
+      if (!form.budgetAmount.trim()) return `Enter a ${form.budgetType === 'hourly' ? 'hourly rate' : 'weekly amount'}.`
+      return null
+    })(),
+    null,
+    (() => {
+      if (!form.title.trim()) return 'Add a title for your request.'
+      if (!form.description.trim()) return 'Add a description for your request.'
+      return null
+    })(),
   ]
 
   const isLastStep = step === 8
@@ -746,7 +777,7 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgHourl
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium mb-3">Budget Type</label>
+            <label className="block text-sm font-medium mb-3">Budget Type *</label>
             <div className="grid grid-cols-2 gap-2">
               {BUDGET_TYPES.map((b) => (
                 <button key={b.key} type="button"
@@ -759,7 +790,7 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgHourl
             {form.budgetType && (
               <div className="mt-3 space-y-2">
                 <label className="block text-sm font-medium mb-1">
-                  {form.budgetType === 'hourly' ? 'Hourly Rate' : 'Weekly Amount'}
+                  {form.budgetType === 'hourly' ? 'Hourly Rate *' : 'Weekly Amount *'}
                 </label>
                 {form.budgetType === 'hourly' && avgHourlyMin !== null && avgHourlyMax !== null && (
                   <p className="text-xs text-muted-foreground">
@@ -970,33 +1001,45 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgHourl
 
       {/* Navigation */}
       {!isFinalStep && (
-        <div className="flex justify-between pt-8 mt-8 border-t border-border">
-          <button
-            type="button"
-            onClick={() => step > 1 ? setStep((s) => s - 1) : router.push('/client/dashboard/requests')}
-            className="px-5 py-2.5 text-sm font-medium text-muted-foreground hover:text-foreground"
-          >
-            Back
-          </button>
-          {isLastStep ? (
-            <button
-              type="button"
-              onClick={handleSubmit}
-              disabled={isPending || !stepValid[7]}
-              className="px-6 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium disabled:opacity-40"
-            >
-              {isPending ? 'Submitting…' : 'Submit Request'}
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={() => setStep((s) => s + 1)}
-              disabled={step === 7 ? false : !stepValid[step - 1]}
-              className="px-6 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium disabled:opacity-40"
-            >
-              Next
-            </button>
+        <div className="pt-8 mt-8 border-t border-border">
+          {!isLastStep && stepHint[step - 1] && !stepValid[step - 1] && (
+            <p className="text-xs text-amber-600 dark:text-amber-400 text-center mb-3">
+              {stepHint[step - 1]}
+            </p>
           )}
+          {isLastStep && stepHint[7] && !stepValid[7] && (
+            <p className="text-xs text-amber-600 dark:text-amber-400 text-center mb-3">
+              {stepHint[7]}
+            </p>
+          )}
+          <div className="flex justify-between">
+            <button
+              type="button"
+              onClick={() => step > 1 ? setStep((s) => s - 1) : router.push('/client/dashboard/requests')}
+              className="px-5 py-2.5 text-sm font-medium text-muted-foreground hover:text-foreground"
+            >
+              Back
+            </button>
+            {isLastStep ? (
+              <button
+                type="button"
+                onClick={handleSubmit}
+                disabled={isPending || !stepValid[7]}
+                className="px-6 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium disabled:opacity-40"
+              >
+                {isPending ? 'Submitting…' : 'Submit Request'}
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setStep((s) => s + 1)}
+                disabled={step === 7 ? false : !stepValid[step - 1]}
+                className="px-6 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium disabled:opacity-40"
+              >
+                Next
+              </button>
+            )}
+          </div>
         </div>
       )}
     </div>
