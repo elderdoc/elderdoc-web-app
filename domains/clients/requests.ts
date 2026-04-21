@@ -48,10 +48,8 @@ export async function createCareRequest(data: {
   careType: string
   address: { address1: string; address2?: string; city: string; state: string }
   frequency: string
-  days: string[]
-  shifts: string[]
+  schedule: Array<{ day: string; startTime: string; endTime: string }>
   startDate: string
-  durationHours: number
   genderPref?: string
   languagePref: string[]
   budgetType?: string
@@ -68,10 +66,8 @@ export async function createCareRequest(data: {
       recipientId:  data.recipientId,
       careType:     data.careType,
       frequency:    data.frequency,
-      days:         data.days,
-      shifts:       data.shifts,
+      schedule:     data.schedule,
       startDate:    data.startDate,
-      durationHours:data.durationHours,
       genderPref:   data.genderPref,
       languagePref: data.languagePref,
       budgetType:   data.budgetType,
@@ -136,10 +132,8 @@ export async function updateCareRequest(id: string, data: {
   title?: string
   description?: string
   frequency?: string
-  days?: string[]
-  shifts?: string[]
+  schedule?: Array<{ day: string; startTime: string; endTime: string }>
   startDate?: string
-  durationHours?: number
   genderPref?: string
   languagePref?: string[]
   budgetType?: string
@@ -153,10 +147,8 @@ export async function updateCareRequest(id: string, data: {
       title:         data.title,
       description:   data.description,
       frequency:     data.frequency,
-      days:          data.days,
-      shifts:        data.shifts,
+      schedule:      data.schedule,
       startDate:     data.startDate,
-      durationHours: data.durationHours,
       genderPref:    data.genderPref,
       languagePref:  data.languagePref,
       budgetType:    data.budgetType,
