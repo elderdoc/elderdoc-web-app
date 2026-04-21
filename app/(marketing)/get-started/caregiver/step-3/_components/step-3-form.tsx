@@ -10,15 +10,25 @@ const labelClass = 'block text-xs font-medium uppercase tracking-[0.08em] text-m
 
 interface Props {
   initialWorkTypes: string[]
-  initialDays: string[]
-  initialShifts: string[]
+  initialAvailability: Array<{ day: string; startTime: string; endTime: string }>
   initialStart: string
 }
 
-export function Step3Form({ initialWorkTypes, initialDays, initialShifts, initialStart }: Props) {
+export function Step3Form({ initialWorkTypes, initialAvailability, initialStart }: Props) {
   const [workTypes, setWorkTypes] = useState<string[]>(initialWorkTypes)
-  const [days, setDays] = useState<string[]>(initialDays)
-  const [shiftTime, setShiftTime] = useState(initialShifts[0] ?? '')
+  const [days, setDays] = useState<string[]>(
+    initialAvailability.map(a => a.day)
+  )
+  const [sameHoursEveryDay, setSameHoursEveryDay] = useState(true)
+  const [sharedStartTime, setSharedStartTime] = useState(
+    initialAvailability[0]?.startTime ?? ''
+  )
+  const [sharedEndTime, setSharedEndTime] = useState(
+    initialAvailability[0]?.endTime ?? ''
+  )
+  const [dayTimes, setDayTimes] = useState<Record<string, { startTime: string; endTime: string }>>(
+    Object.fromEntries(initialAvailability.map(a => [a.day, { startTime: a.startTime, endTime: a.endTime }]))
+  )
   const [startAvailability, setStart] = useState(initialStart)
   const [isPending, startTransition] = useTransition()
 
@@ -26,12 +36,20 @@ export function Step3Form({ initialWorkTypes, initialDays, initialShifts, initia
     setList(list.includes(key) ? list.filter(k => k !== key) : [...list, key])
   }
 
-  const isValid = workTypes.length > 0 && days.length > 0 && shiftTime.trim().length > 0 && startAvailability.length > 0
+  const timesComplete = days.length === 0 ? false : sameHoursEveryDay
+    ? sharedStartTime.length > 0 && sharedEndTime.length > 0
+    : days.every(d => dayTimes[d]?.startTime && dayTimes[d]?.endTime)
+  const isValid = workTypes.length > 0 && days.length > 0 && timesComplete && startAvailability.length > 0
 
   function handleContinue() {
     if (!isValid) return
     startTransition(async () => {
-      await saveCaregiverStep3({ workTypes, days, shifts: [shiftTime.trim()], startAvailability })
+      const availability = days.map(day => ({
+        day,
+        startTime: sameHoursEveryDay ? sharedStartTime : (dayTimes[day]?.startTime ?? ''),
+        endTime:   sameHoursEveryDay ? sharedEndTime   : (dayTimes[day]?.endTime ?? ''),
+      }))
+      await saveCaregiverStep3({ workTypes, availability, startAvailability })
     })
   }
 
@@ -75,16 +93,63 @@ export function Step3Form({ initialWorkTypes, initialDays, initialShifts, initia
           </div>
         </section>
 
-        {/* Shift Time */}
+        {/* Availability Hours */}
         <section>
-          <p className={labelClass}>Shift Availability</p>
-          <input
-            type="text"
-            placeholder="e.g. 8:00 AM – 4:00 PM"
-            value={shiftTime}
-            onChange={(e) => setShiftTime(e.target.value)}
-            className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-          />
+          <p className={labelClass}>Availability Hours</p>
+          {days.length > 0 && (
+            <div className="space-y-4">
+              <label className="flex items-center gap-2 text-sm cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={sameHoursEveryDay}
+                  onChange={e => setSameHoursEveryDay(e.target.checked)}
+                  className="rounded border-border"
+                />
+                Same hours every day
+              </label>
+              {sameHoursEveryDay ? (
+                <div className="flex items-center gap-3">
+                  <div className="flex-1">
+                    <label className="block text-xs text-muted-foreground mb-1">From</label>
+                    <input type="time" value={sharedStartTime}
+                      onChange={e => setSharedStartTime(e.target.value)}
+                      className="w-full rounded-md border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
+                  </div>
+                  <span className="text-muted-foreground mt-5">–</span>
+                  <div className="flex-1">
+                    <label className="block text-xs text-muted-foreground mb-1">Until</label>
+                    <input type="time" value={sharedEndTime}
+                      onChange={e => setSharedEndTime(e.target.value)}
+                      className="w-full rounded-md border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {days.map(day => (
+                    <div key={day} className="flex items-center gap-3">
+                      <span className="w-24 text-sm capitalize">{day}</span>
+                      <div className="flex-1">
+                        <input type="time"
+                          value={dayTimes[day]?.startTime ?? ''}
+                          onChange={e => setDayTimes(prev => ({ ...prev, [day]: { ...prev[day], startTime: e.target.value } }))}
+                          className="w-full rounded-md border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
+                      </div>
+                      <span className="text-muted-foreground">–</span>
+                      <div className="flex-1">
+                        <input type="time"
+                          value={dayTimes[day]?.endTime ?? ''}
+                          onChange={e => setDayTimes(prev => ({ ...prev, [day]: { ...prev[day], endTime: e.target.value } }))}
+                          className="w-full rounded-md border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+          {days.length === 0 && (
+            <p className="text-sm text-muted-foreground">Select days above to set availability hours.</p>
+          )}
         </section>
 
         {/* Start Availability */}
