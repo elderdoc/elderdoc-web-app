@@ -127,6 +127,30 @@ export const careRequests = pgTable('care_requests', {
   frequency:    text('frequency'),
   schedule:     jsonb('schedule').$type<Array<{ day: string; startTime: string; endTime: string }>>(),
   startDate:    text('start_date'),
+  suppliesNeeded:   text('supplies_needed'),
+  infectionControl: jsonb('infection_control').$type<{
+    enabled: boolean
+    gloves?: boolean
+    handWashing?: boolean
+    wasteDisposal?: boolean
+  }>(),
+  safetyMeasures:   jsonb('safety_measures').$type<{
+    enabled: boolean
+    clearPathways?: boolean
+    electricCords?: boolean
+    pets?: boolean
+  }>(),
+  clientStatus:     jsonb('client_status').$type<{
+    livesAlone?: boolean; livesWith?: boolean; aloneDuringDay?: boolean
+    bedBound?: boolean; upAsTolerated?: boolean
+    speechProblems?: boolean; glassesOrContacts?: boolean; visionProblem?: boolean
+    hardOfHearing?: boolean
+    amputee?: boolean; amputeeDetails?: string
+    denturesUpper?: boolean; denturesLower?: boolean; denturesPartial?: boolean
+    orientedAlert?: boolean; forgetful?: boolean; confused?: boolean
+    urinaryCath?: boolean; feedingTube?: boolean
+    diabetic?: boolean; diet?: string; other?: string
+  }>(),
   genderPref:   text('gender_pref'),
   languagePref: text('language_pref').array(),
   budgetType:   text('budget_type'),

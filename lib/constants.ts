@@ -162,6 +162,18 @@ export const CLIENT_STATUS_GROUPS = [
   },
 ] as const
 
+export const INFECTION_CONTROL_ITEMS = [
+  { key: 'gloves',        label: 'Gloves' },
+  { key: 'handWashing',   label: 'Hand washing' },
+  { key: 'wasteDisposal', label: 'Waste disposal' },
+] as const
+
+export const SAFETY_MEASURE_ITEMS = [
+  { key: 'clearPathways', label: 'Clear pathways' },
+  { key: 'electricCords', label: 'Electric cords' },
+  { key: 'pets',          label: 'Pets' },
+] as const
+
 export const MOBILITY_LEVELS = [
   { key: 'independent',          label: 'Independent' },
   { key: 'minimal-assistance',   label: 'Minimal assistance' },
