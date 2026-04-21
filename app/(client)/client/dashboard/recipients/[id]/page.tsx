@@ -5,11 +5,15 @@ import { BackButton } from '@/components/back-button'
 import { db } from '@/services/db'
 import { careRecipients } from '@/db/schema'
 import { and, eq } from 'drizzle-orm'
-import { CONDITIONS } from '@/lib/constants'
+import { CONDITIONS, CLIENT_STATUS_GROUPS } from '@/lib/constants'
 import { formatDistanceToNow } from 'date-fns'
 
 const CONDITIONS_LABELS: Record<string, string> = Object.fromEntries(
   CONDITIONS.map((c) => [c.key, c.label])
+)
+
+const STATUS_LABELS: Record<string, string> = Object.fromEntries(
+  CLIENT_STATUS_GROUPS.flatMap((g) => g.items.map((item) => [item.key, item.label]))
 )
 
 interface PageProps {
@@ -92,6 +96,8 @@ export default async function RecipientDetailPage({ params }: PageProps) {
             <Row label="Gender" value={r.gender ? <span className="capitalize">{r.gender}</span> : <span className="text-muted-foreground">—</span>} />
             <Row label="Phone" value={r.phone ?? <span className="text-muted-foreground">—</span>} />
             <Row label="Mobility" value={r.mobilityLevel ? <span className="capitalize">{r.mobilityLevel.replace(/-/g, ' ')}</span> : <span className="text-muted-foreground">—</span>} />
+            {r.height && <Row label="Height" value={r.height} />}
+            {r.weight && <Row label="Weight" value={r.weight} />}
           </dl>
         </section>
 
@@ -128,6 +134,45 @@ export default async function RecipientDetailPage({ params }: PageProps) {
             )}
           </section>
         </>
+
+        {r.clientStatus && Object.keys(r.clientStatus).some(k => k !== 'amputeeDetails' && k !== 'diet' && k !== 'other') && (
+          <>
+            <hr className="border-border" />
+            <section>
+              <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-3">Functional Status</h2>
+              <div className="space-y-4">
+                {CLIENT_STATUS_GROUPS.map((group) => {
+                  const checked = group.items.filter(item => r.clientStatus![item.key])
+                  if (checked.length === 0) return null
+                  return (
+                    <div key={group.label}>
+                      <p className="text-xs text-muted-foreground mb-1.5">{group.label}</p>
+                      <div className="flex flex-wrap gap-2">
+                        {checked.map(item => (
+                          <span key={item.key} className="rounded bg-muted px-2.5 py-1 text-xs font-medium">
+                            {STATUS_LABELS[item.key] ?? item.key}
+                            {item.key === 'amputee' && typeof r.clientStatus!.amputeeDetails === 'string' && r.clientStatus!.amputeeDetails && (
+                              <span className="text-muted-foreground ml-1">({r.clientStatus!.amputeeDetails as string})</span>
+                            )}
+                            {item.key === 'diabetic' && typeof r.clientStatus!.diet === 'string' && r.clientStatus!.diet && (
+                              <span className="text-muted-foreground ml-1">({r.clientStatus!.diet as string})</span>
+                            )}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )
+                })}
+                {typeof r.clientStatus.other === 'string' && r.clientStatus.other && (
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-1">Other</p>
+                    <p className="text-sm">{r.clientStatus.other as string}</p>
+                  </div>
+                )}
+              </div>
+            </section>
+          </>
+        )}
 
         <>
           <hr className="border-border" />

@@ -2,9 +2,8 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import Link from 'next/link'
 import { createCareRecipient } from '@/domains/clients/requests'
-import { RELATIONSHIPS, CONDITIONS, MOBILITY_LEVELS, GENDER_OPTIONS } from '@/lib/constants'
+import { RELATIONSHIPS, CONDITIONS, MOBILITY_LEVELS, GENDER_OPTIONS, CLIENT_STATUS_GROUPS } from '@/lib/constants'
 import { formatUSPhone } from '@/lib/phone'
 
 interface RecipientForm {
@@ -21,16 +20,27 @@ interface RecipientForm {
   zip: string
   conditions: string[]
   mobilityLevel: string
+  height: string
+  weight: string
+  clientStatus: Record<string, boolean | string>
   notes: string
 }
 
 const EMPTY: RecipientForm = {
   relationship: '', name: '', dob: '', phone: '', gender: '',
   photoUrl: '', address1: '', address2: '', city: '', state: '', zip: '',
-  conditions: [], mobilityLevel: '', notes: '',
+  conditions: [], mobilityLevel: '',
+  height: '', weight: '', clientStatus: {},
+  notes: '',
 }
 
-const STEPS = ['Who are you caring for?', 'Basic information', 'Health & mobility', 'Additional notes']
+const STEPS = [
+  'Who are you caring for?',
+  'Basic information',
+  'Health & mobility',
+  'Functional status',
+  'Additional notes',
+]
 
 export default function NewRecipientPage() {
   const router = useRouter()
@@ -45,7 +55,7 @@ export default function NewRecipientPage() {
     if (key === 'myself') {
       setForm((f) => ({ ...f, relationship: key, name: 'Myself' }))
       setMyselfSelected(true)
-      setStep(4)
+      setStep(5)
     } else {
       setForm((f) => ({ ...f, relationship: key, name: f.name === 'Myself' ? '' : f.name }))
       setMyselfSelected(false)
@@ -53,7 +63,7 @@ export default function NewRecipientPage() {
   }
 
   function handleBack() {
-    if (step === 4 && myselfSelected) { setStep(1); return }
+    if (step === 5 && myselfSelected) { setStep(1); return }
     if (step > 1) setStep((s) => s - 1)
     else router.push('/client/dashboard/recipients')
   }
@@ -65,6 +75,23 @@ export default function NewRecipientPage() {
         ? f.conditions.filter((c) => c !== key)
         : [...f.conditions, key],
     }))
+  }
+
+  function toggleStatus(key: string) {
+    setForm((f) => {
+      const current = f.clientStatus[key]
+      const updated = { ...f.clientStatus }
+      if (current) {
+        delete updated[key]
+      } else {
+        updated[key] = true
+      }
+      return { ...f, clientStatus: updated }
+    })
+  }
+
+  function setStatusDetail(key: string, value: string) {
+    setForm((f) => ({ ...f, clientStatus: { ...f.clientStatus, [key]: value } }))
   }
 
   async function handlePhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -99,6 +126,9 @@ export default function NewRecipientPage() {
         } : undefined,
         conditions:    form.conditions,
         mobilityLevel: form.mobilityLevel || undefined,
+        height:        form.height || undefined,
+        weight:        form.weight || undefined,
+        clientStatus:  Object.keys(form.clientStatus).length > 0 ? form.clientStatus : undefined,
         notes:         form.notes || undefined,
       })
       router.push('/client/dashboard/recipients')
@@ -111,8 +141,8 @@ export default function NewRecipientPage() {
     step === 3 ? !form.mobilityLevel :
     false
 
-  const totalSteps = myselfSelected ? 2 : 4
-  const displayStep = myselfSelected && step === 4 ? 2 : step
+  const totalSteps = myselfSelected ? 2 : 5
+  const displayStep = myselfSelected && step === 5 ? 2 : step
 
   return (
     <div className="p-8 max-w-2xl mx-auto">
@@ -312,11 +342,94 @@ export default function NewRecipientPage() {
               ))}
             </div>
           </div>
+          <div>
+            <label className="block text-sm font-medium mb-3">Height &amp; Weight</label>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs text-muted-foreground mb-1">Height</label>
+                <input
+                  type="text"
+                  value={form.height}
+                  onChange={(e) => setForm((f) => ({ ...f, height: e.target.value }))}
+                  className="w-full rounded-lg border border-border px-4 py-3 text-sm focus:border-primary focus:outline-none"
+                  placeholder={`5'6"`}
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-muted-foreground mb-1">Weight</label>
+                <input
+                  type="text"
+                  value={form.weight}
+                  onChange={(e) => setForm((f) => ({ ...f, weight: e.target.value }))}
+                  className="w-full rounded-lg border border-border px-4 py-3 text-sm focus:border-primary focus:outline-none"
+                  placeholder="142 lbs"
+                />
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
-      {/* Step 4 — Notes */}
+      {/* Step 4 — Functional Status */}
       {step === 4 && (
+        <div className="space-y-8">
+          {CLIENT_STATUS_GROUPS.map((group) => (
+            <div key={group.label}>
+              <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-3">{group.label}</h3>
+              <div className="grid grid-cols-2 gap-2">
+                {group.items.map((item) => {
+                  const checked = !!form.clientStatus[item.key]
+                  return (
+                    <div key={item.key} className="flex flex-col gap-1">
+                      <button
+                        type="button"
+                        onClick={() => toggleStatus(item.key)}
+                        className={[
+                          'rounded-xl border-2 px-4 py-3 text-sm text-left transition-colors',
+                          checked ? 'border-primary bg-primary/5 text-primary' : 'border-border hover:border-primary/50',
+                        ].join(' ')}
+                      >
+                        {item.label}
+                      </button>
+                      {checked && item.key === 'amputee' && (
+                        <input
+                          type="text"
+                          value={typeof form.clientStatus.amputeeDetails === 'string' ? form.clientStatus.amputeeDetails : ''}
+                          onChange={(e) => setStatusDetail('amputeeDetails', e.target.value)}
+                          className="rounded-lg border border-border px-3 py-2 text-xs focus:border-primary focus:outline-none"
+                          placeholder="e.g. left leg below knee"
+                        />
+                      )}
+                      {checked && item.key === 'diabetic' && (
+                        <input
+                          type="text"
+                          value={typeof form.clientStatus.diet === 'string' ? form.clientStatus.diet : ''}
+                          onChange={(e) => setStatusDetail('diet', e.target.value)}
+                          className="rounded-lg border border-border px-3 py-2 text-xs focus:border-primary focus:outline-none"
+                          placeholder="Diet details"
+                        />
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          ))}
+          <div>
+            <label className="block text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-2">Other</label>
+            <input
+              type="text"
+              value={typeof form.clientStatus.other === 'string' ? form.clientStatus.other : ''}
+              onChange={(e) => setStatusDetail('other', e.target.value)}
+              className="w-full rounded-lg border border-border px-4 py-3 text-sm focus:border-primary focus:outline-none"
+              placeholder="Specify any other relevant status…"
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Step 5 — Notes */}
+      {step === 5 && (
         <div className="space-y-2">
           <label className="block text-sm font-medium">Additional notes</label>
           <textarea
@@ -341,7 +454,7 @@ export default function NewRecipientPage() {
         >
           Back
         </button>
-        {step < 4 ? (
+        {step < 5 ? (
           <button
             type="button"
             onClick={() => setStep((s) => s + 1)}

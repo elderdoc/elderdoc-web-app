@@ -4,7 +4,7 @@ import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { updateCareRecipient } from '@/domains/clients/requests'
-import { CONDITIONS, MOBILITY_LEVELS, GENDER_OPTIONS, RELATIONSHIPS } from '@/lib/constants'
+import { CONDITIONS, MOBILITY_LEVELS, GENDER_OPTIONS, RELATIONSHIPS, CLIENT_STATUS_GROUPS } from '@/lib/constants'
 import { formatUSPhone } from '@/lib/phone'
 
 interface Recipient {
@@ -16,6 +16,9 @@ interface Recipient {
   gender: string | null
   conditions: string[] | null
   mobilityLevel: string | null
+  height: string | null
+  weight: string | null
+  clientStatus: Record<string, boolean | string> | null
   notes: string | null
   address: { address1?: string; address2?: string; city?: string; state?: string; zip?: string } | null
 }
@@ -31,6 +34,9 @@ export function EditRecipientForm({ recipient: r }: { recipient: Recipient }) {
     gender:        r.gender ?? '',
     conditions:    r.conditions ?? [],
     mobilityLevel: r.mobilityLevel ?? '',
+    height:        r.height ?? '',
+    weight:        r.weight ?? '',
+    clientStatus:  (r.clientStatus ?? {}) as Record<string, boolean | string>,
     notes:         r.notes ?? '',
     address1:      r.address?.address1 ?? '',
     address2:      r.address?.address2 ?? '',
@@ -48,6 +54,23 @@ export function EditRecipientForm({ recipient: r }: { recipient: Recipient }) {
     }))
   }
 
+  function toggleStatus(key: string) {
+    setForm(f => {
+      const current = f.clientStatus[key]
+      const updated = { ...f.clientStatus }
+      if (current) {
+        delete updated[key]
+      } else {
+        updated[key] = true
+      }
+      return { ...f, clientStatus: updated }
+    })
+  }
+
+  function setStatusDetail(key: string, value: string) {
+    setForm(f => ({ ...f, clientStatus: { ...f.clientStatus, [key]: value } }))
+  }
+
   function handleSave() {
     startTransition(async () => {
       await updateCareRecipient(r.id, {
@@ -58,6 +81,9 @@ export function EditRecipientForm({ recipient: r }: { recipient: Recipient }) {
         gender:        form.gender || undefined,
         conditions:    form.conditions,
         mobilityLevel: form.mobilityLevel || undefined,
+        height:        form.height || undefined,
+        weight:        form.weight || undefined,
+        clientStatus:  Object.keys(form.clientStatus).length > 0 ? form.clientStatus : undefined,
         notes:         form.notes || undefined,
         address: (form.address1 || form.city) ? {
           address1: form.address1 || undefined,
@@ -186,6 +212,89 @@ export function EditRecipientForm({ recipient: r }: { recipient: Recipient }) {
                 {m.label}
               </button>
             ))}
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-2">Height &amp; Weight</label>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs text-muted-foreground mb-1">Height</label>
+              <input
+                type="text"
+                value={form.height}
+                onChange={e => setForm(f => ({ ...f, height: e.target.value }))}
+                className="w-full rounded-lg border border-border px-4 py-3 text-sm focus:border-primary focus:outline-none"
+                placeholder={`5'6"`}
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-muted-foreground mb-1">Weight</label>
+              <input
+                type="text"
+                value={form.weight}
+                onChange={e => setForm(f => ({ ...f, weight: e.target.value }))}
+                className="w-full rounded-lg border border-border px-4 py-3 text-sm focus:border-primary focus:outline-none"
+                placeholder="142 lbs"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-4">Functional Status</label>
+          <div className="space-y-6">
+            {CLIENT_STATUS_GROUPS.map((group) => (
+              <div key={group.label}>
+                <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-2">{group.label}</h3>
+                <div className="grid grid-cols-2 gap-2">
+                  {group.items.map((item) => {
+                    const checked = !!form.clientStatus[item.key]
+                    return (
+                      <div key={item.key} className="flex flex-col gap-1">
+                        <button
+                          type="button"
+                          onClick={() => toggleStatus(item.key)}
+                          className={['rounded-xl border-2 px-4 py-3 text-sm text-left transition-colors',
+                            checked ? 'border-primary bg-primary/5 text-primary' : 'border-border hover:border-primary/50',
+                          ].join(' ')}
+                        >
+                          {item.label}
+                        </button>
+                        {checked && item.key === 'amputee' && (
+                          <input
+                            type="text"
+                            value={typeof form.clientStatus.amputeeDetails === 'string' ? form.clientStatus.amputeeDetails : ''}
+                            onChange={e => setStatusDetail('amputeeDetails', e.target.value)}
+                            className="rounded-lg border border-border px-3 py-2 text-xs focus:border-primary focus:outline-none"
+                            placeholder="e.g. left leg below knee"
+                          />
+                        )}
+                        {checked && item.key === 'diabetic' && (
+                          <input
+                            type="text"
+                            value={typeof form.clientStatus.diet === 'string' ? form.clientStatus.diet : ''}
+                            onChange={e => setStatusDetail('diet', e.target.value)}
+                            className="rounded-lg border border-border px-3 py-2 text-xs focus:border-primary focus:outline-none"
+                            placeholder="Diet details"
+                          />
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            ))}
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-2">Other</label>
+              <input
+                type="text"
+                value={typeof form.clientStatus.other === 'string' ? form.clientStatus.other : ''}
+                onChange={e => setStatusDetail('other', e.target.value)}
+                className="w-full rounded-lg border border-border px-4 py-3 text-sm focus:border-primary focus:outline-none"
+                placeholder="Specify any other relevant status…"
+              />
+            </div>
           </div>
         </div>
 

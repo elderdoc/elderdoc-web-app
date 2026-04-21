@@ -15,6 +15,9 @@ export async function createCareRecipient(data: {
   conditions: string[]
   mobilityLevel?: string
   notes?: string
+  height?: string
+  weight?: string
+  clientStatus?: Record<string, boolean | string>
   address?: { address1?: string; address2?: string; city?: string; state?: string; zip?: string }
 }): Promise<{ id: string }> {
   const session = await auth()
@@ -31,6 +34,9 @@ export async function createCareRecipient(data: {
     conditions:   data.conditions,
     mobilityLevel:data.mobilityLevel,
     notes:        data.notes,
+    height:       data.height,
+    weight:       data.weight,
+    clientStatus: data.clientStatus,
     address:      data.address,
   }).returning({ id: careRecipients.id })
 
@@ -99,6 +105,9 @@ export async function updateCareRecipient(id: string, data: {
   conditions: string[]
   mobilityLevel?: string
   notes?: string
+  height?: string
+  weight?: string
+  clientStatus?: Record<string, boolean | string>
   address?: { address1?: string; address2?: string; city?: string; state?: string; zip?: string }
 }): Promise<void> {
   const session = await auth()
@@ -115,6 +124,9 @@ export async function updateCareRecipient(id: string, data: {
       conditions:    data.conditions,
       mobilityLevel: data.mobilityLevel,
       notes:         data.notes,
+      height:        data.height,
+      weight:        data.weight,
+      clientStatus:  data.clientStatus,
       address:       data.address,
     })
     .where(and(eq(careRecipients.id, id), eq(careRecipients.clientId, session.user.id)))

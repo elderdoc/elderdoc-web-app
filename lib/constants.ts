@@ -105,6 +105,63 @@ export const CONDITIONS = [
   { key: 'other',              label: 'Other' },
 ] as const
 
+export const CLIENT_STATUS_GROUPS = [
+  {
+    label: 'Living Situation',
+    items: [
+      { key: 'livesAlone',      label: 'Lives alone' },
+      { key: 'livesWith',       label: 'Lives with other' },
+      { key: 'aloneDuringDay',  label: 'Alone during the day' },
+    ],
+  },
+  {
+    label: 'Mobility / Activity',
+    items: [
+      { key: 'bedBound',        label: 'Bed bound' },
+      { key: 'upAsTolerated',   label: 'Up as tolerated' },
+    ],
+  },
+  {
+    label: 'Communication & Senses',
+    items: [
+      { key: 'speechProblems',    label: 'Speech problems' },
+      { key: 'glassesOrContacts', label: 'Glasses or contacts' },
+      { key: 'visionProblem',     label: 'Vision problem' },
+      { key: 'hardOfHearing',     label: 'Hard of hearing / hearing aid' },
+    ],
+  },
+  {
+    label: 'Physical',
+    items: [
+      { key: 'amputee',         label: 'Amputee (specify below if checked)' },
+      { key: 'denturesUpper',   label: 'Dentures — upper' },
+      { key: 'denturesLower',   label: 'Dentures — lower' },
+      { key: 'denturesPartial', label: 'Dentures — partial' },
+    ],
+  },
+  {
+    label: 'Cognitive',
+    items: [
+      { key: 'orientedAlert', label: 'Oriented / alert' },
+      { key: 'forgetful',     label: 'Forgetful' },
+      { key: 'confused',      label: 'Confused' },
+    ],
+  },
+  {
+    label: 'Medical Equipment',
+    items: [
+      { key: 'urinaryCath', label: 'Urinary cath' },
+      { key: 'feedingTube', label: 'Feeding tube' },
+    ],
+  },
+  {
+    label: 'Diet',
+    items: [
+      { key: 'diabetic', label: 'Diabetic' },
+    ],
+  },
+] as const
+
 export const MOBILITY_LEVELS = [
   { key: 'independent',          label: 'Independent' },
   { key: 'minimal-assistance',   label: 'Minimal assistance' },

@@ -57,6 +57,13 @@
       "when": 1776727161038,
       "tag": "0007_wild_rocket_raccoon",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1776776665675,
+      "tag": "0008_rich_emma_frost",
+      "breakpoints": true
     }
   ]
 }

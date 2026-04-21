@@ -101,6 +101,19 @@ export const careRecipients = pgTable('care_recipients', {
   }>(),
   conditions:   text('conditions').array(),
   mobilityLevel:text('mobility_level'),
+  height:       text('height'),
+  weight:       text('weight'),
+  clientStatus: jsonb('client_status').$type<{
+    livesAlone?: boolean; livesWith?: boolean; aloneDuringDay?: boolean
+    bedBound?: boolean; upAsTolerated?: boolean
+    speechProblems?: boolean; glassesOrContacts?: boolean; visionProblem?: boolean
+    amputee?: boolean; amputeeDetails?: string
+    hardOfHearing?: boolean
+    denturesUpper?: boolean; denturesLower?: boolean; denturesPartial?: boolean
+    orientedAlert?: boolean; forgetful?: boolean; confused?: boolean
+    urinaryCath?: boolean; feedingTube?: boolean
+    diabetic?: boolean; diet?: string; other?: string
+  }>(),
   notes:        text('notes'),
   createdAt:    timestamp('created_at').defaultNow().notNull(),
 })
