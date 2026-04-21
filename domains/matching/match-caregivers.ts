@@ -137,17 +137,23 @@ export async function matchCaregivers(requestId: string): Promise<RankedCandidat
   // 4. Build prompt
   const systemPrompt = `You are a care coordinator matching caregivers to a care request.
 Rank the provided candidates by fit. Return valid JSON only — no prose, no markdown.
-Schema: { "rankings": [{ "caregiverId": string, "score": number (0-100), "reason": string (one warm sentence) }] }
+Schema: { "rankings": [{ "caregiverId": string, "score": number (0-100), "reason": string }] }
 Include all candidates. Highest score = best fit.
 
 SCORING WEIGHTS (apply in this priority order):
-1. proximityMiles (highest weight — 30 pts): ≤25 mi = full 30 pts; 26–50 mi = 22 pts; 51–100 mi = 14 pts; 101–200 mi = 6 pts; >200 mi or unknown = 0 pts. Always mention distance in the reason.
+1. proximityMiles (highest weight — 30 pts): ≤25 mi = full 30 pts; 26–50 mi = 22 pts; 51–100 mi = 14 pts; 101–200 mi = 6 pts; >200 mi or unknown = 0 pts.
 2. scheduleDayCoverage (20 pts): full coverage = 20, partial = proportional, none = 0.
-3. specialNeedsMatch (20 pts): all needs met = 20, partial = proportional, none = 0. Note specifics in reason.
+3. specialNeedsMatch (20 pts): all needs met = 20, partial = proportional, none = 0.
 4. carePlanOverlap (15 pts): high overlap across sections = up to 15.
 5. languageMatch (10 pts): all preferred languages covered = 10.
 6. weightCarryFit (5 pts): sufficient = 5, insufficient = −5, unknown = 0.
-If proximityMiles is unknown, apply 0 pts for distance but note it in the reason.`
+
+REASON GUIDELINES:
+- Write 2–3 sentences, targeting ~200 characters minimum.
+- Cover ALL relevant factors present in the data: distance/proximity, experience, languages spoken, special needs handling (hard of hearing, vision impairment, amputee, overweight/mobility, dementia, etc.), schedule fit, care plan overlap, certifications, weight carry capacity, and any notable strengths or concerns.
+- Be specific — name the actual distance, the actual special needs handled, the actual languages, the actual care types.
+- Write in warm, professional third-person ("She covers...", "He is experienced with...", "Available nearby at X miles...").
+- If a factor is a concern (e.g., far distance, insufficient weight carry, missing special needs), mention it honestly but briefly.`
 
   const userPrompt = `CARE REQUEST
 Type: ${requestRow.careType}
@@ -193,18 +199,21 @@ ${JSON.stringify(filteredCandidates.map((c) => {
     const proximityMiles = reqLat && reqLng && cgLat && cgLng
       ? Math.round(haversineDistance(reqLat, reqLng, cgLat, cgLng))
       : null
+    const specialNeedsHandled = Object.entries(
+      (c.specialNeedsHandling as Record<string, boolean> | null) ?? {}
+    ).filter(([, v]) => v).map(([k]) => k)
     return {
       id:                  c.id,
       careTypes:           typeMap.get(c.id) ?? [],
       certifications:      certMap.get(c.id) ?? [],
       languages:           langMap.get(c.id) ?? [],
       experience:          c.experience ?? '',
-      hourlyMin:           c.hourlyMin ?? '',
-      hourlyMax:           c.hourlyMax ?? '',
+      maxCarryLbs:         c.maxCarryLbs ?? null,
       proximityMiles,
       scheduleDayCoverage: scheduleOverlap,
       carePlanOverlap,
       specialNeedsMatch,
+      specialNeedsHandled,
       weightCarryFit,
     }
   }))}`
