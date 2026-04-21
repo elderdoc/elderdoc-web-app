@@ -30,9 +30,7 @@ export async function matchCaregivers(requestId: string): Promise<RankedCandidat
     .select({
       careType:      careRequests.careType,
       frequency:     careRequests.frequency,
-      days:          careRequests.days,
-      shifts:        careRequests.shifts,
-      durationHours: careRequests.durationHours,
+      schedule:      careRequests.schedule,
       languagePref:  careRequests.languagePref,
       budgetAmount:  careRequests.budgetAmount,
       budgetType:    careRequests.budgetType,
@@ -52,18 +50,19 @@ export async function matchCaregivers(requestId: string): Promise<RankedCandidat
   // 2. Pre-filter candidates
   const candidates = await db
     .select({
-      id:         caregiverProfiles.id,
-      headline:   caregiverProfiles.headline,
-      hourlyMin:  caregiverProfiles.hourlyMin,
-      hourlyMax:  caregiverProfiles.hourlyMax,
-      experience: caregiverProfiles.experience,
-      name:       users.name,
-      image:      users.image,
-      city:       caregiverLocations.city,
-      state:      caregiverLocations.state,
-      lat:        caregiverLocations.lat,
-      lng:        caregiverLocations.lng,
-      rating:     caregiverProfiles.rating,
+      id:           caregiverProfiles.id,
+      headline:     caregiverProfiles.headline,
+      hourlyMin:    caregiverProfiles.hourlyMin,
+      hourlyMax:    caregiverProfiles.hourlyMax,
+      experience:   caregiverProfiles.experience,
+      availability: caregiverProfiles.availability,
+      name:         users.name,
+      image:        users.image,
+      city:         caregiverLocations.city,
+      state:        caregiverLocations.state,
+      lat:          caregiverLocations.lat,
+      lng:          caregiverLocations.lng,
+      rating:       caregiverProfiles.rating,
     })
     .from(caregiverProfiles)
     .innerJoin(users, eq(users.id, caregiverProfiles.userId))
@@ -82,8 +81,22 @@ export async function matchCaregivers(requestId: string): Promise<RankedCandidat
 
   if (candidates.length === 0) return []
 
+  const requestedDays = new Set(
+    (requestRow.schedule as Array<{ day: string }> | null)?.map(s => s.day) ?? []
+  )
+
+  const filteredCandidates = candidates.filter(c => {
+    if (requestedDays.size === 0) return true
+    const cgAvail = c.availability as Array<{ day: string }> | null
+    if (!cgAvail || cgAvail.length === 0) return true  // no availability set — pass through
+    const cgDays = new Set(cgAvail.map(a => a.day))
+    return [...requestedDays].every(d => cgDays.has(d))
+  })
+
+  if (filteredCandidates.length === 0) return []
+
   // 3. Fetch context per candidate (3 parallel batch queries using inArray)
-  const ids = candidates.map((c) => c.id)
+  const ids = filteredCandidates.map((c) => c.id)
 
   const [certRows, langRows, careTypeRows] = await Promise.all([
     db.select({ caregiverId: caregiverCertifications.caregiverId, certification: caregiverCertifications.certification })
@@ -113,14 +126,16 @@ Include all candidates. Highest score = best fit.`
 
   const userPrompt = `CARE REQUEST
 Type: ${requestRow.careType}
-Schedule: ${requestRow.frequency ?? 'unspecified'}, ${(requestRow.days ?? []).join(', ')}, ${(requestRow.shifts ?? []).join(', ')}
-Duration: ${requestRow.durationHours ?? 'unspecified'}h/visit
+Schedule: ${requestRow.frequency ?? 'unspecified'}, days: ${
+  (requestRow.schedule as Array<{ day: string; startTime: string; endTime: string }> | null)
+    ?.map(s => `${s.day} ${s.startTime}–${s.endTime}`).join(', ') ?? 'unspecified'
+}
 Language preference: ${(requestRow.languagePref ?? []).join(', ') || 'none'}
 Budget: ${requestRow.budgetType ?? ''} ${requestRow.budgetAmount ?? ''}
 Notes: ${requestRow.title ?? ''}. ${requestRow.description ?? ''}
 
 CANDIDATES
-${JSON.stringify(candidates.map((c) => ({
+${JSON.stringify(filteredCandidates.map((c) => ({
     id:             c.id,
     careTypes:      typeMap.get(c.id) ?? [],
     certifications: certMap.get(c.id) ?? [],
@@ -157,7 +172,7 @@ ${JSON.stringify(candidates.map((c) => ({
     .sort((a, b) => b.score - a.score)
     .slice(0, 5)
     .map((r) => {
-      const c = candidates.find((x) => x.id === r.caregiverId)
+      const c = filteredCandidates.find((x) => x.id === r.caregiverId)
       const cgLat = c?.lat ? Number(c.lat) : null
       const cgLng = c?.lng ? Number(c.lng) : null
       const distanceLabel = reqLat && reqLng && cgLat && cgLng
