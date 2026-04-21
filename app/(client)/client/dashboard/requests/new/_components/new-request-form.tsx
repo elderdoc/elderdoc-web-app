@@ -939,7 +939,10 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgHourl
               </div>
               <div className="pt-6 text-center space-y-1">
                 <p className="text-sm text-muted-foreground">Not seeing the right fit?</p>
-                <Link href="/client/dashboard/find-caregivers" className="text-sm font-medium text-primary hover:underline">
+                <Link
+                  href={matchRequestId ? `/client/dashboard/find-caregivers?requestId=${matchRequestId}` : '/client/dashboard/find-caregivers'}
+                  className="text-sm font-medium text-primary hover:underline"
+                >
                   Browse all caregivers →
                 </Link>
               </div>
