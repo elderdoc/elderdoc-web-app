@@ -11,6 +11,7 @@ import {
   INFECTION_CONTROL_ITEMS, SAFETY_MEASURE_ITEMS, CLIENT_STATUS_GROUPS,
 } from '@/lib/constants'
 import { MapPin } from 'lucide-react'
+import { LoadingQuotes } from '@/components/loading-quotes'
 import { StateSelect } from '@/components/state-select'
 import { DatePicker } from '@/components/date-picker'
 import { TimePicker } from '@/components/ui/time-picker'
@@ -831,10 +832,7 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgHourl
       {step === 9 && (
         <div className="space-y-4">
           {matchingState === 'matching' && (
-            <div className="flex flex-col items-center gap-4 py-12">
-              <div className="h-10 w-10 rounded-full border-2 border-primary border-t-transparent animate-spin" />
-              <p className="text-sm text-muted-foreground">Finding your best matches…</p>
-            </div>
+            <LoadingQuotes label="Finding your best matches…" />
           )}
 
           {matchingState === 'error' && (
