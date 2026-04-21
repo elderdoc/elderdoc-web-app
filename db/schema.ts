@@ -32,6 +32,20 @@ export const caregiverProfiles = pgTable('caregiver_profiles', {
   completedStep:            integer('completed_step').default(0),
   stripeConnectAccountId:   text('stripe_connect_account_id'),
   availability: jsonb('availability').$type<Array<{ day: string; startTime: string; endTime: string }>>(),
+  careCapabilities:    jsonb('care_capabilities').$type<{
+    activityMobilitySafety: string[]
+    hygieneElimination:     string[]
+    homeManagement:         string[]
+    hydrationNutrition:     string[]
+    medicationReminders:    string[]
+  }>(),
+  specialNeedsHandling: jsonb('special_needs_handling').$type<{
+    hardOfHearing?:      boolean
+    visionProblem?:      boolean
+    amputee?:            boolean
+    overweightMobility?: boolean
+  }>(),
+  maxCarryLbs:          integer('max_carry_lbs'),
   createdAt:                timestamp('created_at').defaultNow().notNull(),
 })
 

@@ -239,6 +239,13 @@ export const CARE_PLAN_SECTIONS = [
   },
 ] as const
 
+export const SPECIAL_NEEDS_HANDLING = [
+  { key: 'hardOfHearing',      label: 'Hard of hearing' },
+  { key: 'visionProblem',      label: 'Vision impairment' },
+  { key: 'amputee',            label: 'Amputee' },
+  { key: 'overweightMobility', label: 'Overweight / mobility assistance' },
+] as const
+
 export const INFECTION_CONTROL_ITEMS = [
   { key: 'gloves',        label: 'Gloves' },
   { key: 'handWashing',   label: 'Hand washing' },
