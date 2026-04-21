@@ -269,7 +269,7 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgHourl
     })(),
     true, // step 5 — Care Details is optional
     form.genderPref.length > 0,
-    false, // step 7 — Care Plan is optional
+    true, // step 7 — Care Plan is optional
     form.title.trim().length > 0 && form.description.trim().length > 0,
   ]
 
