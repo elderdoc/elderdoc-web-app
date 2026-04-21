@@ -3,7 +3,8 @@
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { createCareRequest } from '@/domains/clients/requests'
+import { createCareRequest, saveCareRequestCarePlan } from '@/domains/clients/requests'
+import { CarePlanStep, CarePlanState, EMPTY_CARE_PLAN } from './care-plan-step'
 import {
   CARE_TYPES, CARE_FREQUENCIES, DAYS_OF_WEEK,
   GENDER_PREFERENCES, LANGUAGES, BUDGET_TYPES,
@@ -47,6 +48,7 @@ interface RequestForm {
   budgetAmount: string
   title: string
   description: string
+  carePlan: CarePlanState
 }
 
 const EMPTY: RequestForm = {
@@ -62,6 +64,7 @@ const EMPTY: RequestForm = {
   sameTimeEveryDay: true, sharedStartTime: '', sharedEndTime: '', dayTimes: {},
   genderPref: '', languagePref: [], budgetType: '', budgetAmount: '',
   title: '', description: '',
+  carePlan: EMPTY_CARE_PLAN,
 }
 
 const STEP_TITLES = [
@@ -71,6 +74,7 @@ const STEP_TITLES = [
   'Schedule',
   'Care Details',
   'Preferences',
+  'Care Plan',
   'Review & generate',
   'Your Top Matches',
 ]
@@ -222,13 +226,18 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgHourl
         })
       } catch {
         setMatchingState('error')
-        setStep(8)
+        setStep(9)
         return
+      }
+
+      const hasAnyPlan = Object.values(form.carePlan).some(arr => arr.length > 0)
+      if (hasAnyPlan) {
+        await saveCareRequestCarePlan(result.id, form.carePlan)
       }
 
       setMatchRequestId(result.id)
       setMatchingState('matching')
-      setStep(8)
+      setStep(9)
       router.refresh()
 
       try {
@@ -260,11 +269,12 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgHourl
     })(),
     true, // step 5 — Care Details is optional
     form.genderPref.length > 0,
+    false, // step 7 — Care Plan is optional
     form.title.trim().length > 0 && form.description.trim().length > 0,
   ]
 
-  const isLastStep = step === 7
-  const isFinalStep = step === 8
+  const isLastStep = step === 8
+  const isFinalStep = step === 9
 
   return (
     <div className="p-8 max-w-2xl mx-auto">
@@ -281,7 +291,7 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgHourl
       {/* Progress */}
       {!isFinalStep && (
         <div className="flex items-center gap-2 mb-8">
-          {Array.from({ length: 7 }).map((_, i) => (
+          {Array.from({ length: 8 }).map((_, i) => (
             <div
               key={i}
               className={[
@@ -294,7 +304,7 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgHourl
       )}
 
       {!isFinalStep && (
-        <p className="text-xs text-muted-foreground mb-1">Step {step} of 7</p>
+        <p className="text-xs text-muted-foreground mb-1">Step {step} of 8</p>
       )}
       <h1 className="text-2xl font-semibold mb-8">{STEP_TITLES[step - 1]}</h1>
 
@@ -715,8 +725,16 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgHourl
         </div>
       )}
 
-      {/* Step 7 — Review & Generate */}
+      {/* Step 7 — Care Plan */}
       {step === 7 && (
+        <CarePlanStep
+          value={form.carePlan}
+          onChange={plan => setForm(f => ({ ...f, carePlan: plan }))}
+        />
+      )}
+
+      {/* Step 8 — Review & Generate */}
+      {step === 8 && (
         <div className="space-y-6">
           <div className="flex justify-center">
             <button type="button" onClick={handleGenerate} disabled={isGenerating}
@@ -744,8 +762,8 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgHourl
         </div>
       )}
 
-      {/* Step 8 — Matches */}
-      {step === 8 && (
+      {/* Step 9 — Matches */}
+      {step === 9 && (
         <div className="space-y-4">
           {matchingState === 'matching' && (
             <div className="flex flex-col items-center gap-4 py-12">
@@ -876,7 +894,7 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgHourl
             <button
               type="button"
               onClick={handleSubmit}
-              disabled={isPending || !stepValid[6]}
+              disabled={isPending || !stepValid[7]}
               className="px-6 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium disabled:opacity-40"
             >
               {isPending ? 'Submitting…' : 'Submit Request'}
@@ -885,7 +903,7 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgHourl
             <button
               type="button"
               onClick={() => setStep((s) => s + 1)}
-              disabled={!stepValid[step - 1]}
+              disabled={step === 7 ? false : !stepValid[step - 1]}
               className="px-6 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium disabled:opacity-40"
             >
               Next
