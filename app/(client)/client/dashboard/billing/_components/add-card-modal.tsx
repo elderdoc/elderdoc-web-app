@@ -65,7 +65,11 @@ function SetupForm({ onClose }: { onClose: () => void }) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <PaymentElement />
+      <PaymentElement
+        options={{
+          defaultValues: { billingDetails: { address: { country: 'US' } } },
+        }}
+      />
       {error && <p className="text-xs text-destructive">{error}</p>}
       <div className="flex gap-2 justify-end pt-2">
         <button
@@ -101,8 +105,8 @@ export function AddCardModal({ stripePublishableKey, onClose }: Props) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <div className="bg-card rounded-xl border border-border shadow-lg w-full max-w-sm">
-        <div className="p-6 flex flex-col gap-5">
+      <div className="bg-card rounded-xl border border-border shadow-lg w-full max-w-lg">
+        <div className="p-6 flex flex-col gap-5 max-h-[85vh] overflow-y-auto">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold">Add payment method</h2>
             <button onClick={onClose} aria-label="Close" className="text-muted-foreground hover:text-foreground">

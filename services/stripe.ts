@@ -113,14 +113,17 @@ export async function createAndPayInvoice(
   const invoice = await getStripe().invoices.create({
     customer: customerId,
     auto_advance: false,
+    pending_invoice_items_behavior: 'include',
     metadata: { jobId },
   })
   const finalized = await getStripe().invoices.finalizeInvoice(invoice.id)
-  const paid = await getStripe().invoices.pay(finalized.id)
+  const result = finalized.status === 'paid'
+    ? finalized
+    : await getStripe().invoices.pay(finalized.id)
   return {
-    invoiceId: paid.id,
-    invoicePdfUrl: paid.invoice_pdf ?? null,
-    hostedInvoiceUrl: paid.hosted_invoice_url ?? null,
+    invoiceId: result.id,
+    invoicePdfUrl: result.invoice_pdf ?? null,
+    hostedInvoiceUrl: result.hosted_invoice_url ?? null,
     paymentIntentId: null,
   }
 }
@@ -152,11 +155,13 @@ export async function getPaymentIntentCharge(paymentIntentId: string): Promise<S
   }
 }
 
-export async function getInvoicePdfUrl(invoiceId: string): Promise<{ pdfUrl: string | null; hostedUrl: string | null }> {
-  if (MOCK_MODE || invoiceId.startsWith('mock_in_')) return { pdfUrl: null, hostedUrl: null }
-  const invoice = await getStripe().invoices.retrieve(invoiceId)
+export async function getInvoicePdfUrl(invoiceId: string): Promise<{ pdfUrl: string | null; hostedUrl: string | null; receiptUrl: string | null }> {
+  if (MOCK_MODE || invoiceId.startsWith('mock_in_')) return { pdfUrl: null, hostedUrl: null, receiptUrl: null }
+  const invoice = await getStripe().invoices.retrieve(invoiceId, { expand: ['charge'] }) as Stripe.Invoice & { charge: Stripe.Charge | null }
+  const receiptUrl = invoice.charge?.receipt_url ?? null
   return {
     pdfUrl: invoice.invoice_pdf ?? null,
     hostedUrl: invoice.hosted_invoice_url ?? null,
+    receiptUrl,
   }
 }

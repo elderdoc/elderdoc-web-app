@@ -9,14 +9,23 @@ export async function GET(
   const download = req.nextUrl.searchParams.get('download') === '1'
 
   if (receiptId.startsWith('in_')) {
-    const { hostedUrl } = await getInvoicePdfUrl(receiptId)
-    if (!hostedUrl) {
-      return NextResponse.json({ error: 'Receipt not available' }, { status: 404 })
-    }
+    const { pdfUrl, hostedUrl, receiptUrl } = await getInvoicePdfUrl(receiptId)
     if (download) {
-      return NextResponse.redirect(hostedUrl)
+      const target = pdfUrl ?? hostedUrl
+      if (!target) return NextResponse.json({ error: 'Receipt not available' }, { status: 404 })
+      return NextResponse.redirect(target)
     }
-    return NextResponse.redirect(hostedUrl)
+    // Use receipt URL (pay.stripe.com) for iframe — falls back to PDF inline
+    const embedTarget = receiptUrl ?? pdfUrl
+    if (!embedTarget) return NextResponse.json({ error: 'Receipt not available' }, { status: 404 })
+    if (pdfUrl && !receiptUrl) {
+      const res = await fetch(pdfUrl)
+      const pdf = await res.arrayBuffer()
+      return new NextResponse(pdf, {
+        headers: { 'Content-Type': 'application/pdf', 'Content-Disposition': 'inline' },
+      })
+    }
+    return NextResponse.redirect(embedTarget)
   }
 
   // Legacy: PaymentIntent-based receipt

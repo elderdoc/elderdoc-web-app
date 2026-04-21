@@ -44,6 +44,7 @@ export async function POST(req: NextRequest) {
   let billed = 0
   let skipped = 0
   let totalCharged = 0
+  const errors: { jobId: string; error: string }[] = []
 
   for (const [jobId, jobShifts] of byJob) {
     const { clientId, stripeCustomerId, budgetAmount, careType } = jobShifts[0]
@@ -97,9 +98,11 @@ export async function POST(req: NextRequest) {
       billed++
       totalCharged += subtotalCents + feeCents
     } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err)
       console.error(`Failed to bill job ${jobId}:`, err)
+      errors.push({ jobId, error: msg })
     }
   }
 
-  return NextResponse.json({ billed, skipped, totalCharged: totalCharged / 100 })
+  return NextResponse.json({ billed, skipped, totalCharged: totalCharged / 100, errors })
 }
