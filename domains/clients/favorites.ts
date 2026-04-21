@@ -51,18 +51,21 @@ export async function toggleFavoriteCaregiver(caregiverId: string): Promise<{ fa
 }
 
 export type MyCaregiverCard = {
-  caregiverId: string
-  name:        string | null
-  image:       string | null
-  headline:    string | null
-  rating:      string | null
-  hourlyMin:   string | null
-  hourlyMax:   string | null
-  city:        string | null
-  state:       string | null
-  careTypes:   string[]
-  jobStatus:   'active' | 'completed' | 'cancelled' | null
-  isFavorited: boolean
+  caregiverId:   string
+  name:          string | null
+  image:         string | null
+  headline:      string | null
+  rating:        string | null
+  hourlyMin:     string | null
+  hourlyMax:     string | null
+  city:          string | null
+  state:         string | null
+  lat:           string | null
+  lng:           string | null
+  distanceMiles: number | null
+  careTypes:     string[]
+  jobStatus:     'active' | 'completed' | 'cancelled' | null
+  isFavorited:   boolean
 }
 
 async function hydrateCards(
@@ -77,6 +80,9 @@ async function hydrateCards(
     hourlyMax: string | null
     city: string | null
     state: string | null
+    lat: string | null
+    lng: string | null
+    distanceMiles: number | null
     jobStatus: 'active' | 'completed' | 'cancelled' | null
   }>,
 ): Promise<MyCaregiverCard[]> {
@@ -104,6 +110,7 @@ async function hydrateCards(
     ...r,
     careTypes:   careTypeMap.get(r.caregiverId) ?? [],
     isFavorited: favSet.has(r.caregiverId),
+    distanceMiles: r.distanceMiles,
   }))
 }
 
@@ -119,6 +126,8 @@ export async function getCurrentCaregivers(clientId: string): Promise<MyCaregive
       hourlyMax:   caregiverProfiles.hourlyMax,
       city:        caregiverLocations.city,
       state:       caregiverLocations.state,
+      lat:         caregiverLocations.lat,
+      lng:         caregiverLocations.lng,
       jobStatus:   jobs.status,
     })
     .from(jobs)
@@ -135,7 +144,7 @@ export async function getCurrentCaregivers(clientId: string): Promise<MyCaregive
     return true
   })
 
-  return hydrateCards(clientId, unique)
+  return hydrateCards(clientId, unique.map((r) => ({ ...r, distanceMiles: null })))
 }
 
 export async function getFavoriteCaregivers(clientId: string): Promise<MyCaregiverCard[]> {
@@ -150,6 +159,8 @@ export async function getFavoriteCaregivers(clientId: string): Promise<MyCaregiv
       hourlyMax:   caregiverProfiles.hourlyMax,
       city:        caregiverLocations.city,
       state:       caregiverLocations.state,
+      lat:         caregiverLocations.lat,
+      lng:         caregiverLocations.lng,
       favAt:       caregiverFavorites.createdAt,
     })
     .from(caregiverFavorites)
@@ -176,7 +187,7 @@ export async function getFavoriteCaregivers(clientId: string): Promise<MyCaregiv
 
   return hydrateCards(
     clientId,
-    rows.map((r) => ({ ...r, jobStatus: jobStatusMap.get(r.caregiverId) ?? null })),
+    rows.map((r) => ({ ...r, jobStatus: jobStatusMap.get(r.caregiverId) ?? null, distanceMiles: null })),
   )
 }
 

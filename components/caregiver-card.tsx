@@ -11,6 +11,7 @@ export interface CaregiverPreview {
   careTypes: string[]
   city: string | null
   state: string | null
+  distanceMiles?: number | null
   hourlyMin: string | null
   hourlyMax: string | null
   experience?: string | null
@@ -98,9 +99,11 @@ export function CaregiverCard({ caregiver, rank, onSendOffer, className }: Careg
 
           {/* Details row */}
           <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground">
-            {caregiver.city && caregiver.state && (
+            {caregiver.distanceMiles != null ? (
+              <span>📍 {caregiver.distanceMiles < 1 ? '<1 mi' : `${Math.round(caregiver.distanceMiles)} mi`} away</span>
+            ) : caregiver.city && caregiver.state ? (
               <span>📍 {caregiver.city}, {caregiver.state}</span>
-            )}
+            ) : null}
             {caregiver.experience && (
               <span>🕐 {caregiver.experience}</span>
             )}

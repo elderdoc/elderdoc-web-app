@@ -31,9 +31,19 @@ describe('CaregiverCard', () => {
     expect(screen.getByText('Companionship')).toBeDefined()
   })
 
-  it('renders location', () => {
+  it('renders city/state when no distanceMiles provided', () => {
     render(<CaregiverCard caregiver={mockCaregiver} />)
-    expect(screen.getByText('Austin, Texas')).toBeDefined()
+    expect(screen.getByText('📍 Austin, Texas')).toBeDefined()
+  })
+
+  it('renders distance when distanceMiles provided', () => {
+    render(<CaregiverCard caregiver={{ ...mockCaregiver, distanceMiles: 12.7 }} />)
+    expect(screen.getByText('📍 13 mi away')).toBeDefined()
+  })
+
+  it('renders <1 mi away for sub-mile distances', () => {
+    render(<CaregiverCard caregiver={{ ...mockCaregiver, distanceMiles: 0.4 }} />)
+    expect(screen.getByText('📍 <1 mi away')).toBeDefined()
   })
 
   it('renders hourly rate', () => {

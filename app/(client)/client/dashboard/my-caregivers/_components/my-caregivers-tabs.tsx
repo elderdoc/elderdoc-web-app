@@ -83,11 +83,15 @@ function CardGrid({ items }: { items: MyCaregiverCard[] }) {
                   </span>
                 )}
               </div>
-              {[cg.city, cg.state].filter(Boolean).length > 0 && (
+              {cg.distanceMiles != null ? (
+                <p className="text-xs text-muted-foreground truncate">
+                  📍 {cg.distanceMiles < 1 ? '<1 mi' : `${Math.round(cg.distanceMiles)} mi`} away
+                </p>
+              ) : [cg.city, cg.state].filter(Boolean).length > 0 ? (
                 <p className="text-xs text-muted-foreground truncate">
                   {[cg.city, cg.state].filter(Boolean).join(', ')}
                 </p>
-              )}
+              ) : null}
             </div>
             <FavoriteButton caregiverId={cg.caregiverId} favorited={cg.isFavorited} />
           </div>
