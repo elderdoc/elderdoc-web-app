@@ -18,16 +18,18 @@ interface Props {
   initialAbout: string
   initialPhotoUrl: string | null
   initialGender: string
+  initialTransportationMode: string
 }
 
 export function Step5Form({
-  initialName, initialPhone, initialHeadline, initialAbout, initialPhotoUrl, initialGender,
+  initialName, initialPhone, initialHeadline, initialAbout, initialPhotoUrl, initialGender, initialTransportationMode,
 }: Props) {
   const [name, setName] = useState(initialName)
   const [phone, setPhone] = useState(initialPhone)
   const [headline, setHeadline] = useState(initialHeadline)
   const [about, setAbout] = useState(initialAbout)
   const [gender, setGender] = useState(initialGender)
+  const [transportationMode, setTransportationMode] = useState(initialTransportationMode)
   const [photoUrl, setPhotoUrl] = useState<string | null>(initialPhotoUrl)
   const [photoPreview, setPhotoPreview] = useState<string | null>(initialPhotoUrl)
   const [isUploading, setIsUploading] = useState(false)
@@ -53,7 +55,7 @@ export function Step5Form({
     }
   }
 
-  const isValid = name.trim().length > 0 && phone.trim().length > 0 && headline.trim().length > 0 && about.trim().length > 0 && gender.length > 0
+  const isValid = name.trim().length > 0 && phone.trim().length > 0 && headline.trim().length > 0 && about.trim().length > 0 && gender.length > 0 && transportationMode.length > 0
 
   function handleComplete() {
     if (!isValid) return
@@ -64,6 +66,7 @@ export function Step5Form({
         headline,
         about,
         gender,
+        transportationMode,
         photoUrl: photoUrl ?? undefined,
       })
     })
@@ -165,6 +168,33 @@ export function Step5Form({
                 }`}
               >
                 {opt.label}
+              </button>
+            ))}
+          </div>
+        </section>
+
+        {/* Transportation */}
+        <section>
+          <p className={labelClass}>How do you get to work?</p>
+          <div className="space-y-2">
+            {[
+              { value: 'own-vehicle',    label: 'I have my own vehicle',         desc: 'Licensed driver with personal car or truck.' },
+              { value: 'public-transit', label: 'Public transit / commute',       desc: 'Bus, train, or subway to reach the client.' },
+              { value: 'rideshare',      label: 'Rideshare (Uber, Lyft, etc.)',   desc: 'I use rideshare services to get around.' },
+              { value: 'can-commute',    label: 'I can commute flexibly',          desc: 'Mix of options — I can adapt to what works.' },
+            ].map(opt => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => setTransportationMode(opt.value)}
+                className={`w-full rounded-[8px] border px-4 py-3 text-left transition-colors ${
+                  transportationMode === opt.value
+                    ? 'border-primary bg-primary/5'
+                    : 'border-input bg-background hover:border-primary/50'
+                }`}
+              >
+                <p className={`text-sm font-medium ${transportationMode === opt.value ? 'text-primary' : 'text-foreground'}`}>{opt.label}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">{opt.desc}</p>
               </button>
             ))}
           </div>

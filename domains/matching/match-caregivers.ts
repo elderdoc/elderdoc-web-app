@@ -47,7 +47,7 @@ export async function matchCaregivers(requestId: string): Promise<RankedCandidat
       clientStatus:  careRequests.clientStatus,
       recipientId:   careRequests.recipientId,
       genderPref:    careRequests.genderPref,
-      transportationNeeded: careRequests.transportationNeeded,
+      transportationPref: careRequests.transportationPref,
     })
     .from(careRequests)
     .leftJoin(careRequestLocations, eq(careRequestLocations.requestId, careRequests.id))
@@ -164,7 +164,7 @@ SCORING WEIGHTS (apply in this priority order):
 4. carePlanOverlap (15 pts): high overlap across sections = up to 15.
 5. languageMatch (10 pts): all preferred languages covered = 10.
 6. weightCarryFit (5 pts): sufficient = 5, insufficient = −5, unknown = 0.
-7. transportationFit: if transportationNeeded=true and caregiver does NOT have a vehicle/license, apply −10 pts. If caregiver has vehicle+license when transportation is needed, apply +5 pts.
+7. transportationFit: if transportationPref is "requires-vehicle" and caregiver does NOT have vehicle+license, apply −10 pts. If they do, apply +5 pts. If "client-provides" or "commute-ok" or "no-preference", no penalty/bonus based on vehicle.
 
 REASON GUIDELINES:
 - Write 3–5 natural, flowing sentences. Do NOT follow a fixed template — vary the structure for each candidate so no two cards sound the same.
@@ -182,7 +182,7 @@ Schedule: ${requestRow.frequency ?? 'unspecified'}, days: ${
     ?.map(s => `${s.day} ${s.startTime}–${s.endTime}`).join(', ') ?? 'unspecified'
 }
 Language preference: ${(requestRow.languagePref ?? []).join(', ') || 'none'}
-Transportation needed: ${requestRow.transportationNeeded ? 'yes' : 'no'}
+Transportation preference: ${requestRow.transportationPref ?? 'no-preference'}
 Budget: ${requestRow.budgetType ?? ''} ${requestRow.budgetAmount ?? ''}
 Notes: ${requestRow.title ?? ''}. ${requestRow.description ?? ''}
 
@@ -224,7 +224,7 @@ ${JSON.stringify(filteredCandidates.map((c) => {
       (c.specialNeedsHandling as Record<string, boolean> | null) ?? {}
     ).filter(([, v]) => v).map(([k]) => k)
     const transportationFit: 'meets' | 'does-not-meet' | 'not-required' =
-      requestRow.transportationNeeded
+      requestRow.transportationPref === 'requires-vehicle'
         ? (c.hasVehicle && c.hasDriversLicense ? 'meets' : 'does-not-meet')
         : 'not-required'
     return {

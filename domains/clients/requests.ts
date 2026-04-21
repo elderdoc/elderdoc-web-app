@@ -52,6 +52,7 @@ export async function createCareRequest(data: {
   schedule: Array<{ day: string; startTime: string; endTime: string }>
   startDate: string
   genderPref?: string
+  transportationPref?: string
   languagePref: string[]
   budgetType?: string
   budgetAmount?: string
@@ -73,17 +74,18 @@ export async function createCareRequest(data: {
       frequency:    data.frequency,
       schedule:     data.schedule,
       startDate:    data.startDate,
-      genderPref:   data.genderPref,
-      languagePref: data.languagePref,
-      budgetType:   data.budgetType,
-      budgetAmount: data.budgetAmount?.trim() && Number.isFinite(Number(data.budgetAmount.trim())) ? data.budgetAmount.trim() : undefined,
-      title:           data.title,
-      description:     data.description,
-      status:          'active',
-      suppliesNeeded:  data.suppliesNeeded,
-      infectionControl:data.infectionControl,
-      safetyMeasures:  data.safetyMeasures,
-      clientStatus:    data.clientStatus,
+      genderPref:          data.genderPref,
+      transportationPref:  data.transportationPref,
+      languagePref:        data.languagePref,
+      budgetType:          data.budgetType,
+      budgetAmount:        data.budgetAmount?.trim() && Number.isFinite(Number(data.budgetAmount.trim())) ? data.budgetAmount.trim() : undefined,
+      title:               data.title,
+      description:         data.description,
+      status:              'active',
+      suppliesNeeded:      data.suppliesNeeded,
+      infectionControl:    data.infectionControl,
+      safetyMeasures:      data.safetyMeasures,
+      clientStatus:        data.clientStatus,
     }).returning({ id: careRequests.id })
 
     const coords = await geocodeAddress(data.address.address1, data.address.city, data.address.state)
@@ -147,6 +149,7 @@ export async function updateCareRequest(id: string, data: {
   schedule?: Array<{ day: string; startTime: string; endTime: string }>
   startDate?: string
   genderPref?: string
+  transportationPref?: string
   languagePref?: string[]
   budgetType?: string
   budgetAmount?: string
@@ -160,13 +163,14 @@ export async function updateCareRequest(id: string, data: {
 
   await db.update(careRequests)
     .set({
-      title:         data.title,
-      description:   data.description,
-      frequency:     data.frequency,
-      schedule:      data.schedule,
-      startDate:     data.startDate,
-      genderPref:    data.genderPref,
-      languagePref:  data.languagePref,
+      title:              data.title,
+      description:        data.description,
+      frequency:          data.frequency,
+      schedule:           data.schedule,
+      startDate:          data.startDate,
+      genderPref:         data.genderPref,
+      transportationPref: data.transportationPref,
+      languagePref:       data.languagePref,
       budgetType:    data.budgetType,
       budgetAmount:    data.budgetAmount?.trim() && Number.isFinite(Number(data.budgetAmount.trim())) ? data.budgetAmount.trim() : undefined,
       suppliesNeeded:  data.suppliesNeeded,

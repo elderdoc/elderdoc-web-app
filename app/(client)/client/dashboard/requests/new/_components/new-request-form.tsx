@@ -51,6 +51,7 @@ interface RequestForm {
   sharedEndTime: string
   dayTimes: Record<string, { startTime: string; endTime: string }>
   genderPref: string
+  transportationPref: string
   languagePref: string[]
   budgetType: string
   budgetAmount: string
@@ -70,7 +71,7 @@ const EMPTY: RequestForm = {
   safetyMeasures: {},
   careRequestClientStatus: {},
   sameTimeEveryDay: true, sharedStartTime: '', sharedEndTime: '', dayTimes: {},
-  genderPref: '', languagePref: [], budgetType: '', budgetAmount: '',
+  genderPref: '', transportationPref: '', languagePref: [], budgetType: '', budgetAmount: '',
   title: '', description: '',
   carePlan: EMPTY_CARE_PLAN,
 }
@@ -235,8 +236,9 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgHourl
           safetyMeasures:   { enabled: form.safetyMeasuresEnabled, ...form.safetyMeasures },
           clientStatus:     Object.keys(form.careRequestClientStatus).length > 0
             ? form.careRequestClientStatus : undefined,
-          genderPref:    form.genderPref || undefined,
-          languagePref:  form.languagePref,
+          genderPref:         form.genderPref || undefined,
+          transportationPref: form.transportationPref || undefined,
+          languagePref:       form.languagePref,
           budgetType:    form.budgetType || undefined,
           budgetAmount:  form.budgetAmount || undefined,
           title:         form.title,
@@ -289,7 +291,7 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgHourl
         : form.schedule.every(s => form.dayTimes[s.day]?.startTime && form.dayTimes[s.day]?.endTime)
     })(),
     true, // step 5 — Care Details is optional
-    form.genderPref.length > 0 && form.budgetType.length > 0 && form.budgetAmount.trim().length > 0,
+    form.genderPref.length > 0 && form.transportationPref.length > 0 && form.budgetType.length > 0 && form.budgetAmount.trim().length > 0,
     true, // step 7 — Care Plan is optional
     form.title.trim().length > 0 && form.description.trim().length > 0,
   ]
@@ -313,6 +315,7 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgHourl
     null,
     (() => {
       if (!form.genderPref) return 'Select a caregiver gender preference.'
+      if (!form.transportationPref) return 'Select a transportation preference.'
       if (!form.budgetType) return 'Select a budget type.'
       if (!form.budgetAmount.trim()) return `Enter a ${form.budgetType === 'hourly' ? 'hourly rate' : 'weekly amount'}.`
       return null
@@ -760,6 +763,32 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgHourl
                   onClick={() => setForm((f) => ({ ...f, genderPref: g.key }))}
                   className={['rounded-xl border-2 px-3 py-2.5 text-sm font-medium transition-colors', form.genderPref === g.key ? 'border-primary bg-primary/5 text-primary' : 'border-border hover:border-primary/50'].join(' ')}>
                   {g.label}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-3">Transportation *</label>
+            <div className="space-y-2">
+              {[
+                { key: 'requires-vehicle',  label: 'Caregiver must have a vehicle',      desc: 'The caregiver needs their own transportation to reach the location.' },
+                { key: 'client-provides',   label: 'Client will provide transportation', desc: 'We will arrange or cover transportation for the caregiver.' },
+                { key: 'commute-ok',        label: 'Commuting is fine',                  desc: 'The caregiver can use public transit, rideshare, or walk.' },
+                { key: 'no-preference',     label: 'No preference',                       desc: 'Transportation is not a factor for this request.' },
+              ].map(opt => (
+                <button
+                  key={opt.key}
+                  type="button"
+                  onClick={() => setForm(f => ({ ...f, transportationPref: opt.key }))}
+                  className={[
+                    'w-full rounded-xl border-2 px-4 py-3 text-left transition-colors',
+                    form.transportationPref === opt.key
+                      ? 'border-primary bg-primary/5'
+                      : 'border-border hover:border-primary/50',
+                  ].join(' ')}
+                >
+                  <p className={`text-sm font-medium ${form.transportationPref === opt.key ? 'text-primary' : ''}`}>{opt.label}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">{opt.desc}</p>
                 </button>
               ))}
             </div>

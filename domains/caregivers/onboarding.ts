@@ -234,6 +234,7 @@ export async function saveCaregiverStep5(data: {
   headline: string
   about: string
   gender?: string
+  transportationMode?: string
   photoUrl?: string
 }) {
   const session = await auth()
@@ -247,6 +248,7 @@ export async function saveCaregiverStep5(data: {
       headline: data.headline,
       about: data.about,
       ...(data.gender ? { gender: data.gender } : {}),
+      ...(data.transportationMode ? { transportationMode: data.transportationMode } : {}),
       ...(data.photoUrl ? { photoUrl: data.photoUrl } : {}),
       status: 'active',
       completedStep: 6,
