@@ -3,9 +3,9 @@ import { getOpenAI } from '@/services/openai'
 import {
   careRequests, careRequestLocations, caregiverProfiles,
   caregiverLocations, caregiverCareTypes, caregiverCertifications,
-  caregiverLanguages, users, carePlans, careRecipients,
+  caregiverLanguages, users, carePlans, careRecipients, jobs,
 } from '@/db/schema'
-import { eq, and, inArray } from 'drizzle-orm'
+import { eq, and, inArray, count } from 'drizzle-orm'
 import { haversineDistance, formatMiles } from '@/lib/geo'
 import { computeScheduleOverlap, computeCarePlanOverlap, computeSpecialNeedsMatch, parseWeightLbs } from './helpers'
 
@@ -108,10 +108,10 @@ export async function matchCaregivers(requestId: string): Promise<RankedCandidat
 
   if (filteredCandidates.length === 0) return []
 
-  // 3. Fetch context per candidate (3 parallel batch queries using inArray)
+  // 3. Fetch context per candidate (batch queries using inArray)
   const ids = filteredCandidates.map((c) => c.id)
 
-  const [certRows, langRows, careTypeRows] = await Promise.all([
+  const [certRows, langRows, careTypeRows, jobCountRows] = await Promise.all([
     db.select({ caregiverId: caregiverCertifications.caregiverId, certification: caregiverCertifications.certification })
       .from(caregiverCertifications)
       .where(inArray(caregiverCertifications.caregiverId, ids)),
@@ -121,15 +121,21 @@ export async function matchCaregivers(requestId: string): Promise<RankedCandidat
     db.select({ caregiverId: caregiverCareTypes.caregiverId, careType: caregiverCareTypes.careType })
       .from(caregiverCareTypes)
       .where(inArray(caregiverCareTypes.caregiverId, ids)),
+    db.select({ caregiverId: jobs.caregiverId, total: count() })
+      .from(jobs)
+      .where(and(inArray(jobs.caregiverId, ids), eq(jobs.status, 'completed')))
+      .groupBy(jobs.caregiverId),
   ])
 
   const certMap = new Map<string, string[]>()
   const langMap = new Map<string, string[]>()
   const typeMap = new Map<string, string[]>()
+  const jobCountMap = new Map<string, number>()
 
   for (const r of certRows) certMap.set(r.caregiverId, [...(certMap.get(r.caregiverId) ?? []), r.certification])
   for (const r of langRows) langMap.set(r.caregiverId, [...(langMap.get(r.caregiverId) ?? []), r.language])
   for (const r of careTypeRows) typeMap.set(r.caregiverId, [...(typeMap.get(r.caregiverId) ?? []), r.careType])
+  for (const r of jobCountRows) jobCountMap.set(r.caregiverId, r.total)
 
   const reqLat = requestRow.lat ? Number(requestRow.lat) : null
   const reqLng = requestRow.lng ? Number(requestRow.lng) : null
@@ -149,13 +155,12 @@ SCORING WEIGHTS (apply in this priority order):
 6. weightCarryFit (5 pts): sufficient = 5, insufficient = −5, unknown = 0.
 
 REASON GUIDELINES:
-- Write exactly 5 sentences.
-- Sentence 1: Distance and location fit ("Located X miles away, making them a [nearby/manageable/distant] option.").
-- Sentence 2: Experience, certifications, and care type match ("Brings X years of experience in [care types] with certifications in [list].").
-- Sentence 3: Special needs handling — name each specific need the caregiver can or cannot handle (hard of hearing, vision impairment, amputee, overweight/mobility assistance, dementia, speech problems, etc.).
-- Sentence 4: Schedule fit, language match, and care plan overlap ("Covers [X/all] requested days, speaks [languages], and aligns with [X] care plan tasks.").
-- Sentence 5: Weight carry capacity and any remaining strengths or concerns ("Can carry up to X lbs [which is/is not] sufficient for mobility assistance needs." or a notable concern if relevant).
-- Be specific — use actual numbers, actual names, actual values from the data. Never use vague filler like "good fit" or "strong candidate" without backing it up.`
+- Write 3–5 natural, flowing sentences. Do NOT follow a fixed template — vary the structure for each candidate so no two cards sound the same.
+- Lead with the most compelling thing about this candidate for this specific request — that could be proximity, a standout rating, rare special needs experience, years in the field, or a high job count.
+- Weave in the relevant facts naturally: distance in miles, rating (e.g. "rated 4.8"), completed jobs (e.g. "has completed 12 jobs on the platform"), languages spoken, special needs handled (name them specifically: hard of hearing, vision impairment, amputee, mobility/overweight assistance, dementia, etc.), schedule fit, certifications, weight carry capacity.
+- Only mention factors that are actually present and relevant — skip factors with no data or no impact on this match.
+- If something is a genuine concern (far distance, insufficient weight carry, missing a needed language), mention it briefly and honestly — don't oversell a weak match.
+- Sound like a knowledgeable, warm care coordinator speaking to a family — not a list of attributes being read off. Make it feel personal and earned.`
 
   const userPrompt = `CARE REQUEST
 Type: ${requestRow.careType}
@@ -210,6 +215,8 @@ ${JSON.stringify(filteredCandidates.map((c) => {
       certifications:      certMap.get(c.id) ?? [],
       languages:           langMap.get(c.id) ?? [],
       experience:          c.experience ?? '',
+      rating:              c.rating ? Number(c.rating) : null,
+      completedJobs:       jobCountMap.get(c.id) ?? 0,
       maxCarryLbs:         c.maxCarryLbs ?? null,
       proximityMiles,
       scheduleDayCoverage: scheduleOverlap,
