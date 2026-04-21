@@ -12,6 +12,9 @@ import {
   isToday,
 } from 'date-fns'
 import { SelectField } from '@/components/select-field'
+import {
+  Sheet, SheetContent, SheetHeader, SheetTitle,
+} from '@/components/ui/sheet'
 
 export type CalendarEvent = {
   id: string
@@ -216,63 +219,63 @@ export function Calendar({ year, month, events, activeJobs, basePath, addShiftAc
         </div>
       )}
 
-      <div className="flex flex-col lg:flex-row gap-6">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center justify-between mb-4">
-            <button onClick={prevMonth} className="text-sm px-2 py-1 rounded-lg border border-border hover:bg-muted transition-colors">←</button>
-            <h2 className="font-semibold text-sm">{format(monthDate, 'MMMM yyyy')}</h2>
-            <button onClick={nextMonth} className="text-sm px-2 py-1 rounded-lg border border-border hover:bg-muted transition-colors">→</button>
-          </div>
-
-          <div className="grid grid-cols-7 mb-1">
-            {DAY_LABELS.map((d) => (
-              <div key={d} className="text-center text-xs text-muted-foreground py-1">{d}</div>
-            ))}
-          </div>
-
-          <div className="grid grid-cols-7 gap-px bg-border rounded-xl overflow-hidden border border-border">
-            {Array.from({ length: firstDayOfWeek }).map((_, i) => (
-              <div key={`empty-${i}`} className="bg-card min-h-[60px]" />
-            ))}
-            {days.map((day) => {
-              const dateStr = format(day, 'yyyy-MM-dd')
-              const dayEvents = events.filter((e) => e.date === dateStr)
-              const isSelected = selectedDate ? isSameDay(day, selectedDate) : false
-              const today = isToday(day)
-              return (
-                <button key={dateStr} onClick={() => setSelectedDate(isSelected ? null : day)}
-                  className={['bg-card min-h-[60px] p-1.5 text-left hover:bg-muted/50 transition-colors relative', isSelected ? 'ring-2 ring-inset ring-primary' : ''].join(' ')}>
-                  <span className={['text-xs font-medium inline-flex w-5 h-5 items-center justify-center rounded-full', today ? 'bg-primary text-primary-foreground' : 'text-foreground'].join(' ')}>
-                    {format(day, 'd')}
-                  </span>
-                  {dayEvents.length > 0 && (
-                    <div className="flex flex-wrap gap-0.5 mt-1">
-                      {dayEvents.slice(0, 3).map((_, i) => (
-                        <span key={i} className="w-1.5 h-1.5 rounded-full bg-primary block" />
-                      ))}
-                      {dayEvents.length > 3 && <span className="text-[10px] text-muted-foreground">+{dayEvents.length - 3}</span>}
-                    </div>
-                  )}
-                </button>
-              )
-            })}
-          </div>
+      <div>
+        <div className="flex items-center justify-between mb-4">
+          <button onClick={prevMonth} className="text-sm px-2 py-1 rounded-lg border border-border hover:bg-muted transition-colors">←</button>
+          <h2 className="font-semibold text-sm">{format(monthDate, 'MMMM yyyy')}</h2>
+          <button onClick={nextMonth} className="text-sm px-2 py-1 rounded-lg border border-border hover:bg-muted transition-colors">→</button>
         </div>
 
-        {selectedDate && (
-          <div className="w-full lg:w-72 shrink-0 rounded-xl border border-border bg-card p-5 self-start">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold text-sm">{format(selectedDate, 'EEEE, MMMM d')}</h3>
-              <button onClick={() => setSelectedDate(null)} className="text-xs text-muted-foreground hover:text-foreground">Close</button>
-            </div>
+        <div className="grid grid-cols-7 mb-1">
+          {DAY_LABELS.map((d) => (
+            <div key={d} className="text-center text-xs text-muted-foreground py-1">{d}</div>
+          ))}
+        </div>
 
+        <div className="grid grid-cols-7 gap-px bg-border rounded-xl overflow-hidden border border-border">
+          {Array.from({ length: firstDayOfWeek }).map((_, i) => (
+            <div key={`empty-${i}`} className="bg-card min-h-[60px]" />
+          ))}
+          {days.map((day) => {
+            const dateStr = format(day, 'yyyy-MM-dd')
+            const dayEvents = events.filter((e) => e.date === dateStr)
+            const isSelected = selectedDate ? isSameDay(day, selectedDate) : false
+            const today = isToday(day)
+            return (
+              <button key={dateStr} onClick={() => setSelectedDate(day)}
+                className={['bg-card min-h-[60px] p-1.5 text-left hover:bg-muted/50 transition-colors relative', isSelected ? 'ring-2 ring-inset ring-primary' : ''].join(' ')}>
+                <span className={['text-xs font-medium inline-flex w-5 h-5 items-center justify-center rounded-full', today ? 'bg-primary text-primary-foreground' : 'text-foreground'].join(' ')}>
+                  {format(day, 'd')}
+                </span>
+                {dayEvents.length > 0 && (
+                  <div className="flex flex-wrap gap-0.5 mt-1">
+                    {dayEvents.slice(0, 3).map((_, i) => (
+                      <span key={i} className="w-1.5 h-1.5 rounded-full bg-primary block" />
+                    ))}
+                    {dayEvents.length > 3 && <span className="text-[10px] text-muted-foreground">+{dayEvents.length - 3}</span>}
+                  </div>
+                )}
+              </button>
+            )
+          })}
+        </div>
+      </div>
+
+      <Sheet open={!!selectedDate} onOpenChange={(open) => { if (!open) setSelectedDate(null) }}>
+        <SheetContent side="right" className="sm:max-w-sm w-full flex flex-col overflow-hidden p-0">
+          <SheetHeader className="px-6 pt-6 pb-4 border-b border-border">
+            <SheetTitle>{selectedDate ? format(selectedDate, 'EEEE, MMMM d') : ''}</SheetTitle>
+          </SheetHeader>
+
+          <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
             {selectedEvents.length === 0 ? (
-              <p className="text-sm text-muted-foreground mb-4">No shifts.</p>
+              <p className="text-sm text-muted-foreground">No shifts on this day.</p>
             ) : (
-              <ul className="space-y-3 mb-4">
+              <ul className="space-y-3">
                 {selectedEvents.map((event) => (
-                  <li key={event.id} className="rounded-lg border border-border p-3 space-y-2">
+                  <li key={event.id} className="rounded-lg border border-border p-4 space-y-2">
                     <p className="text-sm font-medium">{event.label}</p>
+                    <p className="text-xs text-muted-foreground">{event.startTime} – {event.endTime}</p>
                     <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${SHIFT_STATUS_CLASSES[event.status] ?? 'bg-muted text-muted-foreground'}`}>
                       {event.status}
                     </span>
@@ -318,7 +321,7 @@ export function Calendar({ year, month, events, activeJobs, basePath, addShiftAc
 
             {addShiftAction && activeJobs.length > 0 && (
               <div className="border-t border-border pt-4 space-y-3">
-                <p className="text-xs font-medium">Add Shift</p>
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Add Shift</p>
                 {activeJobs.length > 1 && (
                   <SelectField
                     options={activeJobs.map((job) => ({ value: job.jobId, label: job.label }))}
@@ -347,8 +350,8 @@ export function Calendar({ year, month, events, activeJobs, basePath, addShiftAc
               </div>
             )}
           </div>
-        )}
-      </div>
+        </SheetContent>
+      </Sheet>
     </>
   )
 }
