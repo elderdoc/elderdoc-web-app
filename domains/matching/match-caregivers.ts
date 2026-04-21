@@ -149,11 +149,13 @@ SCORING WEIGHTS (apply in this priority order):
 6. weightCarryFit (5 pts): sufficient = 5, insufficient = −5, unknown = 0.
 
 REASON GUIDELINES:
-- Write 2–3 sentences, targeting ~200 characters minimum.
-- Cover ALL relevant factors present in the data: distance/proximity, experience, languages spoken, special needs handling (hard of hearing, vision impairment, amputee, overweight/mobility, dementia, etc.), schedule fit, care plan overlap, certifications, weight carry capacity, and any notable strengths or concerns.
-- Be specific — name the actual distance, the actual special needs handled, the actual languages, the actual care types.
-- Write in warm, professional third-person ("She covers...", "He is experienced with...", "Available nearby at X miles...").
-- If a factor is a concern (e.g., far distance, insufficient weight carry, missing special needs), mention it honestly but briefly.`
+- Write exactly 5 sentences.
+- Sentence 1: Distance and location fit ("Located X miles away, making them a [nearby/manageable/distant] option.").
+- Sentence 2: Experience, certifications, and care type match ("Brings X years of experience in [care types] with certifications in [list].").
+- Sentence 3: Special needs handling — name each specific need the caregiver can or cannot handle (hard of hearing, vision impairment, amputee, overweight/mobility assistance, dementia, speech problems, etc.).
+- Sentence 4: Schedule fit, language match, and care plan overlap ("Covers [X/all] requested days, speaks [languages], and aligns with [X] care plan tasks.").
+- Sentence 5: Weight carry capacity and any remaining strengths or concerns ("Can carry up to X lbs [which is/is not] sufficient for mobility assistance needs." or a notable concern if relevant).
+- Be specific — use actual numbers, actual names, actual values from the data. Never use vague filler like "good fit" or "strong candidate" without backing it up.`
 
   const userPrompt = `CARE REQUEST
 Type: ${requestRow.careType}
