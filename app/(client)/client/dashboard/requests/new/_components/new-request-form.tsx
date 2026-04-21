@@ -7,6 +7,7 @@ import { createCareRequest } from '@/domains/clients/requests'
 import {
   CARE_TYPES, CARE_FREQUENCIES, DAYS_OF_WEEK,
   GENDER_PREFERENCES, LANGUAGES, BUDGET_TYPES,
+  INFECTION_CONTROL_ITEMS, SAFETY_MEASURE_ITEMS, CLIENT_STATUS_GROUPS,
 } from '@/lib/constants'
 import { StateSelect } from '@/components/state-select'
 import { DatePicker } from '@/components/date-picker'
@@ -30,6 +31,12 @@ interface RequestForm {
   frequency: string
   schedule: Array<{ day: string; startTime: string; endTime: string }>
   startDate: string
+  suppliesNeeded: string
+  infectionControlEnabled: boolean
+  infectionControl: Record<string, boolean>
+  safetyMeasuresEnabled: boolean
+  safetyMeasures: Record<string, boolean>
+  careRequestClientStatus: Record<string, boolean | string>
   sameTimeEveryDay: boolean
   sharedStartTime: string
   sharedEndTime: string
@@ -45,7 +52,14 @@ interface RequestForm {
 const EMPTY: RequestForm = {
   careTypes: [], recipientId: '', recipientName: '',
   address: { address1: '', address2: '', city: '', state: '' },
-  frequency: '', schedule: [], startDate: '', sameTimeEveryDay: true, sharedStartTime: '', sharedEndTime: '', dayTimes: {},
+  frequency: '', schedule: [], startDate: '',
+  suppliesNeeded: '',
+  infectionControlEnabled: false,
+  infectionControl: {},
+  safetyMeasuresEnabled: false,
+  safetyMeasures: {},
+  careRequestClientStatus: {},
+  sameTimeEveryDay: true, sharedStartTime: '', sharedEndTime: '', dayTimes: {},
   genderPref: '', languagePref: [], budgetType: '', budgetAmount: '',
   title: '', description: '',
 }
@@ -55,6 +69,7 @@ const STEP_TITLES = [
   'Who needs care?',
   'Where will care take place?',
   'Schedule',
+  'Care Details',
   'Preferences',
   'Review & generate',
   'Your Top Matches',
@@ -193,6 +208,11 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgHourl
             endTime:   form.sameTimeEveryDay ? form.sharedEndTime   : (form.dayTimes[s.day]?.endTime ?? ''),
           })),
           startDate:     form.startDate,
+          suppliesNeeded: form.suppliesNeeded || undefined,
+          infectionControl: { enabled: form.infectionControlEnabled, ...form.infectionControl },
+          safetyMeasures:   { enabled: form.safetyMeasuresEnabled, ...form.safetyMeasures },
+          clientStatus:     Object.keys(form.careRequestClientStatus).length > 0
+            ? form.careRequestClientStatus : undefined,
           genderPref:    form.genderPref || undefined,
           languagePref:  form.languagePref,
           budgetType:    form.budgetType || undefined,
@@ -202,13 +222,13 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgHourl
         })
       } catch {
         setMatchingState('error')
-        setStep(7)
+        setStep(8)
         return
       }
 
       setMatchRequestId(result.id)
       setMatchingState('matching')
-      setStep(7)
+      setStep(8)
       router.refresh()
 
       try {
@@ -238,12 +258,13 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgHourl
         : form.schedule.every(s => form.dayTimes[s.day]?.startTime && form.dayTimes[s.day]?.endTime)
       return timesOk
     })(),
+    true, // step 5 — Care Details is optional
     form.genderPref.length > 0,
     form.title.trim().length > 0 && form.description.trim().length > 0,
   ]
 
-  const isLastStep = step === 6
-  const isFinalStep = step === 7
+  const isLastStep = step === 7
+  const isFinalStep = step === 8
 
   return (
     <div className="p-8 max-w-2xl mx-auto">
@@ -260,7 +281,7 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgHourl
       {/* Progress */}
       {!isFinalStep && (
         <div className="flex items-center gap-2 mb-8">
-          {Array.from({ length: 6 }).map((_, i) => (
+          {Array.from({ length: 7 }).map((_, i) => (
             <div
               key={i}
               className={[
@@ -273,7 +294,7 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgHourl
       )}
 
       {!isFinalStep && (
-        <p className="text-xs text-muted-foreground mb-1">Step {step} of 6</p>
+        <p className="text-xs text-muted-foreground mb-1">Step {step} of 7</p>
       )}
       <h1 className="text-2xl font-semibold mb-8">{STEP_TITLES[step - 1]}</h1>
 
@@ -478,8 +499,151 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgHourl
         </div>
       )}
 
-      {/* Step 5 — Preferences */}
+      {/* Step 5 — Care Details */}
       {step === 5 && (
+        <div className="space-y-8">
+          {/* Supplies needed */}
+          <div>
+            <label className="block text-sm font-medium mb-2">Supplies needed (optional)</label>
+            <textarea
+              value={form.suppliesNeeded}
+              onChange={e => setForm(f => ({ ...f, suppliesNeeded: e.target.value }))}
+              rows={3}
+              className="w-full rounded-lg border border-border px-4 py-3 text-sm focus:border-primary focus:outline-none resize-none"
+              placeholder="e.g. Gloves, masks, gown, hand sanitizer"
+            />
+          </div>
+
+          {/* Infection control */}
+          <div>
+            <label className="block text-sm font-medium mb-3">Infection control precautions</label>
+            <div className="flex gap-3 mb-3">
+              {['Yes', 'No'].map(opt => (
+                <button key={opt} type="button"
+                  onClick={() => setForm(f => ({ ...f, infectionControlEnabled: opt === 'Yes' }))}
+                  className={['rounded-xl border-2 px-5 py-2 text-sm font-medium transition-colors',
+                    (opt === 'Yes' ? form.infectionControlEnabled : !form.infectionControlEnabled)
+                      ? 'border-primary bg-primary/5 text-primary' : 'border-border hover:border-primary/50',
+                  ].join(' ')}>
+                  {opt}
+                </button>
+              ))}
+            </div>
+            {form.infectionControlEnabled && (
+              <div className="flex flex-wrap gap-2">
+                {INFECTION_CONTROL_ITEMS.map(item => (
+                  <button key={item.key} type="button"
+                    onClick={() => setForm(f => ({
+                      ...f,
+                      infectionControl: {
+                        ...f.infectionControl,
+                        [item.key]: !f.infectionControl[item.key],
+                      },
+                    }))}
+                    className={['rounded-xl border-2 px-4 py-2.5 text-sm transition-colors',
+                      form.infectionControl[item.key] ? 'border-primary bg-primary/5 text-primary' : 'border-border hover:border-primary/50',
+                    ].join(' ')}>
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Safety measures */}
+          <div>
+            <label className="block text-sm font-medium mb-3">Safety measures</label>
+            <div className="flex gap-3 mb-3">
+              {['Yes', 'No'].map(opt => (
+                <button key={opt} type="button"
+                  onClick={() => setForm(f => ({ ...f, safetyMeasuresEnabled: opt === 'Yes' }))}
+                  className={['rounded-xl border-2 px-5 py-2 text-sm font-medium transition-colors',
+                    (opt === 'Yes' ? form.safetyMeasuresEnabled : !form.safetyMeasuresEnabled)
+                      ? 'border-primary bg-primary/5 text-primary' : 'border-border hover:border-primary/50',
+                  ].join(' ')}>
+                  {opt}
+                </button>
+              ))}
+            </div>
+            {form.safetyMeasuresEnabled && (
+              <div className="flex flex-wrap gap-2">
+                {SAFETY_MEASURE_ITEMS.map(item => (
+                  <button key={item.key} type="button"
+                    onClick={() => setForm(f => ({
+                      ...f,
+                      safetyMeasures: {
+                        ...f.safetyMeasures,
+                        [item.key]: !f.safetyMeasures[item.key],
+                      },
+                    }))}
+                    className={['rounded-xl border-2 px-4 py-2.5 text-sm transition-colors',
+                      form.safetyMeasures[item.key] ? 'border-primary bg-primary/5 text-primary' : 'border-border hover:border-primary/50',
+                    ].join(' ')}>
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Recipient status */}
+          <div>
+            <label className="block text-sm font-medium mb-4">Recipient status (optional)</label>
+            <div className="space-y-6">
+              {CLIENT_STATUS_GROUPS.map(group => (
+                <div key={group.label}>
+                  <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-2">{group.label}</h3>
+                  <div className="grid grid-cols-2 gap-2">
+                    {group.items.map(item => {
+                      const checked = !!form.careRequestClientStatus[item.key]
+                      return (
+                        <div key={item.key} className="flex flex-col gap-1">
+                          <button type="button"
+                            onClick={() => setForm(f => {
+                              const s = { ...f.careRequestClientStatus }
+                              if (s[item.key]) { delete s[item.key] } else { s[item.key] = true }
+                              return { ...f, careRequestClientStatus: s }
+                            })}
+                            className={['rounded-xl border-2 px-4 py-3 text-sm text-left transition-colors',
+                              checked ? 'border-primary bg-primary/5 text-primary' : 'border-border hover:border-primary/50',
+                            ].join(' ')}>
+                            {item.label}
+                          </button>
+                          {checked && item.key === 'amputee' && (
+                            <input type="text"
+                              value={typeof form.careRequestClientStatus.amputeeDetails === 'string' ? form.careRequestClientStatus.amputeeDetails : ''}
+                              onChange={e => setForm(f => ({ ...f, careRequestClientStatus: { ...f.careRequestClientStatus, amputeeDetails: e.target.value } }))}
+                              className="rounded-lg border border-border px-3 py-2 text-xs focus:border-primary focus:outline-none"
+                              placeholder="e.g. left leg below knee" />
+                          )}
+                          {checked && item.key === 'diabetic' && (
+                            <input type="text"
+                              value={typeof form.careRequestClientStatus.diet === 'string' ? form.careRequestClientStatus.diet : ''}
+                              onChange={e => setForm(f => ({ ...f, careRequestClientStatus: { ...f.careRequestClientStatus, diet: e.target.value } }))}
+                              className="rounded-lg border border-border px-3 py-2 text-xs focus:border-primary focus:outline-none"
+                              placeholder="Diet details" />
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              ))}
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-2">Other</label>
+                <input type="text"
+                  value={typeof form.careRequestClientStatus.other === 'string' ? form.careRequestClientStatus.other : ''}
+                  onChange={e => setForm(f => ({ ...f, careRequestClientStatus: { ...f.careRequestClientStatus, other: e.target.value } }))}
+                  className="w-full rounded-lg border border-border px-4 py-3 text-sm focus:border-primary focus:outline-none"
+                  placeholder="Specify any other relevant status…" />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Step 6 — Preferences */}
+      {step === 6 && (
         <div className="space-y-8">
           <div>
             <label className="block text-sm font-medium mb-3">Caregiver Gender Preference *</label>
@@ -551,8 +715,8 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgHourl
         </div>
       )}
 
-      {/* Step 6 — Review & Generate */}
-      {step === 6 && (
+      {/* Step 7 — Review & Generate */}
+      {step === 7 && (
         <div className="space-y-6">
           <div className="flex justify-center">
             <button type="button" onClick={handleGenerate} disabled={isGenerating}
@@ -580,8 +744,8 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgHourl
         </div>
       )}
 
-      {/* Step 7 — Matches */}
-      {step === 7 && (
+      {/* Step 8 — Matches */}
+      {step === 8 && (
         <div className="space-y-4">
           {matchingState === 'matching' && (
             <div className="flex flex-col items-center gap-4 py-12">
@@ -712,7 +876,7 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgHourl
             <button
               type="button"
               onClick={handleSubmit}
-              disabled={isPending || !stepValid[5]}
+              disabled={isPending || !stepValid[6]}
               className="px-6 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium disabled:opacity-40"
             >
               {isPending ? 'Submitting…' : 'Submit Request'}
