@@ -75,7 +75,7 @@ export function Step4Form({
 
   return (
     <CaregiverStepShell
-      currentStep={4}
+      currentStep={5}
       title="Where are you located?"
       subtitle="We'll use this to match you with nearby families."
       backHref="/get-started/caregiver/step-3"

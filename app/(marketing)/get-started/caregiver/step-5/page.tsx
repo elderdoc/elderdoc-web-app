@@ -1,29 +1,55 @@
 import { auth } from '@/auth'
-import { eq } from 'drizzle-orm'
+import { eq, isNotNull, and } from 'drizzle-orm'
 import { db } from '@/services/db'
-import { caregiverProfiles, users } from '@/db/schema'
-import { Step5Form } from './_components/step-5-form'
+import { caregiverProfiles, caregiverLocations, caregiverWorkPrefs } from '@/db/schema'
+import { getRateDefaults } from '@/lib/rate-defaults'
+import type { ExperienceKey } from '@/lib/rate-defaults'
+import { Step4Form } from './_components/step-4-form'
 
-export default async function CaregiverStep5() {
+export default async function CaregiverStep4() {
   const session = await auth()
   if (!session?.user?.id) return null
 
-  const [profile, user] = await Promise.all([
-    db.query.caregiverProfiles.findFirst({
-      where: eq(caregiverProfiles.userId, session.user.id),
-    }),
-    db.query.users.findFirst({
-      where: eq(users.id, session.user.id),
-    }),
-  ])
+  const profile = await db.query.caregiverProfiles.findFirst({
+    where: eq(caregiverProfiles.userId, session.user.id),
+  })
+
+  const location = profile
+    ? await db
+        .select()
+        .from(caregiverLocations)
+        .where(eq(caregiverLocations.caregiverId, profile.id))
+        .limit(1)
+        .then(r => r[0] ?? null)
+    : null
+
+  const travelRows = profile
+    ? await db
+        .select({ miles: caregiverWorkPrefs.travelDistanceMiles })
+        .from(caregiverWorkPrefs)
+        .where(
+          and(
+            eq(caregiverWorkPrefs.caregiverId, profile.id),
+            isNotNull(caregiverWorkPrefs.travelDistanceMiles)
+          )
+        )
+    : []
+
+  const rateDefaults =
+    profile?.experience
+      ? getRateDefaults(profile.experience as ExperienceKey)
+      : { min: 20, max: 30 }
 
   return (
-    <Step5Form
-      initialName={user?.name ?? ''}
-      initialPhone={user?.phone ?? ''}
-      initialHeadline={profile?.headline ?? ''}
-      initialAbout={profile?.about ?? ''}
-      initialPhotoUrl={profile?.photoUrl ?? null}
+    <Step4Form
+      initialAddress1={location?.address1 ?? ''}
+      initialAddress2={location?.address2 ?? ''}
+      initialCity={location?.city ?? ''}
+      initialState={location?.state ?? ''}
+      initialTravelDistances={travelRows.map(r => r.miles!)}
+      initialRelocatable={profile?.relocatable ?? false}
+      initialHourlyMin={profile?.hourlyMin ?? String(rateDefaults.min)}
+      initialHourlyMax={profile?.hourlyMax ?? String(rateDefaults.max)}
     />
   )
 }

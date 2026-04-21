@@ -68,10 +68,10 @@ export function Step5Form({
 
   return (
     <CaregiverStepShell
-      currentStep={5}
+      currentStep={6}
       title="Build your profile"
       subtitle="This is what families will see when they find you."
-      backHref="/get-started/caregiver/step-4"
+      backHref="/get-started/caregiver/step-5"
     >
       <div className="mx-auto max-w-lg space-y-8">
         {/* Photo */}

@@ -187,11 +187,11 @@ export async function saveCaregiverStep4(data: {
       hourlyMin: data.hourlyMin,
       hourlyMax: data.hourlyMax,
       relocatable: data.relocatable,
-      completedStep: 4,
+      completedStep: 5,
     })
     .where(eq(caregiverProfiles.id, profile.id))
 
-  redirect('/get-started/caregiver/step-5')
+  redirect('/get-started/caregiver/step-6')
 }
 
 export async function saveCaregiverStep5(data: {
@@ -213,7 +213,7 @@ export async function saveCaregiverStep5(data: {
       about: data.about,
       ...(data.photoUrl ? { photoUrl: data.photoUrl } : {}),
       status: 'active',
-      completedStep: 5,
+      completedStep: 6,
     })
     .where(eq(caregiverProfiles.id, profile.id))
 
