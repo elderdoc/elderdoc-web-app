@@ -89,13 +89,8 @@ export async function matchCaregivers(requestId: string): Promise<RankedCandidat
       eq(caregiverCareTypes.careType, requestRow.careType),
     ))
     .leftJoin(caregiverLocations, eq(caregiverLocations.caregiverId, caregiverProfiles.id))
-    .where(
-      and(
-        eq(caregiverProfiles.status, 'active'),
-        ...(requestRow.state ? [eq(caregiverLocations.state, requestRow.state)] : []),
-      )
-    )
-    .limit(20)
+    .where(eq(caregiverProfiles.status, 'active'))
+    .limit(50)
 
   if (candidates.length === 0) return []
 
@@ -136,17 +131,23 @@ export async function matchCaregivers(requestId: string): Promise<RankedCandidat
   for (const r of langRows) langMap.set(r.caregiverId, [...(langMap.get(r.caregiverId) ?? []), r.language])
   for (const r of careTypeRows) typeMap.set(r.caregiverId, [...(typeMap.get(r.caregiverId) ?? []), r.careType])
 
+  const reqLat = requestRow.lat ? Number(requestRow.lat) : null
+  const reqLng = requestRow.lng ? Number(requestRow.lng) : null
+
   // 4. Build prompt
   const systemPrompt = `You are a care coordinator matching caregivers to a care request.
 Rank the provided candidates by fit. Return valid JSON only — no prose, no markdown.
 Schema: { "rankings": [{ "caregiverId": string, "score": number (0-100), "reason": string (one warm sentence) }] }
 Include all candidates. Highest score = best fit.
 
-Scoring guidance for new signals:
-- scheduleDayCoverage: A caregiver covering all requested days (covered === requested) is strongly preferred.
-- carePlanOverlap: High overlap across sections is a positive signal. Zero overlap in a section with many items should lower the ranking.
-- specialNeedsMatch: A caregiver covering all required special needs should rank higher. Note partial matches in the reason.
-- weightCarryFit: If "insufficient", note this as a concern. If "sufficient", it is a positive signal for mobility tasks.`
+SCORING WEIGHTS (apply in this priority order):
+1. proximityMiles (highest weight — 30 pts): ≤25 mi = full 30 pts; 26–50 mi = 22 pts; 51–100 mi = 14 pts; 101–200 mi = 6 pts; >200 mi or unknown = 0 pts. Always mention distance in the reason.
+2. scheduleDayCoverage (20 pts): full coverage = 20, partial = proportional, none = 0.
+3. specialNeedsMatch (20 pts): all needs met = 20, partial = proportional, none = 0. Note specifics in reason.
+4. carePlanOverlap (15 pts): high overlap across sections = up to 15.
+5. languageMatch (10 pts): all preferred languages covered = 10.
+6. weightCarryFit (5 pts): sufficient = 5, insufficient = −5, unknown = 0.
+If proximityMiles is unknown, apply 0 pts for distance but note it in the reason.`
 
   const userPrompt = `CARE REQUEST
 Type: ${requestRow.careType}
@@ -187,6 +188,11 @@ ${JSON.stringify(filteredCandidates.map((c) => {
       recipientWeightLbs && needsMobilityHelp && c.maxCarryLbs != null
         ? (c.maxCarryLbs >= recipientWeightLbs ? 'sufficient' : 'insufficient')
         : 'unknown'
+    const cgLat = c.lat ? Number(c.lat) : null
+    const cgLng = c.lng ? Number(c.lng) : null
+    const proximityMiles = reqLat && reqLng && cgLat && cgLng
+      ? Math.round(haversineDistance(reqLat, reqLng, cgLat, cgLng))
+      : null
     return {
       id:                  c.id,
       careTypes:           typeMap.get(c.id) ?? [],
@@ -195,6 +201,7 @@ ${JSON.stringify(filteredCandidates.map((c) => {
       experience:          c.experience ?? '',
       hourlyMin:           c.hourlyMin ?? '',
       hourlyMax:           c.hourlyMax ?? '',
+      proximityMiles,
       scheduleDayCoverage: scheduleOverlap,
       carePlanOverlap,
       specialNeedsMatch,
@@ -221,12 +228,12 @@ ${JSON.stringify(filteredCandidates.map((c) => {
     return []
   }
 
-  const reqLat = requestRow.lat ? Number(requestRow.lat) : null
-  const reqLng = requestRow.lng ? Number(requestRow.lng) : null
+  const MIN_SCORE = 30
 
-  // 6. Top 5 by score, join display data
+  // 6. Top 5 by score, filtered to meaningful matches only
   return rankings
     .sort((a, b) => b.score - a.score)
+    .filter((r) => r.score >= MIN_SCORE)
     .slice(0, 5)
     .map((r) => {
       const c = filteredCandidates.find((x) => x.id === r.caregiverId)

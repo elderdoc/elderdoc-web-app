@@ -10,6 +10,7 @@ export async function sendOffer(
   caregiverId: string,
   score: number,
   reason: string,
+  message?: string,
 ): Promise<void> {
   const session = await auth()
   if (!session?.user?.id) throw new Error('Unauthorized')
@@ -30,5 +31,5 @@ export async function sendOffer(
 
   if (existing) return
 
-  await db.insert(matches).values({ requestId, caregiverId, score: Math.round(score), reason, status: 'pending' })
+  await db.insert(matches).values({ requestId, caregiverId, score: Math.round(score), reason, message: message ?? null, status: 'pending' })
 }

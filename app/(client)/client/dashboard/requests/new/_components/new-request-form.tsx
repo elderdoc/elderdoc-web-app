@@ -10,8 +10,10 @@ import {
   GENDER_PREFERENCES, LANGUAGES, BUDGET_TYPES,
   INFECTION_CONTROL_ITEMS, SAFETY_MEASURE_ITEMS, CLIENT_STATUS_GROUPS,
 } from '@/lib/constants'
+import { MapPin } from 'lucide-react'
 import { StateSelect } from '@/components/state-select'
 import { DatePicker } from '@/components/date-picker'
+import { TimePicker } from '@/components/ui/time-picker'
 import { CareRecipientModal } from '../../../_components/care-recipient-modal'
 import { SendOfferButton } from '../../../_components/send-offer-button'
 import type { RankedCandidate } from '@/domains/matching/match-caregivers'
@@ -22,6 +24,11 @@ interface RecipientOption {
   relationship: string | null
   photoUrl: string | null
   address: { address1?: string; address2?: string; city?: string; state?: string } | null
+  conditions: string[] | null
+  mobilityLevel: string | null
+  height: string | null
+  weight: string | null
+  clientStatus: Record<string, boolean | string> | null
 }
 
 interface RequestForm {
@@ -138,7 +145,7 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgHourl
   }
 
   function handleNewRecipientCreated(id: string, name: string) {
-    const newRec: RecipientOption = { id, name, relationship: null, photoUrl: null, address: null }
+    const newRec: RecipientOption = { id, name, relationship: null, photoUrl: null, address: null, conditions: null, mobilityLevel: null, height: null, weight: null, clientStatus: null }
     setRecipients((prev) => [...prev, newRec])
     setForm((f) => ({ ...f, recipientId: id, recipientName: name }))
   }
@@ -164,18 +171,28 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgHourl
 
   async function handleGenerate() {
     setIsGenerating(true)
+    const selectedRecipient = recipients.find(r => r.id === form.recipientId)
     try {
       const res = await fetch('/api/care-request/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           careType: form.careTypes[0] ?? '',
-          conditions: [], frequency: form.frequency,
+          conditions: selectedRecipient?.conditions ?? [],
+          mobilityLevel: selectedRecipient?.mobilityLevel ?? undefined,
+          height: selectedRecipient?.height ?? undefined,
+          weight: selectedRecipient?.weight ?? undefined,
+          clientStatus: selectedRecipient?.clientStatus ?? undefined,
+          frequency: form.frequency,
           days: form.schedule.map(s => s.day),
           shifts: form.schedule.map(s => `${form.sameTimeEveryDay ? form.sharedStartTime : (form.dayTimes[s.day]?.startTime ?? '')}–${form.sameTimeEveryDay ? form.sharedEndTime : (form.dayTimes[s.day]?.endTime ?? '')}`),
           languages: form.languagePref,
           budgetType: form.budgetType || undefined,
           budgetAmount: form.budgetAmount || undefined,
+          suppliesNeeded: form.suppliesNeeded || undefined,
+          infectionControl: form.infectionControlEnabled ? form.infectionControl : undefined,
+          safetyMeasures: form.safetyMeasuresEnabled ? form.safetyMeasures : undefined,
+          careRequestClientStatus: Object.keys(form.careRequestClientStatus).length > 0 ? form.careRequestClientStatus : undefined,
         }),
       })
       if (!res.ok || !res.body) return
@@ -261,11 +278,14 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgHourl
     form.recipientId.length > 0,
     form.address.address1.trim().length > 0 && form.address.city.trim().length > 0 && form.address.state.length > 0,
     (() => {
-      if (!form.frequency || form.schedule.length === 0 || !form.startDate) return false
-      const timesOk = form.sameTimeEveryDay
-        ? form.sharedStartTime.length > 0 && form.sharedEndTime.length > 0
+      if (!form.frequency || !form.startDate) return false
+      if (form.frequency === 'as-needed') return true
+      const timesOk = form.sharedStartTime.length > 0 && form.sharedEndTime.length > 0
+      if (form.frequency === 'one-time' || form.frequency === 'daily') return timesOk
+      if (form.schedule.length === 0) return false
+      return form.sameTimeEveryDay
+        ? timesOk
         : form.schedule.every(s => form.dayTimes[s.day]?.startTime && form.dayTimes[s.day]?.endTime)
-      return timesOk
     })(),
     true, // step 5 — Care Details is optional
     form.genderPref.length > 0,
@@ -425,71 +445,116 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgHourl
             <div className="grid grid-cols-3 gap-2">
               {CARE_FREQUENCIES.map((f) => (
                 <button key={f.key} type="button"
-                  onClick={() => setForm((fm) => ({ ...fm, frequency: f.key }))}
+                  onClick={() => setForm(fm => {
+                    const ALL_DAYS = ['monday','tuesday','wednesday','thursday','friday','saturday','sunday']
+                    if (f.key === 'daily') {
+                      return { ...fm, frequency: f.key, sameTimeEveryDay: true,
+                        schedule: ALL_DAYS.map(d => ({ day: d, startTime: fm.sharedStartTime, endTime: fm.sharedEndTime })) }
+                    }
+                    if (f.key === 'one-time' || f.key === 'as-needed') {
+                      return { ...fm, frequency: f.key, sameTimeEveryDay: true, schedule: [] }
+                    }
+                    return { ...fm, frequency: f.key, schedule: [] }
+                  })}
                   className={['rounded-xl border-2 px-3 py-2.5 text-sm font-medium transition-colors', form.frequency === f.key ? 'border-primary bg-primary/5 text-primary' : 'border-border hover:border-primary/50'].join(' ')}>
                   {f.label}
                 </button>
               ))}
             </div>
           </div>
-          <div>
-            <label className="block text-sm font-medium mb-3">Days *</label>
-            <div className="flex flex-wrap gap-2">
-              {DAYS_OF_WEEK.map((d) => (
-                <button key={d.key} type="button"
-                  onClick={() => toggleDay(d.key)}
-                  className={['rounded-xl border-2 px-4 py-2.5 text-sm font-medium transition-colors', form.schedule.some(s => s.day === d.key) ? 'border-primary bg-primary/5 text-primary' : 'border-border hover:border-primary/50'].join(' ')}>
-                  {d.label.slice(0, 3)}
-                </button>
-              ))}
+
+          {/* Days — only for weekly/bi-weekly */}
+          {(form.frequency === 'weekly' || form.frequency === 'bi-weekly') && (
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <label className="block text-sm font-medium">Days *</label>
+                <div className="flex gap-2">
+                  {[
+                    { label: 'All',      days: ['monday','tuesday','wednesday','thursday','friday','saturday','sunday'] },
+                    { label: 'Weekdays', days: ['monday','tuesday','wednesday','thursday','friday'] },
+                    { label: 'Weekends', days: ['saturday','sunday'] },
+                    { label: 'Reset',    days: [] },
+                  ].map(({ label, days }) => (
+                    <button
+                      key={label}
+                      type="button"
+                      onClick={() => setForm(f => {
+                        const newDayTimes = { ...f.dayTimes }
+                        Object.keys(newDayTimes).forEach(k => { if (!days.includes(k)) delete newDayTimes[k] })
+                        return {
+                          ...f,
+                          schedule: days.map(d => f.schedule.find(s => s.day === d) ?? { day: d, startTime: '', endTime: '' }),
+                          dayTimes: newDayTimes,
+                        }
+                      })}
+                      className="text-xs font-medium text-primary hover:underline"
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {DAYS_OF_WEEK.map((d) => (
+                  <button key={d.key} type="button"
+                    onClick={() => toggleDay(d.key)}
+                    className={['rounded-xl border-2 px-4 py-2.5 text-sm font-medium transition-colors', form.schedule.some(s => s.day === d.key) ? 'border-primary bg-primary/5 text-primary' : 'border-border hover:border-primary/50'].join(' ')}>
+                    {d.label.slice(0, 3)}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
-          {form.schedule.length > 0 && (
+          )}
+
+          {/* Daily — informational banner */}
+          {form.frequency === 'daily' && (
+            <p className="text-sm text-muted-foreground bg-muted rounded-lg px-4 py-3">
+              Care will be provided every day of the week.
+            </p>
+          )}
+
+          {/* Shift time — all frequencies except as-needed */}
+          {form.frequency && form.frequency !== 'as-needed' && (
             <div>
               <label className="block text-sm font-medium mb-3">Shift Time *</label>
-              <label className="flex items-center gap-2 text-sm mb-4 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={form.sameTimeEveryDay}
-                  onChange={e => setForm(f => ({ ...f, sameTimeEveryDay: e.target.checked }))}
-                  className="rounded border-border"
-                />
-                Same time every day
-              </label>
-              {form.sameTimeEveryDay ? (
-                <div className="flex items-center gap-3">
-                  <div className="flex-1">
+              {(form.frequency === 'weekly' || form.frequency === 'bi-weekly') && form.schedule.length > 0 && (
+                <label className="flex items-center gap-2 text-sm mb-4 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={form.sameTimeEveryDay}
+                    onChange={e => setForm(f => ({ ...f, sameTimeEveryDay: e.target.checked }))}
+                    className="rounded border-border"
+                  />
+                  Same time every day
+                </label>
+              )}
+              {(form.frequency === 'one-time' || form.frequency === 'daily' ||
+                ((form.frequency === 'weekly' || form.frequency === 'bi-weekly') && (form.sameTimeEveryDay || form.schedule.length === 0))) ? (
+                <div className="flex items-center gap-3 flex-wrap">
+                  <div>
                     <label className="block text-xs text-muted-foreground mb-1">From</label>
-                    <input type="time" value={form.sharedStartTime}
-                      onChange={e => setForm(f => ({ ...f, sharedStartTime: e.target.value }))}
-                      className="w-full rounded-lg border border-border px-3 py-3 text-sm focus:border-primary focus:outline-none" />
+                    <TimePicker value={form.sharedStartTime} onChange={v => setForm(f => ({ ...f, sharedStartTime: v }))} />
                   </div>
                   <span className="text-muted-foreground mt-5">–</span>
-                  <div className="flex-1">
+                  <div>
                     <label className="block text-xs text-muted-foreground mb-1">To</label>
-                    <input type="time" value={form.sharedEndTime}
-                      onChange={e => setForm(f => ({ ...f, sharedEndTime: e.target.value }))}
-                      className="w-full rounded-lg border border-border px-3 py-3 text-sm focus:border-primary focus:outline-none" />
+                    <TimePicker value={form.sharedEndTime} onChange={v => setForm(f => ({ ...f, sharedEndTime: v }))} />
                   </div>
                 </div>
               ) : (
                 <div className="space-y-3">
                   {form.schedule.map(s => (
-                    <div key={s.day} className="flex items-center gap-3">
+                    <div key={s.day} className="flex items-center gap-3 flex-wrap">
                       <span className="w-28 text-sm capitalize">{s.day}</span>
-                      <div className="flex-1">
-                        <input type="time"
-                          value={form.dayTimes[s.day]?.startTime ?? ''}
-                          onChange={e => setForm(f => ({ ...f, dayTimes: { ...f.dayTimes, [s.day]: { ...f.dayTimes[s.day], startTime: e.target.value } } }))}
-                          className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:border-primary focus:outline-none" />
-                      </div>
+                      <TimePicker
+                        value={form.dayTimes[s.day]?.startTime ?? ''}
+                        onChange={v => setForm(f => ({ ...f, dayTimes: { ...f.dayTimes, [s.day]: { ...f.dayTimes[s.day], startTime: v } } }))}
+                      />
                       <span className="text-muted-foreground">–</span>
-                      <div className="flex-1">
-                        <input type="time"
-                          value={form.dayTimes[s.day]?.endTime ?? ''}
-                          onChange={e => setForm(f => ({ ...f, dayTimes: { ...f.dayTimes, [s.day]: { ...f.dayTimes[s.day], endTime: e.target.value } } }))}
-                          className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:border-primary focus:outline-none" />
-                      </div>
+                      <TimePicker
+                        value={form.dayTimes[s.day]?.endTime ?? ''}
+                        onChange={v => setForm(f => ({ ...f, dayTimes: { ...f.dayTimes, [s.day]: { ...f.dayTimes[s.day], endTime: v } } }))}
+                      />
                     </div>
                   ))}
                 </div>
@@ -833,9 +898,10 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgHourl
                             </div>
                             <span className="text-sm font-semibold text-primary shrink-0">{c.score}% match</span>
                           </div>
-                          {(c.distanceLabel || c.city || c.state) && (
-                            <p className="text-sm text-muted-foreground">
-                              {c.distanceLabel ?? [c.city, c.state].filter(Boolean).join(', ')}
+                          {c.distanceLabel && (
+                            <p className="flex items-center gap-1 text-sm text-muted-foreground">
+                              <MapPin className="h-3 w-3 shrink-0" />
+                              {c.distanceLabel} away
                             </p>
                           )}
                           {c.headline && <p className="text-sm text-muted-foreground mt-0.5">{c.headline}</p>}
@@ -859,6 +925,7 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgHourl
                               <SendOfferButton
                                 requestId={matchRequestId}
                                 caregiverId={c.caregiverId}
+                                caregiverName={c.name}
                                 score={c.score}
                                 reason={c.reason}
                               />
@@ -870,9 +937,10 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgHourl
                   )
                 })}
               </div>
-              <div className="pt-4 text-center">
-                <Link href="/client/dashboard/requests" className="text-sm text-primary hover:underline">
-                  View all requests →
+              <div className="pt-6 text-center space-y-1">
+                <p className="text-sm text-muted-foreground">Not seeing the right fit?</p>
+                <Link href="/client/dashboard/find-caregivers" className="text-sm font-medium text-primary hover:underline">
+                  Browse all caregivers →
                 </Link>
               </div>
             </>

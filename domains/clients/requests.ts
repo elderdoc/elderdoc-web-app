@@ -4,6 +4,7 @@ import { auth } from '@/auth'
 import { db } from '@/services/db'
 import { careRecipients, careRequests, careRequestLocations, carePlans, type CareTaskEntry } from '@/db/schema'
 import { eq, and } from 'drizzle-orm'
+import { geocodeAddress } from '@/lib/geo'
 
 export async function createCareRecipient(data: {
   relationship: string
@@ -85,12 +86,15 @@ export async function createCareRequest(data: {
       clientStatus:    data.clientStatus,
     }).returning({ id: careRequests.id })
 
+    const coords = await geocodeAddress(data.address.address1, data.address.city, data.address.state)
     await tx.insert(careRequestLocations).values({
       requestId: row.id,
       address1:  data.address.address1,
       address2:  data.address.address2,
       city:      data.address.city,
       state:     data.address.state,
+      lat:       coords ? String(coords.lat) : null,
+      lng:       coords ? String(coords.lng) : null,
     })
 
     return row

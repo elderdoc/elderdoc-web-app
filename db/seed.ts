@@ -75,6 +75,33 @@ const CAREGIVERS = [
 ]
 
 // ---------------------------------------------------------------------------
+// Caregiver capabilities data (keyed to CAREGIVERS array by index)
+// ---------------------------------------------------------------------------
+
+const CAREGIVER_CAPABILITIES = [
+  { careCapabilities: { activityMobilitySafety: ['companionship','transfers','walkerCane'], hygieneElimination: ['bathShower','oralHygiene','dressing','toiletBsc'], homeManagement: ['vacuumSweep','washDishes','makeBed'], hydrationNutrition: ['encourageEating','encourageFluids','preparedMeals'], medicationReminders: ['medMorning','medEvening'] }, specialNeedsHandling: { visionProblem: true, hardOfHearing: false, amputee: false, overweightMobility: false }, maxCarryLbs: 130 },
+  { careCapabilities: { activityMobilitySafety: ['transfers','walkerCane','repositioning'], hygieneElimination: ['bathShower','bedBath','oralHygiene','nailCare','dressing','toiletBsc'], homeManagement: ['washDishes','makeBed','laundry'], hydrationNutrition: ['assistFeeding','preparedMeals','prepBreakfast'], medicationReminders: ['medMorning','medAfternoon','medEvening','medBedtime'] }, specialNeedsHandling: { hardOfHearing: true, visionProblem: false, amputee: false, overweightMobility: true }, maxCarryLbs: 175 },
+  { careCapabilities: { activityMobilitySafety: ['companionship','rom','repositioning'], hygieneElimination: ['bathShower','bedBath','oralHygiene','hairCare','dressing'], homeManagement: ['vacuumSweep','dusting','cleanKitchen','emptyGarbage'], hydrationNutrition: ['encourageEating','encourageFluids','preparedMeals','prepBreakfast','prepLunch'], medicationReminders: ['medMorning','medAfternoon','medEvening'] }, specialNeedsHandling: { hardOfHearing: false, visionProblem: false, amputee: false, overweightMobility: false }, maxCarryLbs: 100 },
+  { careCapabilities: { activityMobilitySafety: ['transfers','walkerCane','wheelchair','escort'], hygieneElimination: ['bathShower','oralHygiene','dressing','toiletBsc'], homeManagement: ['vacuumSweep','mopFloors','cleanKitchen'], hydrationNutrition: ['encourageFluids','preparedMeals'], medicationReminders: ['medMorning','medEvening'] }, specialNeedsHandling: { overweightMobility: true, hardOfHearing: false, visionProblem: false, amputee: false }, maxCarryLbs: 200 },
+  { careCapabilities: { activityMobilitySafety: ['companionship','transfers','walkerCane'], hygieneElimination: ['bathShower','oralHygiene','hairCare','dressing','toiletBsc','diaperIncontinent'], homeManagement: ['vacuumSweep','washDishes','makeBed','cleanBathroom'], hydrationNutrition: ['assistFeeding','encourageEating','preparedMeals','prepBreakfast','prepLunch','prepDinner'], medicationReminders: ['medMorning','medAfternoon','medEvening'] }, specialNeedsHandling: { hardOfHearing: true, visionProblem: true, amputee: false, overweightMobility: false }, maxCarryLbs: 120 },
+  { careCapabilities: { activityMobilitySafety: ['companionship','rom','repositioning','transfers'], hygieneElimination: ['bathShower','bedBath','oralHygiene','hairCare','shaving','dressing'], homeManagement: ['vacuumSweep','dusting','cleanKitchen','emptyGarbage','washDishes','makeBed'], hydrationNutrition: ['assistFeeding','encourageEating','encourageFluids','preparedMeals'], medicationReminders: ['medMorning','medAfternoon','medEvening','medBedtime','medSnackTime'] }, specialNeedsHandling: { hardOfHearing: false, visionProblem: false, amputee: false, overweightMobility: false }, maxCarryLbs: 150 },
+  { careCapabilities: { activityMobilitySafety: ['companionship','walkerCane'], hygieneElimination: ['bathShower','oralHygiene','dressing'], homeManagement: ['vacuumSweep','washDishes','makeBed'], hydrationNutrition: ['encourageEating','preparedMeals'], medicationReminders: ['medMorning','medEvening'] }, specialNeedsHandling: { hardOfHearing: false, visionProblem: false, amputee: false, overweightMobility: false }, maxCarryLbs: 100 },
+  { careCapabilities: { activityMobilitySafety: ['transfers','walkerCane','wheelchair','escort','transportation'], hygieneElimination: ['bathShower','bedBath','oralHygiene','dressing','toiletBsc'], homeManagement: ['vacuumSweep','mopFloors','cleanKitchen','washDishes','cleanBathroom'], hydrationNutrition: ['encourageEating','encourageFluids','preparedMeals','prepBreakfast'], medicationReminders: ['medMorning','medAfternoon','medEvening'] }, specialNeedsHandling: { overweightMobility: true, amputee: true, hardOfHearing: false, visionProblem: false }, maxCarryLbs: 220 },
+  { careCapabilities: { activityMobilitySafety: ['transfers','walkerCane','wheelchair'], hygieneElimination: ['bathShower','oralHygiene','dressing','toiletBsc'], homeManagement: ['vacuumSweep','dusting','washDishes','makeBed'], hydrationNutrition: ['encourageEating','preparedMeals','prepLunch','prepDinner'], medicationReminders: ['medMorning','medEvening','medBedtime'] }, specialNeedsHandling: { overweightMobility: true, hardOfHearing: false, visionProblem: false, amputee: false }, maxCarryLbs: 180 },
+  { careCapabilities: { activityMobilitySafety: ['companionship','transfers','walkerCane'], hygieneElimination: ['bathShower','oralHygiene','hairCare','dressing','toiletBsc'], homeManagement: ['vacuumSweep','cleanKitchen','washDishes','makeBed','changeLinens'], hydrationNutrition: ['encourageEating','encourageFluids','preparedMeals'], medicationReminders: ['medMorning','medAfternoon','medEvening'] }, specialNeedsHandling: { hardOfHearing: false, visionProblem: false, amputee: false, overweightMobility: false }, maxCarryLbs: 160 },
+  { careCapabilities: { activityMobilitySafety: ['companionship','walkerCane','escort'], hygieneElimination: ['bathShower','oralHygiene','dressing'], homeManagement: ['washDishes','makeBed','errandsShopping'], hydrationNutrition: ['encourageEating','encourageFluids'], medicationReminders: ['medMorning','medEvening'] }, specialNeedsHandling: { hardOfHearing: false, visionProblem: true, amputee: false, overweightMobility: false }, maxCarryLbs: 110 },
+  { careCapabilities: { activityMobilitySafety: ['transfers','walkerCane','repositioning'], hygieneElimination: ['bathShower','bedBath','oralHygiene','dressing','toiletBsc','diaperIncontinent'], homeManagement: ['vacuumSweep','mopFloors','cleanKitchen','washDishes','makeBed','changeLinens','laundry'], hydrationNutrition: ['assistFeeding','encourageEating','encourageFluids','preparedMeals','prepBreakfast','prepLunch','prepDinner'], medicationReminders: ['medMorning','medAfternoon','medEvening','medBedtime'] }, specialNeedsHandling: { overweightMobility: true, hardOfHearing: true, visionProblem: false, amputee: false }, maxCarryLbs: 190 },
+  { careCapabilities: { activityMobilitySafety: ['companionship','rom'], hygieneElimination: ['bathShower','oralHygiene','hairCare','dressing'], homeManagement: ['vacuumSweep','dusting','washDishes','makeBed'], hydrationNutrition: ['encourageEating','encourageFluids','preparedMeals'], medicationReminders: ['medMorning','medAfternoon','medEvening'] }, specialNeedsHandling: { hardOfHearing: false, visionProblem: false, amputee: false, overweightMobility: false }, maxCarryLbs: 120 },
+  { careCapabilities: { activityMobilitySafety: ['companionship','walkerCane'], hygieneElimination: ['bathShower','oralHygiene','dressing'], homeManagement: ['washDishes','makeBed','vacuumSweep'], hydrationNutrition: ['encourageEating','preparedMeals'], medicationReminders: ['medMorning','medEvening'] }, specialNeedsHandling: { hardOfHearing: false, visionProblem: false, amputee: false, overweightMobility: false }, maxCarryLbs: 90 },
+  { careCapabilities: { activityMobilitySafety: ['companionship','transfers','walkerCane'], hygieneElimination: ['bathShower','oralHygiene','hairCare','dressing','toiletBsc'], homeManagement: ['vacuumSweep','dusting','cleanKitchen','washDishes','makeBed'], hydrationNutrition: ['encourageEating','encourageFluids','preparedMeals','prepBreakfast'], medicationReminders: ['medMorning','medAfternoon','medEvening'] }, specialNeedsHandling: { hardOfHearing: false, visionProblem: false, amputee: false, overweightMobility: false }, maxCarryLbs: 140 },
+  { careCapabilities: { activityMobilitySafety: ['transfers','walkerCane','wheelchair'], hygieneElimination: ['bathShower','bedBath','oralHygiene','dressing','toiletBsc'], homeManagement: ['vacuumSweep','mopFloors','cleanKitchen','washDishes','makeBed'], hydrationNutrition: ['assistFeeding','encourageEating','encourageFluids','preparedMeals'], medicationReminders: ['medMorning','medAfternoon','medEvening'] }, specialNeedsHandling: { overweightMobility: true, hardOfHearing: false, visionProblem: false, amputee: false }, maxCarryLbs: 200 },
+  { careCapabilities: { activityMobilitySafety: ['companionship','walkerCane','escort'], hygieneElimination: ['bathShower','oralHygiene','dressing'], homeManagement: ['vacuumSweep','washDishes','makeBed'], hydrationNutrition: ['encourageEating','preparedMeals'], medicationReminders: ['medMorning','medEvening'] }, specialNeedsHandling: { hardOfHearing: false, visionProblem: false, amputee: false, overweightMobility: false }, maxCarryLbs: 115 },
+  { careCapabilities: { activityMobilitySafety: ['companionship','rom','repositioning'], hygieneElimination: ['bathShower','oralHygiene','hairCare','dressing','toiletBsc'], homeManagement: ['vacuumSweep','dusting','cleanKitchen','washDishes','makeBed','changeLinens'], hydrationNutrition: ['encourageEating','encourageFluids','preparedMeals','prepBreakfast','prepLunch','prepDinner','prepSnacks'], medicationReminders: ['medMorning','medAfternoon','medEvening','medBedtime','medSnackTime'] }, specialNeedsHandling: { hardOfHearing: false, visionProblem: false, amputee: false, overweightMobility: false }, maxCarryLbs: 145 },
+  { careCapabilities: { activityMobilitySafety: ['companionship','transfers','walkerCane'], hygieneElimination: ['bathShower','bedBath','oralHygiene','dressing','toiletBsc'], homeManagement: ['vacuumSweep','mopFloors','cleanKitchen','washDishes','makeBed'], hydrationNutrition: ['encourageEating','encourageFluids','preparedMeals'], medicationReminders: ['medMorning','medAfternoon','medEvening'] }, specialNeedsHandling: { hardOfHearing: true, visionProblem: false, amputee: false, overweightMobility: false }, maxCarryLbs: 155 },
+  { careCapabilities: { activityMobilitySafety: ['transfers','walkerCane','wheelchair','repositioning'], hygieneElimination: ['bathShower','bedBath','oralHygiene','dressing','toiletBsc','diaperIncontinent'], homeManagement: ['vacuumSweep','washDishes','makeBed','cleanBathroom','laundry'], hydrationNutrition: ['assistFeeding','encourageEating','encourageFluids','preparedMeals','prepBreakfast'], medicationReminders: ['medMorning','medAfternoon','medEvening','medBedtime'] }, specialNeedsHandling: { overweightMobility: true, hardOfHearing: false, visionProblem: true, amputee: false }, maxCarryLbs: 175 },
+]
+
+// ---------------------------------------------------------------------------
 // Clients — each with lat/lng and multiple care recipients
 // ---------------------------------------------------------------------------
 
@@ -280,10 +307,11 @@ async function seed() {
       .onConflictDoUpdate({ target: users.email, set: { name: cg.name, role: 'caregiver', password: hashedPassword } })
       .returning({ id: users.id })
 
+    const cgCaps = CAREGIVER_CAPABILITIES[caregiverProfileIds.length]
     const [profile] = await db
       .insert(caregiverProfiles)
-      .values({ userId: user.id, headline: cg.headline, about: `${cg.name} is a ${cg.experience} caregiver focused on providing excellent care.`, hourlyMin: String(cg.hourlyMin), hourlyMax: String(cg.hourlyMax), experience: cg.experience, status: 'active', completedStep: 5, availability: [{ day: 'monday', startTime: '08:00', endTime: '17:00' }, { day: 'tuesday', startTime: '08:00', endTime: '17:00' }, { day: 'wednesday', startTime: '08:00', endTime: '17:00' }, { day: 'thursday', startTime: '08:00', endTime: '17:00' }, { day: 'friday', startTime: '08:00', endTime: '17:00' }] })
-      .onConflictDoUpdate({ target: caregiverProfiles.userId, set: { headline: cg.headline, status: 'active', hourlyMin: String(cg.hourlyMin), hourlyMax: String(cg.hourlyMax), availability: [{ day: 'monday', startTime: '08:00', endTime: '17:00' }, { day: 'tuesday', startTime: '08:00', endTime: '17:00' }, { day: 'wednesday', startTime: '08:00', endTime: '17:00' }, { day: 'thursday', startTime: '08:00', endTime: '17:00' }, { day: 'friday', startTime: '08:00', endTime: '17:00' }] } })
+      .values({ userId: user.id, headline: cg.headline, about: `${cg.name} is a ${cg.experience} caregiver focused on providing excellent care.`, hourlyMin: String(cg.hourlyMin), hourlyMax: String(cg.hourlyMax), experience: cg.experience, status: 'active', completedStep: 6, availability: [{ day: 'monday', startTime: '08:00', endTime: '17:00' }, { day: 'tuesday', startTime: '08:00', endTime: '17:00' }, { day: 'wednesday', startTime: '08:00', endTime: '17:00' }, { day: 'thursday', startTime: '08:00', endTime: '17:00' }, { day: 'friday', startTime: '08:00', endTime: '17:00' }], careCapabilities: cgCaps.careCapabilities, specialNeedsHandling: cgCaps.specialNeedsHandling, maxCarryLbs: cgCaps.maxCarryLbs })
+      .onConflictDoUpdate({ target: caregiverProfiles.userId, set: { headline: cg.headline, status: 'active', hourlyMin: String(cg.hourlyMin), hourlyMax: String(cg.hourlyMax), completedStep: 6, availability: [{ day: 'monday', startTime: '08:00', endTime: '17:00' }, { day: 'tuesday', startTime: '08:00', endTime: '17:00' }, { day: 'wednesday', startTime: '08:00', endTime: '17:00' }, { day: 'thursday', startTime: '08:00', endTime: '17:00' }, { day: 'friday', startTime: '08:00', endTime: '17:00' }], careCapabilities: cgCaps.careCapabilities, specialNeedsHandling: cgCaps.specialNeedsHandling, maxCarryLbs: cgCaps.maxCarryLbs } })
       .returning({ id: caregiverProfiles.id })
 
     caregiverProfileIds.push(profile.id)
@@ -339,20 +367,62 @@ async function seed() {
     // Multiple care recipients — first one is primary (used in care requests)
     const recipientIds: string[] = []
     for (const rec of cl.recipients) {
+      const hasHearing = rec.conditions.includes('hearing-impairment')
+      const hasVision  = rec.conditions.includes('vision-impairment')
+      const clientStatusData = {
+        livesAlone:      rec.mobilityLevel === 'minimal-assistance',
+        livesWith:       rec.mobilityLevel !== 'minimal-assistance',
+        aloneDuringDay:  false,
+        bedBound:        rec.mobilityLevel === 'full-assistance',
+        upAsTolerated:   rec.mobilityLevel === 'moderate-assistance',
+        hardOfHearing:   hasHearing,
+        visionProblem:   hasVision,
+        orientedAlert:   !rec.conditions.includes('dementia') && !rec.conditions.includes('alzheimers'),
+        forgetful:       rec.conditions.includes('dementia'),
+        confused:        rec.conditions.includes('alzheimers'),
+        diabetic:        rec.conditions.includes('diabetes'),
+      }
+      const heightIn = rec.gender === 'male' ? `5'8"` : `5'4"`
+      const weightLbs = rec.mobilityLevel === 'full-assistance' ? '160 lbs' : rec.mobilityLevel === 'moderate-assistance' ? '145 lbs' : '130 lbs'
       const [recipient] = await db
         .insert(careRecipients)
-        .values({ clientId: clientUser.id, name: rec.name, relationship: rec.relationship, dob: rec.dob, gender: rec.gender, phone: rec.phone, address: rec.address, conditions: rec.conditions, mobilityLevel: rec.mobilityLevel, notes: rec.notes })
+        .values({ clientId: clientUser.id, name: rec.name, relationship: rec.relationship, dob: rec.dob, gender: rec.gender, phone: rec.phone, address: rec.address, conditions: rec.conditions, mobilityLevel: rec.mobilityLevel, notes: rec.notes, height: heightIn, weight: weightLbs, clientStatus: clientStatusData })
         .returning({ id: careRecipients.id })
       recipientIds.push(recipient.id)
     }
     const primaryRecipientId = recipientIds[0]
 
     // Care requests (use primary recipient)
+    const primaryRec = cl.recipients[0]
+    const hasInfection = primaryRec.conditions.some(c => ['copd', 'diabetes', 'heart-disease'].includes(c))
     const requestIds: string[] = []
     for (const req of reqs) {
       const [request] = await db
         .insert(careRequests)
-        .values({ clientId: clientUser.id, recipientId: primaryRecipientId, careType: req.careType, title: req.title, frequency: req.frequency, schedule: req.schedule, budgetType: req.budgetType, budgetAmount: req.budgetAmount, status: 'active', languagePref: [] })
+        .values({
+          clientId: clientUser.id,
+          recipientId: primaryRecipientId,
+          careType: req.careType,
+          title: req.title,
+          frequency: req.frequency,
+          schedule: req.schedule,
+          budgetType: req.budgetType,
+          budgetAmount: req.budgetAmount,
+          status: 'active',
+          languagePref: [],
+          suppliesNeeded: hasInfection ? 'Gloves, hand sanitizer, masks' : 'Gloves',
+          infectionControl: { enabled: hasInfection, gloves: true, handWashing: true, wasteDisposal: hasInfection },
+          safetyMeasures: { enabled: true, clearPathways: true, electricCords: true, pets: false },
+          clientStatus: {
+            livesAlone:    primaryRec.mobilityLevel === 'minimal-assistance',
+            livesWith:     primaryRec.mobilityLevel !== 'minimal-assistance',
+            bedBound:      primaryRec.mobilityLevel === 'full-assistance',
+            upAsTolerated: primaryRec.mobilityLevel === 'moderate-assistance',
+            hardOfHearing: primaryRec.conditions.includes('hearing-impairment'),
+            visionProblem: primaryRec.conditions.includes('vision-impairment'),
+            diabetic:      primaryRec.conditions.includes('diabetes'),
+          },
+        })
         .returning({ id: careRequests.id })
 
       await db.insert(careRequestLocations).values({ requestId: request.id, address1: cl.address1, city: cl.city, state: cl.state, lat: String(cl.lat), lng: String(cl.lng) })
@@ -382,9 +452,42 @@ async function seed() {
         await db.insert(shifts).values({ jobId: job.id, date, startTime: '08:00', endTime: '12:00', status: 'scheduled' })
       }
 
+      const rec0 = cl.recipients[0]
+      const needsFullCare = rec0.mobilityLevel === 'full-assistance'
+      const needsModCare  = rec0.mobilityLevel === 'moderate-assistance'
       await db.insert(carePlans).values({
         requestId: requestIds[0],
         recipientId: primaryRecipientId,
+        activityMobilitySafety: [
+          { key: 'companionship', frequency: 'every-visit' as const },
+          { key: 'transfers',     frequency: needsFullCare ? 'every-visit' as const : 'as-needed' as const },
+          { key: 'walkerCane',    frequency: needsModCare  ? 'every-visit' as const : 'as-needed' as const },
+          { key: 'repositioning', frequency: needsFullCare ? 'every-visit' as const : 'as-needed' as const },
+        ],
+        hygieneElimination: [
+          { key: 'bathShower',   frequency: 'every-visit' as const },
+          { key: 'oralHygiene',  frequency: 'every-visit' as const },
+          { key: 'dressing',     frequency: 'every-visit' as const },
+          { key: 'toiletBsc',    frequency: needsFullCare ? 'every-visit' as const : 'as-needed' as const },
+          ...(needsFullCare ? [{ key: 'diaperIncontinent', frequency: 'as-needed' as const }] : []),
+        ],
+        homeManagement: [
+          { key: 'vacuumSweep',  frequency: 'as-needed' as const },
+          { key: 'washDishes',   frequency: 'every-visit' as const },
+          { key: 'makeBed',      frequency: 'every-visit' as const },
+          { key: 'cleanKitchen', frequency: 'as-needed' as const },
+        ],
+        hydrationNutrition: [
+          { key: 'encourageEating',  frequency: 'every-visit' as const },
+          { key: 'encourageFluids',  frequency: 'every-visit' as const },
+          { key: 'preparedMeals',    frequency: 'every-visit' as const },
+          ...(needsFullCare ? [{ key: 'assistFeeding', frequency: 'every-visit' as const }] : []),
+        ],
+        medicationReminders: [
+          { key: 'medMorning',   frequency: 'every-visit' as const },
+          { key: 'medEvening',   frequency: 'every-visit' as const },
+          ...(needsFullCare || needsModCare ? [{ key: 'medAfternoon', frequency: 'as-needed' as const }] : []),
+        ],
       })
 
       await db.update(careRequests).set({ status: 'filled' }).where(eq(careRequests.id, requestIds[0]))

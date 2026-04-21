@@ -21,6 +21,11 @@ export default async function NewRequestPage({ searchParams }: PageProps) {
         relationship: careRecipients.relationship,
         photoUrl:     careRecipients.photoUrl,
         address:      careRecipients.address,
+        conditions:   careRecipients.conditions,
+        mobilityLevel:careRecipients.mobilityLevel,
+        height:       careRecipients.height,
+        weight:       careRecipients.weight,
+        clientStatus: careRecipients.clientStatus,
       })
       .from(careRecipients)
       .where(eq(careRecipients.clientId, userId)),

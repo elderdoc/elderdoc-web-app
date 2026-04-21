@@ -16,3 +16,23 @@ export function haversineDistance(
 export function formatMiles(miles: number): string {
   return miles < 1 ? '<1 mi' : `${Math.round(miles)} mi`
 }
+
+export async function geocodeAddress(
+  address1: string,
+  city: string,
+  state: string,
+): Promise<{ lat: number; lng: number } | null> {
+  try {
+    const q = encodeURIComponent(`${address1}, ${city}, ${state}, USA`)
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=1`,
+      { headers: { 'User-Agent': 'ElderDoc/1.0' } },
+    )
+    if (!res.ok) return null
+    const data = await res.json()
+    if (!data[0]) return null
+    return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) }
+  } catch {
+    return null
+  }
+}

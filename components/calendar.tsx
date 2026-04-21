@@ -12,6 +12,7 @@ import {
   isToday,
 } from 'date-fns'
 import { SelectField } from '@/components/select-field'
+import { TimePicker } from '@/components/ui/time-picker'
 import {
   Sheet, SheetContent, SheetHeader, SheetTitle,
 } from '@/components/ui/sheet'
@@ -282,16 +283,14 @@ export function Calendar({ year, month, events, activeJobs, basePath, addShiftAc
 
                     {editShiftAction && event.status === 'scheduled' && editingShiftId === event.id && (
                       <div className="space-y-2 pt-1">
-                        <div className="flex gap-2">
-                          <div className="flex-1">
+                        <div className="flex gap-2 flex-wrap">
+                          <div>
                             <label className="text-xs text-muted-foreground block mb-1">Start</label>
-                            <input type="time" value={editStart} onChange={(e) => setEditStart(e.target.value)}
-                              className="h-8 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none focus-visible:border-ring" />
+                            <TimePicker value={editStart} onChange={setEditStart} />
                           </div>
-                          <div className="flex-1">
+                          <div>
                             <label className="text-xs text-muted-foreground block mb-1">End</label>
-                            <input type="time" value={editEnd} onChange={(e) => setEditEnd(e.target.value)}
-                              className="h-8 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none focus-visible:border-ring" />
+                            <TimePicker value={editEnd} onChange={setEditEnd} />
                           </div>
                         </div>
                         {editError && <p className="text-xs text-destructive">{editError}</p>}
@@ -330,16 +329,14 @@ export function Calendar({ year, month, events, activeJobs, basePath, addShiftAc
                     placeholder="Select a job…"
                   />
                 )}
-                <div className="flex gap-2">
-                  <div className="flex-1">
+                <div className="flex gap-2 flex-wrap">
+                  <div>
                     <label className="text-xs text-muted-foreground block mb-1">Start</label>
-                    <input type="time" value={formStart} onChange={(e) => setFormStart(e.target.value)}
-                      className="h-8 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50" />
+                    <TimePicker value={formStart} onChange={setFormStart} />
                   </div>
-                  <div className="flex-1">
+                  <div>
                     <label className="text-xs text-muted-foreground block mb-1">End</label>
-                    <input type="time" value={formEnd} onChange={(e) => setFormEnd(e.target.value)}
-                      className="h-8 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50" />
+                    <TimePicker value={formEnd} onChange={setFormEnd} />
                   </div>
                 </div>
                 {formError && <p className="text-xs text-destructive">{formError}</p>}

@@ -190,6 +190,7 @@ export const matches = pgTable('matches', {
   caregiverId: uuid('caregiver_id').notNull().references(() => caregiverProfiles.id, { onDelete: 'cascade' }),
   score:       integer('score').notNull(),
   reason:      text('reason').notNull(),
+  message:     text('message'),
   status:      text('status', { enum: ['pending', 'accepted', 'declined'] }).default('pending'),
   createdAt:   timestamp('created_at').defaultNow().notNull(),
 })

@@ -4,6 +4,7 @@ import { useState, useTransition } from 'react'
 import { SelectableCard } from '@/components/selectable-card'
 import { CaregiverStepShell } from '../../_components/caregiver-step-shell'
 import { WORK_TYPES, DAYS_OF_WEEK, START_AVAILABILITY } from '@/lib/constants'
+import { TimePicker } from '@/components/ui/time-picker'
 import { saveCaregiverStep3 } from '@/domains/caregivers/onboarding'
 
 const labelClass = 'block text-xs font-medium uppercase tracking-[0.08em] text-muted-foreground mb-3'
@@ -79,7 +80,31 @@ export function Step3Form({ initialWorkTypes, initialAvailability, initialStart 
 
         {/* Days */}
         <section>
-          <p className={labelClass}>Days Available</p>
+          <div className="flex items-center justify-between mb-3">
+            <p className={labelClass.replace('mb-3', '')}>Days Available</p>
+            <div className="flex gap-3">
+              {[
+                { label: 'All',      keys: ['monday','tuesday','wednesday','thursday','friday','saturday','sunday'] },
+                { label: 'Weekdays', keys: ['monday','tuesday','wednesday','thursday','friday'] },
+                { label: 'Weekends', keys: ['saturday','sunday'] },
+                { label: 'Reset',    keys: [] },
+              ].map(({ label, keys }) => (
+                <button
+                  key={label}
+                  type="button"
+                  onClick={() => {
+                    setDays(keys)
+                    const newDayTimes: Record<string, { startTime: string; endTime: string }> = {}
+                    keys.forEach(k => { if (dayTimes[k]) newDayTimes[k] = dayTimes[k] })
+                    setDayTimes(newDayTimes)
+                  }}
+                  className="text-xs font-medium text-primary hover:underline"
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
             {DAYS_OF_WEEK.map(({ key, label }) => (
               <SelectableCard
@@ -108,39 +133,31 @@ export function Step3Form({ initialWorkTypes, initialAvailability, initialStart 
                 Same hours every day
               </label>
               {sameHoursEveryDay ? (
-                <div className="flex items-center gap-3">
-                  <div className="flex-1">
+                <div className="flex items-center gap-3 flex-wrap">
+                  <div>
                     <label className="block text-xs text-muted-foreground mb-1">From</label>
-                    <input type="time" value={sharedStartTime}
-                      onChange={e => setSharedStartTime(e.target.value)}
-                      className="w-full rounded-md border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
+                    <TimePicker value={sharedStartTime} onChange={setSharedStartTime} />
                   </div>
                   <span className="text-muted-foreground mt-5">–</span>
-                  <div className="flex-1">
+                  <div>
                     <label className="block text-xs text-muted-foreground mb-1">Until</label>
-                    <input type="time" value={sharedEndTime}
-                      onChange={e => setSharedEndTime(e.target.value)}
-                      className="w-full rounded-md border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
+                    <TimePicker value={sharedEndTime} onChange={setSharedEndTime} />
                   </div>
                 </div>
               ) : (
                 <div className="space-y-3">
                   {days.map(day => (
-                    <div key={day} className="flex items-center gap-3">
+                    <div key={day} className="flex items-center gap-3 flex-wrap">
                       <span className="w-24 text-sm capitalize">{day}</span>
-                      <div className="flex-1">
-                        <input type="time"
-                          value={dayTimes[day]?.startTime ?? ''}
-                          onChange={e => setDayTimes(prev => ({ ...prev, [day]: { ...prev[day], startTime: e.target.value } }))}
-                          className="w-full rounded-md border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
-                      </div>
+                      <TimePicker
+                        value={dayTimes[day]?.startTime ?? ''}
+                        onChange={v => setDayTimes(prev => ({ ...prev, [day]: { ...prev[day], startTime: v } }))}
+                      />
                       <span className="text-muted-foreground">–</span>
-                      <div className="flex-1">
-                        <input type="time"
-                          value={dayTimes[day]?.endTime ?? ''}
-                          onChange={e => setDayTimes(prev => ({ ...prev, [day]: { ...prev[day], endTime: e.target.value } }))}
-                          className="w-full rounded-md border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
-                      </div>
+                      <TimePicker
+                        value={dayTimes[day]?.endTime ?? ''}
+                        onChange={v => setDayTimes(prev => ({ ...prev, [day]: { ...prev[day], endTime: v } }))}
+                      />
                     </div>
                   ))}
                 </div>

@@ -75,10 +75,9 @@ export async function matchJobsForCaregiver(caregiverProfileId: string): Promise
       and(
         eq(careRequests.status, 'active'),
         inArray(careRequests.careType, myCareTypes),
-        ...(profile.state ? [eq(careRequestLocations.state, profile.state)] : []),
       )
     )
-    .limit(20)
+    .limit(50)
 
   const openRequests = await baseQuery
 
@@ -98,7 +97,8 @@ export async function matchJobsForCaregiver(caregiverProfileId: string): Promise
 Rank the provided requests by how well they fit the caregiver's skills, experience, and availability.
 Return valid JSON only — no prose, no markdown.
 Schema: { "rankings": [{ "requestId": string, "score": number (0-100), "reason": string (one warm sentence explaining why this is a great fit) }] }
-Include all requests. Highest score = best fit.`
+Include all requests. Highest score = best fit.
+Location: same state as the caregiver is a positive signal but not required — out-of-state requests can still rank well if the other factors are strong.`
 
   const userPrompt = `CAREGIVER PROFILE
 Care types: ${myCareTypes.join(', ')}
@@ -106,6 +106,7 @@ Certifications: ${certRows.map(r => r.certification).join(', ') || 'none'}
 Languages: ${langRows.map(r => r.language).join(', ') || 'not specified'}
 Experience: ${profile.experience ?? 'not specified'}
 Rate: $${profile.hourlyMin ?? '?'}–$${profile.hourlyMax ?? '?'}/hr
+Location: ${profile.state ?? 'not specified'}
 
 OPEN CARE REQUESTS
 ${JSON.stringify(openRequests.map(r => ({
