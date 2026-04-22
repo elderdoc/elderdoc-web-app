@@ -148,6 +148,45 @@ export async function getOpenDisputesForClient(clientId: string): Promise<Disput
   }))
 }
 
+export async function getUnbilledShiftsForCaregiver(caregiverId: string): Promise<UnbilledShiftRow[]> {
+  const rows = await db
+    .select({
+      shiftId: shifts.id,
+      jobId: shifts.jobId,
+      careType: careRequests.careType,
+      caregiverName: users.name,
+      date: shifts.date,
+      startTime: shifts.startTime,
+      endTime: shifts.endTime,
+      hourlyRate: careRequests.budgetAmount,
+    })
+    .from(shifts)
+    .innerJoin(jobs, eq(shifts.jobId, jobs.id))
+    .innerJoin(careRequests, eq(jobs.requestId, careRequests.id))
+    .innerJoin(caregiverProfiles, eq(jobs.caregiverId, caregiverProfiles.id))
+    .innerJoin(users, eq(caregiverProfiles.userId, users.id))
+    .where(
+      and(
+        eq(jobs.caregiverId, caregiverId),
+        eq(shifts.status, 'completed'),
+        isNull(shifts.billedAt),
+      )
+    )
+    .orderBy(shifts.date, shifts.startTime)
+    .limit(500)
+
+  return rows.map((r) => ({
+    shiftId: r.shiftId,
+    jobId: r.jobId,
+    careType: r.careType,
+    caregiverName: r.caregiverName ?? null,
+    date: r.date,
+    startTime: r.startTime,
+    endTime: r.endTime,
+    hourlyRate: Number(r.hourlyRate ?? 0),
+  }))
+}
+
 export async function getUnbilledShiftsForClient(clientId: string): Promise<UnbilledShiftRow[]> {
   const rows = await db
     .select({
