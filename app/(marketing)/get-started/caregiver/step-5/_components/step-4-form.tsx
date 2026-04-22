@@ -174,14 +174,15 @@ export function Step4Form({
               <div>
                 <label className={labelClass}>Minimum</label>
                 <div className="relative">
-                  <span className="pointer-events-none absolute inset-y-0 left-3.5 flex items-center text-sm text-muted-foreground">
-                    $
-                  </span>
+                  <span className="pointer-events-none absolute inset-y-0 left-3.5 flex items-center text-sm text-muted-foreground">$</span>
                   <input
                     type="number"
                     min="0"
                     value={hourlyMin}
-                    onChange={e => setHourlyMin(e.target.value)}
+                    onChange={e => {
+                      const v = e.target.value
+                      setHourlyMin(v)
+                    }}
                     className={`${inputClass} pl-7`}
                     placeholder="20"
                   />
@@ -190,20 +191,77 @@ export function Step4Form({
               <div>
                 <label className={labelClass}>Maximum</label>
                 <div className="relative">
-                  <span className="pointer-events-none absolute inset-y-0 left-3.5 flex items-center text-sm text-muted-foreground">
-                    $
-                  </span>
+                  <span className="pointer-events-none absolute inset-y-0 left-3.5 flex items-center text-sm text-muted-foreground">$</span>
                   <input
                     type="number"
                     min="0"
                     value={hourlyMax}
-                    onChange={e => setHourlyMax(e.target.value)}
+                    onChange={e => {
+                      const v = e.target.value
+                      setHourlyMax(v)
+                    }}
                     className={`${inputClass} pl-7`}
                     placeholder="35"
                   />
                 </div>
               </div>
             </div>
+
+            {/* Dual-range slider */}
+            {(() => {
+              const SMIN = 15, SMAX = 100
+              const lo = Math.min(Math.max(Number(hourlyMin) || SMIN, SMIN), SMAX)
+              const hi = Math.min(Math.max(Number(hourlyMax) || SMAX, SMIN), SMAX)
+              const loPct = ((lo - SMIN) / (SMAX - SMIN)) * 100
+              const hiPct = ((hi - SMIN) / (SMAX - SMIN)) * 100
+              const thumbCls = 'appearance-none bg-transparent absolute inset-0 w-full h-full cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-[18px] [&::-webkit-slider-thumb]:w-[18px] [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-primary [&::-webkit-slider-thumb]:shadow-md [&::-webkit-slider-thumb]:transition-transform [&::-webkit-slider-thumb]:hover:scale-110 [&::-webkit-slider-runnable-track]:bg-transparent [&::-moz-range-thumb]:h-[18px] [&::-moz-range-thumb]:w-[18px] [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-white [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-primary [&::-moz-range-thumb]:shadow-md [&::-moz-range-track]:bg-transparent'
+              return (
+                <div className="mt-5 mb-1 px-1">
+                  <div className="relative h-5 flex items-center">
+                    {/* Track */}
+                    <div className="absolute inset-x-0 h-[5px] rounded-full bg-muted" />
+                    {/* Fill */}
+                    <div
+                      className="absolute h-[5px] rounded-full bg-primary"
+                      style={{ left: `${loPct}%`, right: `${100 - hiPct}%` }}
+                    />
+                    {/* Min thumb */}
+                    <input
+                      type="range"
+                      min={SMIN}
+                      max={SMAX}
+                      value={lo}
+                      onChange={e => {
+                        const v = Number(e.target.value)
+                        setHourlyMin(String(v))
+                        if (v > Math.min(Math.max(Number(hourlyMax) || SMAX, SMIN), SMAX)) setHourlyMax(String(v))
+                      }}
+                      style={{ zIndex: lo >= hi - 2 ? 5 : 3 }}
+                      className={thumbCls}
+                    />
+                    {/* Max thumb */}
+                    <input
+                      type="range"
+                      min={SMIN}
+                      max={SMAX}
+                      value={hi}
+                      onChange={e => {
+                        const v = Number(e.target.value)
+                        setHourlyMax(String(v))
+                        if (v < Math.min(Math.max(Number(hourlyMin) || SMIN, SMIN), SMAX)) setHourlyMin(String(v))
+                      }}
+                      style={{ zIndex: lo >= hi - 2 ? 3 : 5 }}
+                      className={thumbCls}
+                    />
+                  </div>
+                  <div className="flex justify-between mt-1">
+                    <span className="text-xs text-muted-foreground">$15</span>
+                    <span className="text-xs text-muted-foreground">$50+</span>
+                  </div>
+                </div>
+              )
+            })()}
+
             <p className="mt-2 text-xs text-muted-foreground">
               Pre-filled based on your experience. You can adjust anytime.
             </p>

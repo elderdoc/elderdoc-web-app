@@ -260,6 +260,14 @@ const CLIENTS = [
   },
 ]
 
+const CARE_TYPE_DESCRIPTIONS: Record<string, string> = {
+  'personal-care':         'Assistance with daily personal care routines including bathing, dressing, grooming, and hygiene. Looking for a compassionate, hands-on caregiver who is patient and respectful of the recipient\'s dignity.',
+  'companionship':         'Social companionship and emotional support for a senior who spends time at home. Activities include conversation, light games, short outings, and help keeping the day engaging and meaningful.',
+  'dementia-care':         'Specialized memory care for a family member living with dementia or Alzheimer\'s. The caregiver must be experienced with redirection techniques, routine maintenance, and providing a calm, safe environment.',
+  'mobility-assistance':   'Physical support with mobility, transfers, walking, and therapeutic exercises. The caregiver should be physically capable and trained to safely assist with movement to preserve independence.',
+  'post-hospital-recovery':'At-home recovery support following surgery or a hospital stay. Responsibilities include monitoring the recipient\'s condition, assisting with rehabilitation exercises, medication reminders, and coordinating with healthcare providers.',
+}
+
 // Care request templates per client
 const REQUEST_TEMPLATES = [
   [{ careType: 'personal-care',          title: 'Daily morning personal care for mother',                    frequency: 'daily',    schedule: [{ day: 'monday', startTime: '09:00', endTime: '13:00' }, { day: 'tuesday', startTime: '09:00', endTime: '13:00' }, { day: 'wednesday', startTime: '09:00', endTime: '13:00' }, { day: 'thursday', startTime: '09:00', endTime: '13:00' }, { day: 'friday', startTime: '09:00', endTime: '13:00' }], budgetType: 'hourly', budgetAmount: '25' }, { careType: 'companionship',           title: 'Weekend companion visits',                                    frequency: 'weekly',   schedule: [{ day: 'saturday', startTime: '09:00', endTime: '11:00' }, { day: 'sunday', startTime: '09:00', endTime: '11:00' }], budgetType: 'hourly', budgetAmount: '20' }],
@@ -404,6 +412,7 @@ async function seed() {
           recipientId: primaryRecipientId,
           careType: req.careType,
           title: req.title,
+          description: CARE_TYPE_DESCRIPTIONS[req.careType] ?? null,
           frequency: req.frequency,
           schedule: req.schedule,
           budgetType: req.budgetType,

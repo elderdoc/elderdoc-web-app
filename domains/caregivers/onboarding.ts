@@ -13,6 +13,7 @@ import {
   caregiverWorkPrefs,
   caregiverLocations,
 } from '@/db/schema'
+import { geocodeAddress } from '@/lib/geo'
 
 async function getOrCreateProfile(userId: string) {
   const existing = await db.query.caregiverProfiles.findFirst({
@@ -196,6 +197,8 @@ export async function saveCaregiverStep4(data: {
       )
   }
 
+  const coords = await geocodeAddress(data.address1, data.city, data.state)
+
   await db
     .insert(caregiverLocations)
     .values({
@@ -204,6 +207,7 @@ export async function saveCaregiverStep4(data: {
       address2: data.address2 || null,
       city: data.city,
       state: data.state,
+      ...(coords ? { lat: String(coords.lat), lng: String(coords.lng) } : {}),
     })
     .onConflictDoUpdate({
       target: caregiverLocations.caregiverId,
@@ -212,6 +216,7 @@ export async function saveCaregiverStep4(data: {
         address2: data.address2 || null,
         city: data.city,
         state: data.state,
+        ...(coords ? { lat: String(coords.lat), lng: String(coords.lng) } : {}),
       },
     })
 
