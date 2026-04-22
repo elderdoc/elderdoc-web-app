@@ -46,6 +46,7 @@ export default async function CaregiverStep4() {
       initialAddress2={location?.address2 ?? ''}
       initialCity={location?.city ?? ''}
       initialState={location?.state ?? ''}
+      initialZip={location?.zip ?? ''}
       initialTravelDistances={travelRows.map(r => r.miles!)}
       initialRelocatable={profile?.relocatable ?? false}
       initialHourlyMin={profile?.hourlyMin ?? String(rateDefaults.min)}

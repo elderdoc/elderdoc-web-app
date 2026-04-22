@@ -167,6 +167,7 @@ export async function saveCaregiverStep4(data: {
   address2: string
   city: string
   state: string
+  zip: string
   travelDistances: number[]
   relocatable: boolean
   hourlyMin: string
@@ -207,6 +208,7 @@ export async function saveCaregiverStep4(data: {
       address2: data.address2 || null,
       city: data.city,
       state: data.state,
+      zip: data.zip || null,
       ...(coords ? { lat: String(coords.lat), lng: String(coords.lng) } : {}),
     })
     .onConflictDoUpdate({
@@ -216,6 +218,7 @@ export async function saveCaregiverStep4(data: {
         address2: data.address2 || null,
         city: data.city,
         state: data.state,
+        zip: data.zip || null,
         ...(coords ? { lat: String(coords.lat), lng: String(coords.lng) } : {}),
       },
     })

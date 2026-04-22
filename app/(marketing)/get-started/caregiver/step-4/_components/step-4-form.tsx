@@ -10,6 +10,8 @@ const labelClass = 'block text-xs font-medium uppercase tracking-[0.08em] text-m
 
 type SectionKey = 'activityMobilitySafety' | 'hygieneElimination' | 'homeManagement' | 'hydrationNutrition' | 'medicationReminders'
 
+const VISIBLE_SECTIONS = CARE_PLAN_SECTIONS.filter(s => s.key !== 'medicationReminders')
+
 interface Props {
   initialCapabilities: Record<SectionKey, string[]>
   initialSpecialNeeds: Record<string, boolean>
@@ -58,7 +60,7 @@ export function Step4Form({ initialCapabilities, initialSpecialNeeds, initialMax
       backHref="/get-started/caregiver/step-3"
     >
       <div className="space-y-10">
-        {CARE_PLAN_SECTIONS.map(section => {
+        {VISIBLE_SECTIONS.map(section => {
           const sKey = section.key as SectionKey
           return (
             <section key={sKey}>

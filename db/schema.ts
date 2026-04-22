@@ -84,6 +84,7 @@ export const caregiverLocations = pgTable('caregiver_locations', {
   address2:    text('address2'),
   city:        text('city'),
   state:       text('state'),
+  zip:         text('zip'),
   lat:         numeric('lat', { precision: 10, scale: 7 }),
   lng:         numeric('lng', { precision: 10, scale: 7 }),
 })

@@ -52,28 +52,44 @@ export function SuggestedJobCard({ job, rank }: Props) {
           <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
             {rank}
           </span>
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2 mb-1">
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2 mb-2">
               <p className="font-semibold text-sm">{title}</p>
               <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${scoreColor}`}>
                 {job.score}% match
               </span>
             </div>
             {job.description && (
-              <p className="text-xs text-muted-foreground mb-1.5 leading-relaxed line-clamp-2">{job.description}</p>
+              <p className="text-xs text-muted-foreground mb-3 leading-relaxed line-clamp-2">{job.description}</p>
             )}
-            <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
               <span>{CARE_TYPE_LABELS[job.careType] ?? job.careType}</span>
-              {distance && <span>{distance}</span>}
-              {job.frequency && <span className="capitalize">{job.frequency.replace(/-/g, ' ')}</span>}
+              {distance && (
+                <>
+                  <span className="inline-block w-px h-3 bg-border align-middle" />
+                  <span>{distance}</span>
+                </>
+              )}
+              {job.frequency && (
+                <>
+                  <span className="inline-block w-px h-3 bg-border align-middle" />
+                  <span className="capitalize">{job.frequency.replace(/-/g, ' ')}</span>
+                </>
+              )}
               {job.budgetAmount && (
-                <span className="font-medium text-foreground">
-                  ${job.budgetAmount}{job.budgetType === 'hourly' ? '/hr' : ''}
-                </span>
+                <>
+                  <span className="inline-block w-px h-3 bg-border align-middle" />
+                  <span className="font-semibold text-foreground">
+                    ${job.budgetAmount}{job.budgetType === 'hourly' ? '/hr' : ''}
+                  </span>
+                </>
               )}
             </div>
             {job.reason && (
-              <p className="text-xs text-muted-foreground mt-2 leading-relaxed italic">&ldquo;{job.reason}&rdquo;</p>
+              <>
+                <hr className="my-3 border-border" />
+                <p className="text-xs text-muted-foreground leading-relaxed italic">&ldquo;{job.reason}&rdquo;</p>
+              </>
             )}
           </div>
         </div>

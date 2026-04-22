@@ -16,6 +16,7 @@ interface Props {
   initialAddress2: string
   initialCity: string
   initialState: string
+  initialZip: string
   initialTravelDistances: number[]
   initialRelocatable: boolean
   initialHourlyMin: string
@@ -23,7 +24,7 @@ interface Props {
 }
 
 export function Step4Form({
-  initialAddress1, initialAddress2, initialCity, initialState,
+  initialAddress1, initialAddress2, initialCity, initialState, initialZip,
   initialTravelDistances, initialRelocatable, initialHourlyMin, initialHourlyMax,
 }: Props) {
   const [form, setForm] = useState({
@@ -31,8 +32,9 @@ export function Step4Form({
     address2: initialAddress2,
     city: initialCity,
     state: initialState,
+    zip: initialZip,
   })
-  const [travelDistances, setTravelDistances] = useState<number[]>(initialTravelDistances)
+  const [travelDistance, setTravelDistance] = useState<number | null>(initialTravelDistances[0] ?? null)
   const [relocatable, setRelocatable] = useState(initialRelocatable)
   const [hourlyMin, setHourlyMin] = useState(initialHourlyMin)
   const [hourlyMax, setHourlyMax] = useState(initialHourlyMax)
@@ -42,17 +44,12 @@ export function Step4Form({
     setForm(prev => ({ ...prev, [field]: value }))
   }
 
-  function toggleDistance(miles: number) {
-    setTravelDistances(prev =>
-      prev.includes(miles) ? prev.filter(m => m !== miles) : [...prev, miles]
-    )
-  }
 
   const isValid =
     form.address1.trim().length > 0 &&
     form.city.trim().length > 0 &&
     form.state.length > 0 &&
-    travelDistances.length > 0 &&
+    travelDistance !== null &&
     hourlyMin.length > 0 &&
     hourlyMax.length > 0 &&
     Number(hourlyMin) <= Number(hourlyMax)
@@ -65,7 +62,8 @@ export function Step4Form({
         address2: form.address2,
         city: form.city,
         state: form.state,
-        travelDistances,
+        zip: form.zip,
+        travelDistances: travelDistance !== null ? [travelDistance] : [],
         relocatable,
         hourlyMin,
         hourlyMax,
@@ -122,6 +120,18 @@ export function Step4Form({
               <StateSelect value={form.state} onChange={v => setField('state', v)} />
             </div>
           </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className={labelClass}>ZIP Code</label>
+              <input
+                type="text"
+                placeholder="78701"
+                value={form.zip}
+                onChange={e => setField('zip', e.target.value)}
+                className={inputClass}
+              />
+            </div>
+          </div>
           <div>
             <label className={labelClass}>Country</label>
             <input
@@ -142,8 +152,8 @@ export function Step4Form({
             {TRAVEL_DISTANCES.map(({ key, label, miles }) => (
               <SelectableCard
                 key={key}
-                selected={travelDistances.includes(miles)}
-                onSelect={() => toggleDistance(miles)}
+                selected={travelDistance === miles}
+                onSelect={() => setTravelDistance(miles)}
               >
                 <span className="text-[15px] font-medium text-foreground">{label}</span>
               </SelectableCard>
@@ -170,6 +180,57 @@ export function Step4Form({
             Hourly Rate
           </p>
           <div className="mx-auto max-w-lg">
+            {/* Dual-range slider */}
+            {(() => {
+              const SMIN = 15, SMAX = 100
+              const lo = Math.min(Math.max(Number(hourlyMin) || SMIN, SMIN), SMAX)
+              const hi = Math.min(Math.max(Number(hourlyMax) || SMAX, SMIN), SMAX)
+              const loPct = ((lo - SMIN) / (SMAX - SMIN)) * 100
+              const hiPct = ((hi - SMIN) / (SMAX - SMIN)) * 100
+              const thumbCls = 'appearance-none bg-transparent absolute inset-0 w-full h-full cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-[18px] [&::-webkit-slider-thumb]:w-[18px] [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-primary [&::-webkit-slider-thumb]:shadow-md [&::-webkit-slider-thumb]:transition-transform [&::-webkit-slider-thumb]:hover:scale-110 [&::-webkit-slider-runnable-track]:bg-transparent [&::-moz-range-thumb]:h-[18px] [&::-moz-range-thumb]:w-[18px] [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-white [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-primary [&::-moz-range-thumb]:shadow-md [&::-moz-range-track]:bg-transparent'
+              return (
+                <div className="mb-5 px-1">
+                  <div className="relative h-5 flex items-center">
+                    <div className="absolute inset-x-0 h-[5px] rounded-full bg-muted" />
+                    <div
+                      className="absolute h-[5px] rounded-full bg-primary"
+                      style={{ left: `${loPct}%`, right: `${100 - hiPct}%` }}
+                    />
+                    <input
+                      type="range"
+                      min={SMIN}
+                      max={SMAX}
+                      value={lo}
+                      onChange={e => {
+                        const v = Number(e.target.value)
+                        setHourlyMin(String(v))
+                        if (v > Math.min(Math.max(Number(hourlyMax) || SMAX, SMIN), SMAX)) setHourlyMax(String(v))
+                      }}
+                      style={{ zIndex: lo >= hi - 2 ? 5 : 3 }}
+                      className={thumbCls}
+                    />
+                    <input
+                      type="range"
+                      min={SMIN}
+                      max={SMAX}
+                      value={hi}
+                      onChange={e => {
+                        const v = Number(e.target.value)
+                        setHourlyMax(String(v))
+                        if (v < Math.min(Math.max(Number(hourlyMin) || SMIN, SMIN), SMAX)) setHourlyMin(String(v))
+                      }}
+                      style={{ zIndex: lo >= hi - 2 ? 3 : 5 }}
+                      className={thumbCls}
+                    />
+                  </div>
+                  <div className="flex justify-between mt-1">
+                    <span className="text-xs text-muted-foreground">$15</span>
+                    <span className="text-xs text-muted-foreground">$50+</span>
+                  </div>
+                </div>
+              )
+            })()}
+
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className={labelClass}>Minimum</label>
@@ -206,61 +267,6 @@ export function Step4Form({
                 </div>
               </div>
             </div>
-
-            {/* Dual-range slider */}
-            {(() => {
-              const SMIN = 15, SMAX = 100
-              const lo = Math.min(Math.max(Number(hourlyMin) || SMIN, SMIN), SMAX)
-              const hi = Math.min(Math.max(Number(hourlyMax) || SMAX, SMIN), SMAX)
-              const loPct = ((lo - SMIN) / (SMAX - SMIN)) * 100
-              const hiPct = ((hi - SMIN) / (SMAX - SMIN)) * 100
-              const thumbCls = 'appearance-none bg-transparent absolute inset-0 w-full h-full cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-[18px] [&::-webkit-slider-thumb]:w-[18px] [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-primary [&::-webkit-slider-thumb]:shadow-md [&::-webkit-slider-thumb]:transition-transform [&::-webkit-slider-thumb]:hover:scale-110 [&::-webkit-slider-runnable-track]:bg-transparent [&::-moz-range-thumb]:h-[18px] [&::-moz-range-thumb]:w-[18px] [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-white [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-primary [&::-moz-range-thumb]:shadow-md [&::-moz-range-track]:bg-transparent'
-              return (
-                <div className="mt-5 mb-1 px-1">
-                  <div className="relative h-5 flex items-center">
-                    {/* Track */}
-                    <div className="absolute inset-x-0 h-[5px] rounded-full bg-muted" />
-                    {/* Fill */}
-                    <div
-                      className="absolute h-[5px] rounded-full bg-primary"
-                      style={{ left: `${loPct}%`, right: `${100 - hiPct}%` }}
-                    />
-                    {/* Min thumb */}
-                    <input
-                      type="range"
-                      min={SMIN}
-                      max={SMAX}
-                      value={lo}
-                      onChange={e => {
-                        const v = Number(e.target.value)
-                        setHourlyMin(String(v))
-                        if (v > Math.min(Math.max(Number(hourlyMax) || SMAX, SMIN), SMAX)) setHourlyMax(String(v))
-                      }}
-                      style={{ zIndex: lo >= hi - 2 ? 5 : 3 }}
-                      className={thumbCls}
-                    />
-                    {/* Max thumb */}
-                    <input
-                      type="range"
-                      min={SMIN}
-                      max={SMAX}
-                      value={hi}
-                      onChange={e => {
-                        const v = Number(e.target.value)
-                        setHourlyMax(String(v))
-                        if (v < Math.min(Math.max(Number(hourlyMin) || SMIN, SMIN), SMAX)) setHourlyMin(String(v))
-                      }}
-                      style={{ zIndex: lo >= hi - 2 ? 3 : 5 }}
-                      className={thumbCls}
-                    />
-                  </div>
-                  <div className="flex justify-between mt-1">
-                    <span className="text-xs text-muted-foreground">$15</span>
-                    <span className="text-xs text-muted-foreground">$50+</span>
-                  </div>
-                </div>
-              )
-            })()}
 
             <p className="mt-2 text-xs text-muted-foreground">
               Pre-filled based on your experience. You can adjust anytime.
