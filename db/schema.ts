@@ -147,6 +147,7 @@ export const careRequests = pgTable('care_requests', {
   frequency:    text('frequency'),
   schedule:     jsonb('schedule').$type<Array<{ day: string; startTime: string; endTime: string }>>(),
   startDate:    text('start_date'),
+  endDate:      text('end_date'),
   suppliesNeeded:   text('supplies_needed'),
   infectionControl: jsonb('infection_control').$type<{
     enabled: boolean
