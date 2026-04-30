@@ -25,10 +25,12 @@ export function TimeDropdown({ value, onChange, increment, placeholder = 'Select
   const [showCustom, setShowCustom] = useState(isCustom)
 
   useEffect(() => {
-    if (!times.includes(value) && value !== '') {
+    if (times.includes(value) || value === '') {
+      setShowCustom(false)
+    } else {
       setShowCustom(true)
     }
-  }, [increment])
+  }, [value, increment])
 
   if (showCustom) {
     return (
