@@ -14,7 +14,7 @@ import { MapPin } from 'lucide-react'
 import { LoadingQuotes } from '@/components/loading-quotes'
 import { StateSelect } from '@/components/state-select'
 import { DatePicker } from '@/components/date-picker'
-import { TimePicker } from '@/components/ui/time-picker'
+import { TimeDropdown } from '@/components/ui/time-dropdown'
 import { CareRecipientModal } from '../../../_components/care-recipient-modal'
 import { SendOfferButton } from '../../../_components/send-offer-button'
 import type { RankedCandidate } from '@/domains/matching/match-caregivers'
@@ -40,6 +40,7 @@ interface RequestForm {
   frequency: string
   schedule: Array<{ day: string; startTime: string; endTime: string }>
   startDate: string
+  endDate: string
   suppliesNeeded: string
   infectionControlEnabled: boolean
   infectionControl: Record<string, boolean>
@@ -63,7 +64,7 @@ interface RequestForm {
 const EMPTY: RequestForm = {
   careTypes: [], recipientId: '', recipientName: '',
   address: { address1: '', address2: '', city: '', state: '' },
-  frequency: '', schedule: [], startDate: '',
+  frequency: '', schedule: [], startDate: '', endDate: '',
   suppliesNeeded: '',
   infectionControlEnabled: false,
   infectionControl: {},
@@ -124,6 +125,8 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgHourl
   const [matchingState, setMatchingState] = useState<'matching' | 'results' | 'error'>('matching')
   const [candidates, setCandidates] = useState<RankedCandidate[]>([])
   const [matchRequestId, setMatchRequestId] = useState<string | null>(null)
+  const [increment, setIncrement] = useState<15 | 30 | 60>(30)
+  const [copyMenuDay, setCopyMenuDay] = useState<string | null>(null)
 
   function toggleMulti(field: 'careTypes' | 'languagePref', key: string) {
     setForm((f) => ({
@@ -231,6 +234,7 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgHourl
             endTime:   form.sameTimeEveryDay ? form.sharedEndTime   : (form.dayTimes[s.day]?.endTime ?? ''),
           })),
           startDate:     form.startDate,
+          endDate:       form.endDate || undefined,
           suppliesNeeded: form.suppliesNeeded || undefined,
           infectionControl: { enabled: form.infectionControlEnabled, ...form.infectionControl },
           safetyMeasures:   { enabled: form.safetyMeasuresEnabled, ...form.safetyMeasures },
@@ -548,6 +552,28 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgHourl
             </p>
           )}
 
+          {/* Time increment selector */}
+          {form.frequency && form.frequency !== 'as-needed' && (
+            <div>
+              <label className="block text-sm font-medium mb-2">Time increment</label>
+              <div className="flex gap-2">
+                {([15, 30, 60] as const).map(inc => (
+                  <button
+                    key={inc}
+                    type="button"
+                    onClick={() => setIncrement(inc)}
+                    className={[
+                      'rounded-xl border-2 px-4 py-2 text-sm font-medium transition-colors',
+                      increment === inc ? 'border-primary bg-primary/5 text-primary' : 'border-border hover:border-primary/50',
+                    ].join(' ')}
+                  >
+                    {inc === 60 ? '1 hr' : `${inc} min`}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Shift time — all frequencies except as-needed */}
           {form.frequency && form.frequency !== 'as-needed' && (
             <div>
@@ -568,30 +594,82 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgHourl
                 <div className="flex items-center gap-3 flex-wrap">
                   <div>
                     <label className="block text-xs text-muted-foreground mb-1">From</label>
-                    <TimePicker value={form.sharedStartTime} onChange={v => setForm(f => ({ ...f, sharedStartTime: v }))} />
+                    <TimeDropdown
+                      value={form.sharedStartTime}
+                      onChange={v => setForm(f => ({ ...f, sharedStartTime: v }))}
+                      increment={increment}
+                      placeholder="Start time"
+                    />
                   </div>
                   <span className="text-muted-foreground mt-5">–</span>
                   <div>
                     <label className="block text-xs text-muted-foreground mb-1">To</label>
-                    <TimePicker value={form.sharedEndTime} onChange={v => setForm(f => ({ ...f, sharedEndTime: v }))} />
+                    <TimeDropdown
+                      value={form.sharedEndTime}
+                      onChange={v => setForm(f => ({ ...f, sharedEndTime: v }))}
+                      increment={increment}
+                      placeholder="End time"
+                    />
                   </div>
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {form.schedule.map(s => (
-                    <div key={s.day} className="flex items-center gap-3 flex-wrap">
-                      <span className="w-28 text-sm capitalize">{s.day}</span>
-                      <TimePicker
-                        value={form.dayTimes[s.day]?.startTime ?? ''}
-                        onChange={v => setForm(f => ({ ...f, dayTimes: { ...f.dayTimes, [s.day]: { ...f.dayTimes[s.day], startTime: v } } }))}
-                      />
-                      <span className="text-muted-foreground">–</span>
-                      <TimePicker
-                        value={form.dayTimes[s.day]?.endTime ?? ''}
-                        onChange={v => setForm(f => ({ ...f, dayTimes: { ...f.dayTimes, [s.day]: { ...f.dayTimes[s.day], endTime: v } } }))}
-                      />
-                    </div>
-                  ))}
+                  {form.schedule.map(s => {
+                    const otherDays = form.schedule.map(sd => sd.day).filter(d => d !== s.day)
+                    return (
+                      <div key={s.day} className="flex items-center gap-2 flex-wrap">
+                        <span className="w-28 text-sm capitalize">{s.day}</span>
+                        <TimeDropdown
+                          value={form.dayTimes[s.day]?.startTime ?? ''}
+                          onChange={v => setForm(f => ({ ...f, dayTimes: { ...f.dayTimes, [s.day]: { ...f.dayTimes[s.day], startTime: v } } }))}
+                          increment={increment}
+                          placeholder="Start"
+                        />
+                        <span className="text-muted-foreground">–</span>
+                        <TimeDropdown
+                          value={form.dayTimes[s.day]?.endTime ?? ''}
+                          onChange={v => setForm(f => ({ ...f, dayTimes: { ...f.dayTimes, [s.day]: { ...f.dayTimes[s.day], endTime: v } } }))}
+                          increment={increment}
+                          placeholder="End"
+                        />
+                        {otherDays.length > 0 && (
+                          <div className="relative">
+                            <button
+                              type="button"
+                              onClick={() => setCopyMenuDay(copyMenuDay === s.day ? null : s.day)}
+                              className="text-xs px-2 py-1 rounded-md border border-border hover:bg-muted text-muted-foreground"
+                            >
+                              Copy to…
+                            </button>
+                            {copyMenuDay === s.day && (
+                              <div className="absolute top-full mt-1 left-0 z-10 bg-card border border-border rounded-lg shadow-md py-1 min-w-[120px]">
+                                {otherDays.map(target => (
+                                  <button
+                                    key={target}
+                                    type="button"
+                                    onClick={() => {
+                                      const src = form.dayTimes[s.day]
+                                      setForm(f => ({
+                                        ...f,
+                                        dayTimes: {
+                                          ...f.dayTimes,
+                                          [target]: { startTime: src?.startTime ?? '', endTime: src?.endTime ?? '' },
+                                        },
+                                      }))
+                                      setCopyMenuDay(null)
+                                    }}
+                                    className="w-full text-left px-3 py-1.5 text-sm capitalize hover:bg-muted"
+                                  >
+                                    {target}
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
                 </div>
               )}
             </div>
@@ -602,6 +680,18 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgHourl
               value={form.startDate}
               onChange={(val) => setForm((f) => ({ ...f, startDate: val }))}
               placeholder="Select start date"
+              disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+              upward
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">
+              End date <span className="font-normal text-muted-foreground">(optional)</span>
+            </label>
+            <DatePicker
+              value={form.endDate}
+              onChange={(val) => setForm((f) => ({ ...f, endDate: val }))}
+              placeholder="Select end date"
               disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
               upward
             />
