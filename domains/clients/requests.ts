@@ -51,6 +51,7 @@ export async function createCareRequest(data: {
   frequency: string
   schedule: Array<{ day: string; startTime: string; endTime: string }>
   startDate: string
+  endDate?: string
   genderPref?: string
   transportationPref?: string
   languagePref: string[]
@@ -74,6 +75,7 @@ export async function createCareRequest(data: {
       frequency:    data.frequency,
       schedule:     data.schedule,
       startDate:    data.startDate,
+      endDate:      data.endDate,
       genderPref:          data.genderPref,
       transportationPref:  data.transportationPref,
       languagePref:        data.languagePref,
