@@ -10,7 +10,7 @@ import {
   GENDER_PREFERENCES, LANGUAGES, BUDGET_TYPES,
   INFECTION_CONTROL_ITEMS, SAFETY_MEASURE_ITEMS, CLIENT_STATUS_GROUPS,
 } from '@/lib/constants'
-import { MapPin, Heart, Users, CalendarDays, ClipboardList, Settings2, BookOpen, Sparkles, DollarSign } from 'lucide-react'
+import { MapPin, Heart, Users, CalendarDays, ClipboardList, Settings2, BookOpen, Sparkles, DollarSign, Brain, Activity, Stethoscope } from 'lucide-react'
 import { LoadingQuotes } from '@/components/loading-quotes'
 import { StateSelect } from '@/components/state-select'
 import { DatePicker } from '@/components/date-picker'
@@ -90,6 +90,14 @@ const STEP_META = [
   { icon: BookOpen,      short: 'Care plan',     title: 'Build the care plan',                   sub: 'Optional shift-by-shift instructions the caregiver will see.' },
   { icon: Sparkles,      short: 'Review',        title: 'Review & finalize your listing',        sub: 'Generate a polished description, then submit for matching.' },
 ] as const
+
+const CARE_TYPE_META: Record<string, { icon: React.ElementType; desc: string }> = {
+  'personal-care':          { icon: Heart,        desc: 'Bathing, dressing, grooming, and daily hygiene' },
+  'companionship':          { icon: Users,         desc: 'Social visits, errands, and emotional support' },
+  'dementia-care':          { icon: Brain,         desc: 'Specialized memory care and cognitive support' },
+  'mobility-assistance':    { icon: Activity,      desc: 'Safe movement, transfers, and fall prevention' },
+  'post-hospital-recovery': { icon: Stethoscope,   desc: 'Recovery support after surgery or hospitalisation' },
+}
 
 const inputCls = 'w-full rounded-[10px] border border-border bg-card h-11 px-3.5 text-[14px] focus:border-[var(--forest)] focus:outline-none focus:ring-2 focus:ring-[var(--forest-soft)] transition-shadow'
 const labelCls = 'block text-[13px] font-medium text-foreground/80 mb-1.5'
@@ -441,6 +449,8 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgRates
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {CARE_TYPES.map((ct) => {
             const selected = form.careTypes.includes(ct.key)
+            const meta = CARE_TYPE_META[ct.key]
+            const CtIcon = meta?.icon
             return (
               <button
                 key={ct.key}
@@ -456,15 +466,26 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgRates
                 {selected && (
                   <div className="pointer-events-none absolute right-[-30px] top-[-30px] h-[120px] w-[120px] rounded-full bg-primary/15" />
                 )}
-                <div className="relative flex items-start justify-between gap-3">
-                  <div className="text-[15px] font-semibold tracking-[-0.005em]">{ct.label}</div>
-                  {selected && (
-                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
-                      <svg width="12" height="9" viewBox="0 0 12 9" fill="none">
-                        <path d="M1 4.5L4.5 8L11 1" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                    </span>
-                  )}
+                <div className="relative">
+                  <div className="flex items-start justify-between gap-3 mb-3">
+                    {CtIcon && (
+                      <div className={[
+                        'flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-colors',
+                        selected ? 'bg-primary/15 text-[var(--forest-deep)]' : 'bg-muted text-muted-foreground group-hover/ct:bg-[var(--forest-soft)] group-hover/ct:text-[var(--forest-deep)]',
+                      ].join(' ')}>
+                        <CtIcon className="h-4 w-4" />
+                      </div>
+                    )}
+                    {selected && (
+                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                        <svg width="12" height="9" viewBox="0 0 12 9" fill="none">
+                          <path d="M1 4.5L4.5 8L11 1" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-[15px] font-semibold tracking-[-0.005em] leading-tight">{ct.label}</p>
+                  {meta?.desc && <p className="mt-1 text-[12.5px] text-muted-foreground leading-snug">{meta.desc}</p>}
                 </div>
               </button>
             )
