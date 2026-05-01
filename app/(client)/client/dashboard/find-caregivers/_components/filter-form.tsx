@@ -1,8 +1,8 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { useCallback, useRef } from 'react'
-import { CARE_TYPES, CERTIFICATIONS, LANGUAGES, US_STATES } from '@/lib/constants'
+import { useCallback, useRef, useState } from 'react'
+import { CARE_TYPES, CERTIFICATIONS, US_STATES } from '@/lib/constants'
 import { SelectField } from '@/components/select-field'
 
 interface Props {
@@ -13,8 +13,7 @@ interface Props {
     state?: string
     rateMin?: string
     rateMax?: string
-    language?: string[]
-    certification?: string[]
+    certification?: string
     experience?: string
     sort?: string
     page?: string
@@ -41,6 +40,9 @@ const STATE_OPTIONS = US_STATES.map((s) => ({ value: s, label: s }))
 export function FilterForm({ activeRequests, currentFilters }: Props) {
   const router = useRouter()
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [showCertFilter, setShowCertFilter] = useState(
+    !!currentFilters.certification && currentFilters.certification !== 'none'
+  )
 
   const buildParams = useCallback(
     (overrides: Record<string, string | string[] | undefined>) => {
@@ -52,7 +54,6 @@ export function FilterForm({ activeRequests, currentFilters }: Props) {
         state:         currentFilters.state,
         rateMin:       currentFilters.rateMin,
         rateMax:       currentFilters.rateMax,
-        language:      currentFilters.language,
         certification: currentFilters.certification,
         experience:    currentFilters.experience,
         sort:          currentFilters.sort,
@@ -68,11 +69,8 @@ export function FilterForm({ activeRequests, currentFilters }: Props) {
       if (merged.experience)   params.set('experience', merged.experience as string)
       if (merged.sort)         params.set('sort', merged.sort as string)
       if (merged.page)         params.set('page', merged.page as string)
-      for (const lang of (merged.language as string[] | undefined) ?? []) {
-        params.append('language', lang)
-      }
-      for (const cert of (merged.certification as string[] | undefined) ?? []) {
-        params.append('certification', cert)
+      if (merged.certification && merged.certification !== 'none') {
+        params.set('certification', merged.certification as string)
       }
       return params.toString()
     },
@@ -91,16 +89,6 @@ export function FilterForm({ activeRequests, currentFilters }: Props) {
 
   function handleRequestChange(id: string) {
     push({ requestId: id || undefined, page: undefined })
-  }
-
-  function handleCheckboxMulti(
-    key: 'language' | 'certification',
-    value: string,
-    checked: boolean,
-  ) {
-    const current = currentFilters[key] ?? []
-    const next = checked ? [...current, value] : current.filter((v) => v !== value)
-    push({ [key]: next.length > 0 ? next : undefined })
   }
 
   const requestOptions = activeRequests.map((r) => ({
@@ -208,44 +196,32 @@ export function FilterForm({ activeRequests, currentFilters }: Props) {
           </div>
         </div>
 
-        {/* Languages */}
-        <div className="mb-4">
-          <p className="text-xs font-medium mb-2">Languages</p>
-          <div className="flex flex-wrap gap-x-4 gap-y-1">
-            {LANGUAGES.map((lang) => (
-              <label key={lang.key} className="flex items-center gap-1.5 text-sm cursor-pointer">
-                <input
-                  type="checkbox"
-                  value={lang.key}
-                  checked={(currentFilters.language ?? []).includes(lang.key)}
-                  onChange={(e) =>
-                    handleCheckboxMulti('language', lang.key, e.target.checked)
-                  }
-                />
-                {lang.label}
-              </label>
-            ))}
-          </div>
-        </div>
-
         {/* Certifications */}
         <div>
-          <p className="text-xs font-medium mb-2">Certifications</p>
-          <div className="flex flex-wrap gap-x-4 gap-y-1">
-            {CERTIFICATIONS.map((cert) => (
-              <label key={cert.key} className="flex items-center gap-1.5 text-sm cursor-pointer">
-                <input
-                  type="checkbox"
-                  value={cert.key}
-                  checked={(currentFilters.certification ?? []).includes(cert.key)}
-                  onChange={(e) =>
-                    handleCheckboxMulti('certification', cert.key, e.target.checked)
-                  }
-                />
-                {cert.label}
-              </label>
-            ))}
-          </div>
+          <label className="flex items-center gap-2 cursor-pointer select-none mb-2">
+            <input
+              type="checkbox"
+              checked={showCertFilter}
+              onChange={e => {
+                setShowCertFilter(e.target.checked)
+                if (!e.target.checked) push({ certification: undefined })
+              }}
+              className="h-4 w-4 rounded border-input accent-primary"
+            />
+            <span className="text-xs font-medium">Special certifications needed</span>
+          </label>
+          {showCertFilter && (
+            <SelectField
+              options={[
+                { value: 'none', label: 'None' },
+                ...CERTIFICATIONS.map(c => ({ value: c.key, label: c.label })),
+              ]}
+              value={currentFilters.certification ?? 'none'}
+              onChange={val => push({ certification: val === 'none' ? undefined : val })}
+              placeholder="None"
+              className="max-w-xs"
+            />
+          )}
         </div>
       </section>
     </div>

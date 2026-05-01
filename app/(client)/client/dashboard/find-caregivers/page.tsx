@@ -15,17 +15,12 @@ function sp(val: string | string[] | undefined): string | undefined {
   return Array.isArray(val) ? val[0] : val
 }
 
-function spArr(val: string | string[] | undefined): string[] | undefined {
-  if (!val) return undefined
-  return Array.isArray(val) ? val : [val]
-}
 
 function buildPageUrl(
   base: {
     requestId?: string; careType?: string; state?: string
     rateMin?: string; rateMax?: string; experience?: string
-    language?: string[]; certification?: string[]
-    sort?: string
+    certification?: string; sort?: string
   },
   targetPage: number,
 ): string {
@@ -37,8 +32,7 @@ function buildPageUrl(
   if (base.rateMax)      params.set('rateMax', base.rateMax)
   if (base.experience)   params.set('experience', base.experience)
   if (base.sort)         params.set('sort', base.sort)
-  for (const lang of base.language ?? []) params.append('language', lang)
-  for (const cert of base.certification ?? []) params.append('certification', cert)
+  if (base.certification && base.certification !== 'none') params.set('certification', base.certification)
   params.set('page', String(targetPage))
   const qs = params.toString()
   return `/client/dashboard/find-caregivers${qs ? `?${qs}` : ''}`
@@ -80,14 +74,13 @@ export default async function FindCaregiversPage({ searchParams }: PageProps) {
   const state         = sp(resolvedSearchParams.state)
   const rateMin       = sp(resolvedSearchParams.rateMin)
   const rateMax       = sp(resolvedSearchParams.rateMax)
-  const language      = spArr(resolvedSearchParams.language)
-  const certification = spArr(resolvedSearchParams.certification)
+  const certification = sp(resolvedSearchParams.certification)
   const experience    = sp(resolvedSearchParams.experience)
   const sort          = sp(resolvedSearchParams.sort)
   const page          = Math.max(1, parseInt(sp(resolvedSearchParams.page) ?? '1', 10) || 1)
 
   const currentFilters = {
-    requestId, careType, state, rateMin, rateMax, language, certification, experience, sort,
+    requestId, careType, state, rateMin, rateMax, certification, experience, sort,
     page: String(page),
   }
 
@@ -117,7 +110,7 @@ export default async function FindCaregiversPage({ searchParams }: PageProps) {
   const clientRefLng = clientLocationRow?.lng ? Number(clientLocationRow.lng) : null
 
   const { caregivers, total } = await searchCaregivers(
-    { careType, state, rateMin, rateMax, language, certification, experience },
+    { careType, state, rateMin, rateMax, certification, experience },
     page,
   )
 
@@ -256,7 +249,7 @@ export default async function FindCaregiversPage({ searchParams }: PageProps) {
           <div className="flex items-center justify-center gap-2 mt-6">
             {page > 1 && (
               <a
-                href={buildPageUrl({ requestId, careType, state, rateMin, rateMax, experience, language, certification, sort }, page - 1)}
+                href={buildPageUrl({ requestId, careType, state, rateMin, rateMax, experience, certification, sort }, page - 1)}
                 className="px-3 py-1.5 rounded-md border border-border text-sm hover:bg-muted"
               >
                 ← Prev
@@ -267,7 +260,7 @@ export default async function FindCaregiversPage({ searchParams }: PageProps) {
             </span>
             {page < totalPages && (
               <a
-                href={buildPageUrl({ requestId, careType, state, rateMin, rateMax, experience, language, certification, sort }, page + 1)}
+                href={buildPageUrl({ requestId, careType, state, rateMin, rateMax, experience, certification, sort }, page + 1)}
                 className="px-3 py-1.5 rounded-md border border-border text-sm hover:bg-muted"
               >
                 Next →
