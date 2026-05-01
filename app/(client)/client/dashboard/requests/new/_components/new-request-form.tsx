@@ -360,36 +360,47 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgRates
   const isFinalStep = step === 9
 
   return (
-    <div className="p-8 max-w-2xl mx-auto">
+    <div className="px-6 md:px-10 py-10 md:py-14 max-w-[920px] mx-auto">
       {!isFinalStep && (
         <button
           type="button"
           onClick={() => router.back()}
-          className="text-xs text-muted-foreground hover:text-foreground mb-6 inline-block"
+          className="group/back inline-flex items-center gap-1.5 text-[13px] text-muted-foreground transition-colors hover:text-foreground mb-10"
         >
-          ← Back to Requests
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" className="transition-transform group-hover/back:-translate-x-0.5">
+            <path d="M10 3L5 8l5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          Back to Requests
         </button>
       )}
 
-      {/* Progress */}
+      {/* Progress — editorial */}
       {!isFinalStep && (
-        <div className="flex items-center gap-2 mb-8">
-          {Array.from({ length: 8 }).map((_, i) => (
+        <div className="mb-12">
+          <div className="flex items-baseline justify-between mb-3">
+            <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+              Step <span className="text-foreground font-medium tabular-nums">{String(step).padStart(2, '0')}</span>
+              {' '}/{' '}<span className="tabular-nums">08</span>
+            </div>
+            <div className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+              {STEP_TITLES[step - 1]}
+            </div>
+          </div>
+          <div className="h-px bg-border relative overflow-hidden">
             <div
-              key={i}
-              className={[
-                'flex-1 h-1.5 rounded-full transition-colors',
-                i < step ? 'bg-primary' : 'bg-muted',
-              ].join(' ')}
+              className="absolute inset-y-0 left-0 bg-foreground transition-[width] duration-500 ease-out"
+              style={{ width: `${(step / 8) * 100}%`, height: '2px', top: '-0.5px' }}
             />
-          ))}
+          </div>
         </div>
       )}
 
-      {!isFinalStep && (
-        <p className="text-xs text-muted-foreground mb-1">Step {step} of 8</p>
-      )}
-      <h1 className="text-2xl font-semibold mb-8">{STEP_TITLES[step - 1]}</h1>
+      <div className="mb-10 max-w-2xl">
+        <p className="ed-eyebrow">Care request</p>
+        <h1 className="ed-display mt-3 text-[32px] sm:text-[40px] md:text-[48px] leading-[1.02] tracking-[-0.035em]">
+          {STEP_TITLES[step - 1]}
+        </h1>
+      </div>
 
       {/* Step 1 — Care Type (multi-select) */}
       {step === 1 && (

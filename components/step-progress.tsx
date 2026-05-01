@@ -7,47 +7,50 @@ interface StepProgressProps {
 }
 
 export function StepProgress({ steps, currentStep, className }: StepProgressProps) {
+  const total = steps.length
   return (
-    <nav aria-label="Progress" className={cn('flex items-center gap-0', className)}>
-      {steps.map((step, index) => {
-        const stepNumber = index + 1
-        const isCompleted = stepNumber < currentStep
-        const isActive    = stepNumber === currentStep
-
-        return (
-          <div key={step.label} className="flex items-center">
-            <div className="flex flex-col items-center gap-1.5">
-              <div
-                data-testid={isCompleted ? 'step-completed' : isActive ? 'step-active' : 'step-pending'}
-                className={cn(
-                  'flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium transition-colors',
-                  isCompleted && 'bg-primary text-primary-foreground',
-                  isActive && 'border-2 border-primary text-primary bg-primary/10',
-                  !isCompleted && !isActive && 'border border-border text-muted-foreground bg-card',
-                )}
-              >
-                {isCompleted ? (
-                  <svg width="12" height="10" viewBox="0 0 12 10" fill="none" aria-hidden="true">
-                    <path d="M1 5L4.5 8.5L11 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                ) : stepNumber}
-              </div>
+    <div className={cn('w-full', className)}>
+      {/* Compact progress: numeric position + thin bar */}
+      <div className="flex items-baseline justify-between mb-3">
+        <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+          Step <span className="text-foreground font-medium tabular-nums">{String(currentStep).padStart(2, '0')}</span>
+          {' '}/{' '}
+          <span className="tabular-nums">{String(total).padStart(2, '0')}</span>
+        </div>
+        <div className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+          {steps[currentStep - 1]?.label}
+        </div>
+      </div>
+      <div className="h-px bg-border relative overflow-hidden">
+        <div
+          className="absolute inset-y-0 left-0 bg-foreground transition-[width] duration-500 ease-out"
+          style={{ width: `${(currentStep / total) * 100}%`, height: '2px', top: '-0.5px' }}
+        />
+      </div>
+      {/* Step ticks */}
+      <div className="mt-3 grid gap-1" style={{ gridTemplateColumns: `repeat(${total}, 1fr)` }}>
+        {steps.map((step, i) => {
+          const n = i + 1
+          const isCompleted = n < currentStep
+          const isActive = n === currentStep
+          return (
+            <div key={step.label} className="flex flex-col items-start">
               <span className={cn(
-                'text-xs font-medium whitespace-nowrap',
-                isActive ? 'text-primary' : 'text-muted-foreground',
+                'font-mono text-[10px] tabular-nums transition-colors',
+                isActive ? 'text-foreground font-medium' : isCompleted ? 'text-foreground/55' : 'text-muted-foreground/40',
+              )}>
+                {String(n).padStart(2, '0')}
+              </span>
+              <span className={cn(
+                'mt-1 text-[11px] truncate w-full transition-colors hidden sm:block',
+                isActive ? 'text-foreground font-medium' : isCompleted ? 'text-foreground/55' : 'text-muted-foreground/50',
               )}>
                 {step.label}
               </span>
             </div>
-            {index < steps.length - 1 && (
-              <div className={cn(
-                'mx-2 mb-5 h-px w-12 transition-colors',
-                isCompleted ? 'bg-primary' : 'bg-border',
-              )} />
-            )}
-          </div>
-        )
-      })}
-    </nav>
+          )
+        })}
+      </div>
+    </div>
   )
 }

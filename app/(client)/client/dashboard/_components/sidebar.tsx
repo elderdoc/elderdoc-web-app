@@ -167,14 +167,9 @@ export function Sidebar({ userName, userInitials, userImage, unreadCount, unread
       <aside className="hidden lg:flex h-screen w-64 shrink-0 flex-col border-r border-border bg-background">
         {/* Masthead */}
         <div className="px-6 pt-7 pb-5 border-b border-border">
-          <div className="flex items-baseline justify-between">
-            <Link href="/client/dashboard" className="font-display text-[24px] tracking-[-0.045em] leading-none">
-              Elderdoc
-            </Link>
-            <span className="font-mono text-[9px] uppercase tracking-[0.18em] text-muted-foreground">
-              Vol.1
-            </span>
-          </div>
+          <Link href="/client/dashboard" className="font-display text-[24px] tracking-[-0.045em] leading-none">
+            Elderdoc
+          </Link>
           <div className="mt-2 font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
             Family · Dashboard
           </div>

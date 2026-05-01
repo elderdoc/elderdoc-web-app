@@ -82,13 +82,8 @@ export default async function ClientDashboard() {
     <div className="px-6 lg:px-12 py-10 lg:py-14 max-w-[1400px] mx-auto">
       {/* Masthead */}
       <header className="border-b border-foreground/30 pb-8">
-        <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-          <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-            Today · {today}
-          </div>
-          <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-            Issue No. 001 — Family Dashboard
-          </div>
+        <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+          {today}
         </div>
         <div className="mt-6 flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
           <div className="max-w-3xl">
@@ -234,11 +229,6 @@ export default async function ClientDashboard() {
         </div>
       </section>
 
-      {/* Footer rule */}
-      <footer className="mt-20 border-t border-foreground/20 pt-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
-        <span>End of issue</span>
-        <span>Set in Fraunces &amp; Inter Tight</span>
-      </footer>
     </div>
   )
 }
