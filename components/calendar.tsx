@@ -169,7 +169,7 @@ export function Calendar({ year, month, events, activeJobs, basePath, addShiftAc
       )}
 
       {cancelShiftId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/40 p-4">
           <div className="bg-card rounded-xl border border-border shadow-lg w-full max-w-sm p-6 flex flex-col gap-4">
             <div>
               <h2 className="text-base font-semibold mb-1">Cancel shift?</h2>

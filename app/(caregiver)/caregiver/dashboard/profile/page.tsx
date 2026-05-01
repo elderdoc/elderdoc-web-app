@@ -61,11 +61,22 @@ export default async function CaregiverProfilePage() {
       {/* Hero card */}
       <div className="rounded-[20px] border border-border bg-card overflow-hidden shadow-[0_4px_20px_-8px_rgba(15,20,16,0.08)]">
         <div className="relative">
-          <div className="relative h-44 bg-[var(--forest)] overflow-hidden">
-            <span aria-hidden className="pointer-events-none absolute right-6 top-1/2 -translate-y-1/2 select-none text-[80px] font-bold tracking-tight text-white/10 leading-none">elderdoc</span>
+          <div
+            className="relative h-52 overflow-hidden"
+            style={{ background: 'linear-gradient(135deg, #1a3d2b 0%, #2d6b48 45%, #1f5238 75%, #163322 100%)' }}
+          >
+            <div
+              className="absolute inset-0"
+              style={{
+                backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.13) 1px, transparent 1px)',
+                backgroundSize: '22px 22px',
+              }}
+            />
+            <span aria-hidden className="pointer-events-none absolute right-4 bottom-0 translate-y-4 select-none text-[104px] font-black tracking-tighter text-white/[0.055] leading-none">elderdoc</span>
           </div>
-          <div className="px-6 sm:px-8 pb-6 -mt-14">
-            <div className="flex items-end gap-4 flex-wrap">
+          <div className="px-6 sm:px-8 pb-6">
+            {/* Avatar */}
+            <div className="-mt-12">
               {(profileRow.photoUrl ?? profileRow.image) ? (
                 <img
                   src={(profileRow.photoUrl ?? profileRow.image)!}
@@ -77,42 +88,43 @@ export default async function CaregiverProfilePage() {
                   {initials}
                 </div>
               )}
-              <div className="pb-1 min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <h1 className="text-[28px] sm:text-[32px] font-semibold tracking-[-0.02em] leading-tight">
-                    {profileRow.name ?? 'Your profile'}
-                  </h1>
-                  {profileRow.rating && (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-1 text-[13px] font-semibold text-amber-700">
-                      <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
-                      {Number(profileRow.rating).toFixed(1)}
-                    </span>
-                  )}
-                </div>
-                <div className="mt-1.5 flex items-center gap-2 flex-wrap">
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-1 text-[12px] text-foreground/70">
-                    <Mail className="h-3 w-3" />
-                    {profileRow.email}
+            </div>
+            {/* Name + badges — fully in white space */}
+            <div className="mt-4 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h1 className="text-[28px] sm:text-[32px] font-semibold tracking-[-0.02em] leading-tight">
+                  {profileRow.name ?? 'Your profile'}
+                </h1>
+                {profileRow.rating && (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-1 text-[13px] font-semibold text-amber-700">
+                    <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+                    {Number(profileRow.rating).toFixed(1)}
                   </span>
-                  {(profileRow.hourlyMin || profileRow.hourlyMax) && (
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--forest-soft)] px-2.5 py-1 text-[12px] font-medium text-[var(--forest-deep)]">
-                      <DollarSign className="h-3 w-3" />
-                      ${profileRow.hourlyMin ?? '?'}–${profileRow.hourlyMax ?? '?'}/hr
-                    </span>
-                  )}
-                  {profileRow.experience && (
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-1 text-[12px] text-foreground/70">
-                      <Briefcase className="h-3 w-3" />
-                      {profileRow.experience}
-                    </span>
-                  )}
-                </div>
-                {profileRow.headline && (
-                  <p className="mt-2 text-[14px] text-muted-foreground line-clamp-2 max-w-xl">
-                    {profileRow.headline}
-                  </p>
                 )}
               </div>
+              <div className="mt-1.5 flex items-center gap-2 flex-wrap">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-1 text-[12px] text-foreground/70">
+                  <Mail className="h-3 w-3" />
+                  {profileRow.email}
+                </span>
+                {(profileRow.hourlyMin || profileRow.hourlyMax) && (
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--forest-soft)] px-2.5 py-1 text-[12px] font-medium text-[var(--forest-deep)]">
+                    <DollarSign className="h-3 w-3" />
+                    ${profileRow.hourlyMin ?? '?'}–${profileRow.hourlyMax ?? '?'}/hr
+                  </span>
+                )}
+                {profileRow.experience && (
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-1 text-[12px] text-foreground/70">
+                    <Briefcase className="h-3 w-3" />
+                    {profileRow.experience}
+                  </span>
+                )}
+              </div>
+              {profileRow.headline && (
+                <p className="mt-2 text-[14px] text-muted-foreground line-clamp-2 max-w-xl">
+                  {profileRow.headline}
+                </p>
+              )}
             </div>
           </div>
         </div>
