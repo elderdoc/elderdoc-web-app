@@ -46,8 +46,7 @@ export type SearchFilters = {
   state?: string
   rateMin?: string
   rateMax?: string
-  language?: string[]
-  certification?: string[]
+  certification?: string
   experience?: string
 }
 
@@ -128,17 +127,9 @@ export async function searchCaregivers(
     conditions.push(eq(caregiverProfiles.experience, filters.experience))
   }
 
-  if (filters.language && filters.language.length > 0) {
-    const langList = sql.join(filters.language.map((l) => sql`${l}`), sql`, `)
+  if (filters.certification && filters.certification !== 'none') {
     conditions.push(
-      sql`EXISTS (SELECT 1 FROM ${caregiverLanguages} WHERE ${caregiverLanguages.caregiverId} = ${caregiverProfiles.id} AND ${caregiverLanguages.language} IN (${langList}))`
-    )
-  }
-
-  if (filters.certification && filters.certification.length > 0) {
-    const certList = sql.join(filters.certification.map((c) => sql`${c}`), sql`, `)
-    conditions.push(
-      sql`EXISTS (SELECT 1 FROM ${caregiverCertifications} WHERE ${caregiverCertifications.caregiverId} = ${caregiverProfiles.id} AND ${caregiverCertifications.certification} IN (${certList}))`
+      sql`EXISTS (SELECT 1 FROM ${caregiverCertifications} WHERE ${caregiverCertifications.caregiverId} = ${caregiverProfiles.id} AND ${caregiverCertifications.certification} = ${filters.certification})`
     )
   }
 
