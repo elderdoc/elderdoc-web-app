@@ -187,7 +187,7 @@ function Toaster({
     <div
       aria-live="polite"
       aria-atomic="false"
-      className="fixed bottom-6 right-6 z-[9999] flex flex-col-reverse gap-2.5 items-end"
+      className="fixed top-6 left-1/2 -translate-x-1/2 z-[9999] flex flex-col gap-2.5 items-center"
     >
       {toasts.map((t) => (
         <ToastItem key={t.id} toast={t} onDismiss={onDismiss} />
@@ -218,8 +218,8 @@ function ToastItem({
         'bg-[#16211c]/97 backdrop-blur-md border border-white/8',
         'transition-all duration-300 ease-out',
         t.exiting
-          ? 'opacity-0 translate-y-1 scale-95'
-          : 'opacity-100 translate-y-0 scale-100 animate-in slide-in-from-bottom-4 fade-in-0 duration-300',
+          ? 'opacity-0 -translate-y-2 scale-95'
+          : 'opacity-100 translate-y-0 scale-100 animate-in slide-in-from-top-4 fade-in-0 duration-300',
       )}
     >
       {/* Icon */}
