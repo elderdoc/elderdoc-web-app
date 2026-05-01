@@ -54,9 +54,11 @@ export async function createCareRequest(data: {
   endDate?: string
   genderPref?: string
   transportationPref?: string
-  languagePref: string[]
+  languagesPreferred: string[]
+  languagesRequired: string[]
   budgetType?: string
-  budgetAmount?: string
+  budgetMin?: string
+  budgetMax?: string
   title: string
   description: string
   suppliesNeeded?: string
@@ -78,9 +80,11 @@ export async function createCareRequest(data: {
       endDate:      data.endDate,
       genderPref:          data.genderPref,
       transportationPref:  data.transportationPref,
-      languagePref:        data.languagePref,
+      languagesPreferred:  data.languagesPreferred,
+      languagesRequired:   data.languagesRequired,
       budgetType:          data.budgetType,
-      budgetAmount:        data.budgetAmount?.trim() && Number.isFinite(Number(data.budgetAmount.trim())) ? data.budgetAmount.trim() : undefined,
+      budgetMin:           data.budgetMin?.trim() && Number.isFinite(Number(data.budgetMin.trim())) ? data.budgetMin.trim() : undefined,
+      budgetMax:           data.budgetMax?.trim() && Number.isFinite(Number(data.budgetMax.trim())) ? data.budgetMax.trim() : undefined,
       title:               data.title,
       description:         data.description,
       status:              'active',
@@ -152,9 +156,11 @@ export async function updateCareRequest(id: string, data: {
   startDate?: string
   genderPref?: string
   transportationPref?: string
-  languagePref?: string[]
+  languagesPreferred?: string[]
+  languagesRequired?: string[]
   budgetType?: string
-  budgetAmount?: string
+  budgetMin?: string
+  budgetMax?: string
   suppliesNeeded?: string
   infectionControl?: { enabled: boolean; gloves?: boolean; handWashing?: boolean; wasteDisposal?: boolean }
   safetyMeasures?: { enabled: boolean; clearPathways?: boolean; electricCords?: boolean; pets?: boolean }
@@ -172,13 +178,15 @@ export async function updateCareRequest(id: string, data: {
       startDate:          data.startDate,
       genderPref:         data.genderPref,
       transportationPref: data.transportationPref,
-      languagePref:       data.languagePref,
-      budgetType:    data.budgetType,
-      budgetAmount:    data.budgetAmount?.trim() && Number.isFinite(Number(data.budgetAmount.trim())) ? data.budgetAmount.trim() : undefined,
-      suppliesNeeded:  data.suppliesNeeded,
-      infectionControl:data.infectionControl,
-      safetyMeasures:  data.safetyMeasures,
-      clientStatus:    data.clientStatus,
+      languagesPreferred: data.languagesPreferred,
+      languagesRequired:  data.languagesRequired,
+      budgetType:         data.budgetType,
+      budgetMin:          data.budgetMin?.trim() && Number.isFinite(Number(data.budgetMin.trim())) ? data.budgetMin.trim() : undefined,
+      budgetMax:          data.budgetMax?.trim() && Number.isFinite(Number(data.budgetMax.trim())) ? data.budgetMax.trim() : undefined,
+      suppliesNeeded:     data.suppliesNeeded,
+      infectionControl:   data.infectionControl,
+      safetyMeasures:     data.safetyMeasures,
+      clientStatus:       data.clientStatus,
     })
     .where(and(eq(careRequests.id, id), eq(careRequests.clientId, session.user.id)))
 }
