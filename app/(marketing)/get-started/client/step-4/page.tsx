@@ -2,6 +2,7 @@ import { Suspense } from 'react'
 import { auth } from '@/auth'
 import { StepShell } from '../_components/step-shell'
 import { searchCaregivers } from '@/domains/caregivers/search'
+import { geocodeAddress, haversineDistance } from '@/lib/geo'
 import { PreviewClient } from './_components/preview-client'
 
 interface Step4PageProps {
@@ -23,7 +24,23 @@ async function CaregiverResults({ searchParams, isAuthenticated }: {
   const params = await searchParams
   const careTypes = params.careTypes?.split(',').filter(Boolean) ?? []
   const caregivers = await searchCaregivers({ careTypes, state: params.state })
-  return <PreviewClient caregivers={caregivers} isAuthenticated={isAuthenticated} searchParams={params} />
+
+  // Geocode user's address to compute distance
+  let userCoords: { lat: number; lng: number } | null = null
+  if (params.address1 && params.city && params.state) {
+    try {
+      userCoords = await geocodeAddress(params.address1, params.city, params.state)
+    } catch {}
+  }
+
+  const withDistance = caregivers.map((cg) => ({
+    ...cg,
+    distanceMiles: userCoords && cg.lat != null && cg.lng != null
+      ? haversineDistance(userCoords.lat, userCoords.lng, cg.lat, cg.lng)
+      : null,
+  }))
+
+  return <PreviewClient caregivers={withDistance} isAuthenticated={isAuthenticated} searchParams={params} />
 }
 
 export default async function ClientStep4({ searchParams }: Step4PageProps) {

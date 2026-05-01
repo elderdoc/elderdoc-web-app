@@ -71,7 +71,13 @@ export async function searchCaregivers(params: {
       .from(caregiverCareTypes)
       .where(inArray(caregiverCareTypes.caregiverId, profileIds)),
     db
-      .select({ caregiverId: caregiverLocations.caregiverId, city: caregiverLocations.city, state: caregiverLocations.state })
+      .select({
+        caregiverId: caregiverLocations.caregiverId,
+        city:        caregiverLocations.city,
+        state:       caregiverLocations.state,
+        lat:         caregiverLocations.lat,
+        lng:         caregiverLocations.lng,
+      })
       .from(caregiverLocations)
       .where(inArray(caregiverLocations.caregiverId, profileIds)),
   ])
@@ -109,6 +115,8 @@ export async function searchCaregivers(params: {
       hourlyMin: profile.hourlyMin,
       hourlyMax: profile.hourlyMax,
       experience: profile.experience,
+      lat: location?.lat ? Number(location.lat) : null,
+      lng: location?.lng ? Number(location.lng) : null,
       matchScore,
       matchReason,
     }

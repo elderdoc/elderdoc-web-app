@@ -13,6 +13,8 @@ export interface CaregiverPreview {
   careTypes: string[]
   city: string | null
   state: string | null
+  lat?: number | null
+  lng?: number | null
   distanceMiles?: number | null
   hourlyMin: string | null
   hourlyMax: string | null
