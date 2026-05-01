@@ -53,9 +53,12 @@ interface RequestForm {
   dayTimes: Record<string, { startTime: string; endTime: string }>
   genderPref: string
   transportationPref: string
-  languagePref: string[]
+  languagesPreferred: string[]
+  languagesRequired: string[]
+  requireLanguages: boolean
   budgetType: string
-  budgetAmount: string
+  budgetMin: string
+  budgetMax: string
   title: string
   description: string
   carePlan: CarePlanState
@@ -72,7 +75,7 @@ const EMPTY: RequestForm = {
   safetyMeasures: {},
   careRequestClientStatus: {},
   sameTimeEveryDay: true, sharedStartTime: '', sharedEndTime: '', dayTimes: {},
-  genderPref: '', transportationPref: '', languagePref: [], budgetType: '', budgetAmount: '',
+  genderPref: '', transportationPref: '', languagesPreferred: [], languagesRequired: [], requireLanguages: false, budgetType: '', budgetMin: '', budgetMax: '',
   title: '', description: '',
   carePlan: EMPTY_CARE_PLAN,
 }
@@ -92,8 +95,7 @@ const STEP_TITLES = [
 interface Props {
   initialRecipients: RecipientOption[]
   initialRecipientId?: string
-  avgHourlyMin: number | null
-  avgHourlyMax: number | null
+  avgRatesByCareType: Record<string, { min: number; max: number }>
 }
 
 function recipientAddressToForm(addr: RecipientOption['address']): RequestForm['address'] {
@@ -105,7 +107,7 @@ function recipientAddressToForm(addr: RecipientOption['address']): RequestForm['
   }
 }
 
-export function NewRequestForm({ initialRecipients, initialRecipientId, avgHourlyMin, avgHourlyMax }: Props) {
+export function NewRequestForm({ initialRecipients, initialRecipientId, avgRatesByCareType }: Props) {
   const router = useRouter()
   const [step, setStep] = useState(1)
   const preselected = initialRecipientId
@@ -128,12 +130,30 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgHourl
   const [increment, setIncrement] = useState<15 | 30 | 60>(30)
   const [copyMenuDay, setCopyMenuDay] = useState<string | null>(null)
 
-  function toggleMulti(field: 'careTypes' | 'languagePref', key: string) {
+  function toggleMulti(field: 'careTypes', key: string) {
     setForm((f) => ({
       ...f,
       [field]: (f[field] as string[]).includes(key)
         ? (f[field] as string[]).filter((v) => v !== key)
         : [...(f[field] as string[]), key],
+    }))
+  }
+
+  function togglePreferredLanguage(key: string) {
+    setForm(f => ({
+      ...f,
+      languagesPreferred: f.languagesPreferred.includes(key)
+        ? f.languagesPreferred.filter(v => v !== key)
+        : [...f.languagesPreferred, key],
+    }))
+  }
+
+  function toggleRequiredLanguage(key: string) {
+    setForm(f => ({
+      ...f,
+      languagesRequired: f.languagesRequired.includes(key)
+        ? f.languagesRequired.filter(v => v !== key)
+        : [...f.languagesRequired, key],
     }))
   }
 
@@ -191,9 +211,10 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgHourl
           frequency: form.frequency,
           days: form.schedule.map(s => s.day),
           shifts: form.schedule.map(s => `${form.sameTimeEveryDay ? form.sharedStartTime : (form.dayTimes[s.day]?.startTime ?? '')}–${form.sameTimeEveryDay ? form.sharedEndTime : (form.dayTimes[s.day]?.endTime ?? '')}`),
-          languages: form.languagePref,
+          languages: form.languagesPreferred,
           budgetType: form.budgetType || undefined,
-          budgetAmount: form.budgetAmount || undefined,
+          budgetMin: form.budgetMin || undefined,
+          budgetMax: form.budgetMax || undefined,
           suppliesNeeded: form.suppliesNeeded || undefined,
           infectionControl: form.infectionControlEnabled ? form.infectionControl : undefined,
           safetyMeasures: form.safetyMeasuresEnabled ? form.safetyMeasures : undefined,
@@ -242,9 +263,11 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgHourl
             ? form.careRequestClientStatus : undefined,
           genderPref:         form.genderPref || undefined,
           transportationPref: form.transportationPref || undefined,
-          languagePref:       form.languagePref,
-          budgetType:    form.budgetType || undefined,
-          budgetAmount:  form.budgetAmount || undefined,
+          languagesPreferred: form.languagesPreferred,
+          languagesRequired:  form.languagesRequired,
+          budgetType:  form.budgetType || undefined,
+          budgetMin:   form.budgetMin || undefined,
+          budgetMax:   form.budgetMax || undefined,
           title:         form.title,
           description:   form.description,
         })
@@ -295,7 +318,7 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgHourl
         : form.schedule.every(s => form.dayTimes[s.day]?.startTime && form.dayTimes[s.day]?.endTime)
     })(),
     true, // step 5 — Care Details is optional
-    form.genderPref.length > 0 && form.transportationPref.length > 0 && form.budgetType.length > 0 && form.budgetAmount.trim().length > 0,
+    form.genderPref.length > 0 && form.transportationPref.length > 0 && form.budgetType.length > 0 && form.budgetMin.trim().length > 0 && form.budgetMax.trim().length > 0,
     true, // step 7 — Care Plan is optional
     form.title.trim().length > 0 && form.description.trim().length > 0,
   ]
@@ -321,7 +344,8 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgHourl
       if (!form.genderPref) return 'Select a caregiver gender preference.'
       if (!form.transportationPref) return 'Select a transportation preference.'
       if (!form.budgetType) return 'Select a budget type.'
-      if (!form.budgetAmount.trim()) return `Enter a ${form.budgetType === 'hourly' ? 'hourly rate' : 'weekly amount'}.`
+      if (!form.budgetMin.trim()) return 'Enter a minimum rate.'
+      if (!form.budgetMax.trim()) return 'Enter a maximum rate.'
       return null
     })(),
     null,
@@ -816,13 +840,6 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgHourl
                               className="rounded-lg border border-border px-3 py-2 text-xs focus:border-primary focus:outline-none"
                               placeholder="e.g. left leg below knee" />
                           )}
-                          {checked && item.key === 'diabetic' && (
-                            <input type="text"
-                              value={typeof form.careRequestClientStatus.diet === 'string' ? form.careRequestClientStatus.diet : ''}
-                              onChange={e => setForm(f => ({ ...f, careRequestClientStatus: { ...f.careRequestClientStatus, diet: e.target.value } }))}
-                              className="rounded-lg border border-border px-3 py-2 text-xs focus:border-primary focus:outline-none"
-                              placeholder="Diet details" />
-                          )}
                         </div>
                       )
                     })}
@@ -830,12 +847,22 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgHourl
                 </div>
               ))}
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-2">Other</label>
+                <label className="block text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-2">Other considerations</label>
                 <input type="text"
                   value={typeof form.careRequestClientStatus.other === 'string' ? form.careRequestClientStatus.other : ''}
                   onChange={e => setForm(f => ({ ...f, careRequestClientStatus: { ...f.careRequestClientStatus, other: e.target.value } }))}
                   className="w-full rounded-lg border border-border px-4 py-3 text-sm focus:border-primary focus:outline-none"
                   placeholder="Specify any other relevant status…" />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-2">Diet</label>
+                <input
+                  type="text"
+                  value={typeof form.careRequestClientStatus.diet === 'string' ? form.careRequestClientStatus.diet : ''}
+                  onChange={e => setForm(f => ({ ...f, careRequestClientStatus: { ...f.careRequestClientStatus, diet: e.target.value } }))}
+                  className="w-full rounded-lg border border-border px-4 py-3 text-sm focus:border-primary focus:outline-none"
+                  placeholder="e.g. Diabetic, low sodium, pureed…"
+                />
               </div>
             </div>
           </div>
@@ -884,20 +911,43 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgHourl
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium mb-3">Languages</label>
-            <div className="flex flex-wrap gap-2">
+            <label className="block text-sm font-medium mb-2">Languages Preferred</label>
+            <div className="flex flex-wrap gap-2 mb-3">
               {LANGUAGES.map((l) => (
                 <button key={l.key} type="button"
-                  onClick={() => toggleMulti('languagePref', l.key)}
-                  className={['rounded-xl border-2 px-4 py-2 text-sm transition-colors', form.languagePref.includes(l.key) ? 'border-primary bg-primary/5 text-primary' : 'border-border hover:border-primary/50'].join(' ')}>
+                  onClick={() => togglePreferredLanguage(l.key)}
+                  className={['rounded-xl border-2 px-4 py-2 text-sm transition-colors', form.languagesPreferred.includes(l.key) ? 'border-primary bg-primary/5 text-primary' : 'border-border hover:border-primary/50'].join(' ')}>
                   {l.label}
                 </button>
               ))}
             </div>
+            <label className="flex items-center gap-2 cursor-pointer select-none mb-2">
+              <input
+                type="checkbox"
+                checked={form.requireLanguages}
+                onChange={e => setForm(f => ({ ...f, requireLanguages: e.target.checked, languagesRequired: e.target.checked ? f.languagesRequired : [] }))}
+                className="h-4 w-4 rounded border-border accent-primary"
+              />
+              <span className="text-sm">Require specific languages</span>
+            </label>
+            {form.requireLanguages && (
+              <div>
+                <label className="block text-xs text-muted-foreground mb-2">Languages Required</label>
+                <div className="flex flex-wrap gap-2">
+                  {LANGUAGES.map((l) => (
+                    <button key={l.key} type="button"
+                      onClick={() => toggleRequiredLanguage(l.key)}
+                      className={['rounded-xl border-2 px-4 py-2 text-sm transition-colors', form.languagesRequired.includes(l.key) ? 'border-primary bg-primary/5 text-primary' : 'border-border hover:border-primary/50'].join(' ')}>
+                      {l.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
           <div>
-            <label className="block text-sm font-medium mb-3">Budget Type *</label>
-            <div className="grid grid-cols-2 gap-2">
+            <label className="block text-sm font-medium mb-3">Please enter hourly rate *</label>
+            <div className="flex gap-2 mb-4">
               {BUDGET_TYPES.map((b) => (
                 <button key={b.key} type="button"
                   onClick={() => setForm((f) => ({ ...f, budgetType: b.key }))}
@@ -906,37 +956,105 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgHourl
                 </button>
               ))}
             </div>
-            {form.budgetType && (
-              <div className="mt-3 space-y-2">
-                <label className="block text-sm font-medium mb-1">
-                  {form.budgetType === 'hourly' ? 'Hourly Rate *' : 'Weekly Amount *'}
-                </label>
-                {form.budgetType === 'hourly' && avgHourlyMin !== null && avgHourlyMax !== null && (
-                  <p className="text-xs text-muted-foreground">
-                    Average caregiver rate: <span className="font-medium text-foreground">${avgHourlyMin}–${avgHourlyMax}/hr</span>
+            {form.budgetType && (() => {
+              const SMIN = 10, SMAX = 100
+              const lo = Math.min(Math.max(Number(form.budgetMin) || SMIN, SMIN), SMAX)
+              const hi = Math.min(Math.max(Number(form.budgetMax) || SMAX, SMIN), SMAX)
+              const loPct = ((lo - SMIN) / (SMAX - SMIN)) * 100
+              const hiPct = ((hi - SMIN) / (SMAX - SMIN)) * 100
+              const thumbCls = 'appearance-none bg-transparent absolute inset-0 w-full h-full cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-[18px] [&::-webkit-slider-thumb]:w-[18px] [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-primary [&::-webkit-slider-thumb]:shadow-md [&::-webkit-slider-thumb]:transition-transform [&::-webkit-slider-thumb]:hover:scale-110 [&::-webkit-slider-runnable-track]:bg-transparent [&::-moz-range-thumb]:h-[18px] [&::-moz-range-thumb]:w-[18px] [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-white [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-primary [&::-moz-range-thumb]:shadow-md [&::-moz-range-track]:bg-transparent'
+              const unit = form.budgetType === 'hourly' ? '/hr' : '/day'
+
+              const avgLines = form.careTypes.map(ct => {
+                const avg = avgRatesByCareType[ct]
+                if (!avg) return null
+                const typeLabel = ct.replace(/-/g, ' ')
+                return (
+                  <p key={ct} className="text-xs text-muted-foreground capitalize">
+                    {typeLabel} caregivers typically earn <span className="font-medium text-foreground">${avg.min}–${avg.max}{unit}</span> on average
                   </p>
-                )}
-                <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">$</span>
-                  <input type="number" min="0" value={form.budgetAmount}
-                    onChange={(e) => setForm((f) => ({ ...f, budgetAmount: e.target.value }))}
-                    className="w-full rounded-lg border border-border pl-8 pr-4 py-3 text-sm focus:border-primary focus:outline-none" />
+                )
+              }).filter(Boolean)
+
+              return (
+                <div className="space-y-4">
+                  <div className="px-1">
+                    <div className="relative h-5 flex items-center">
+                      <div className="absolute inset-x-0 h-[5px] rounded-full bg-muted" />
+                      <div
+                        className="absolute h-[5px] rounded-full bg-primary"
+                        style={{ left: `${loPct}%`, right: `${100 - hiPct}%` }}
+                      />
+                      <input
+                        type="range"
+                        min={SMIN}
+                        max={SMAX}
+                        value={lo}
+                        onChange={e => {
+                          const v = Number(e.target.value)
+                          setForm(f => ({ ...f, budgetMin: String(v) }))
+                          if (v > hi) setForm(f => ({ ...f, budgetMax: String(v) }))
+                        }}
+                        style={{ zIndex: lo >= hi - 2 ? 5 : 3 }}
+                        className={thumbCls}
+                      />
+                      <input
+                        type="range"
+                        min={SMIN}
+                        max={SMAX}
+                        value={hi}
+                        onChange={e => {
+                          const v = Number(e.target.value)
+                          setForm(f => ({ ...f, budgetMax: String(v) }))
+                          if (v < lo) setForm(f => ({ ...f, budgetMin: String(v) }))
+                        }}
+                        style={{ zIndex: lo >= hi - 2 ? 3 : 5 }}
+                        className={thumbCls}
+                      />
+                    </div>
+                    <div className="flex justify-between mt-1">
+                      <span className="text-xs text-muted-foreground">$10</span>
+                      <span className="text-xs text-muted-foreground">$100+</span>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-medium mb-1">Min rate</label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">$</span>
+                        <input
+                          type="number"
+                          min={SMIN}
+                          value={form.budgetMin}
+                          onChange={e => setForm(f => ({ ...f, budgetMin: e.target.value }))}
+                          className="w-full rounded-lg border border-border pl-7 pr-3 py-2.5 text-sm focus:border-primary focus:outline-none"
+                          placeholder="10"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium mb-1">Max rate</label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">$</span>
+                        <input
+                          type="number"
+                          min={SMIN}
+                          value={form.budgetMax}
+                          onChange={e => setForm(f => ({ ...f, budgetMax: e.target.value }))}
+                          className="w-full rounded-lg border border-border pl-7 pr-3 py-2.5 text-sm focus:border-primary focus:outline-none"
+                          placeholder="100+"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  {avgLines.length > 0 && (
+                    <div className="space-y-1">
+                      {avgLines}
+                    </div>
+                  )}
                 </div>
-                {form.budgetType === 'hourly' && avgHourlyMin !== null && avgHourlyMax !== null && form.budgetAmount && (
-                  (() => {
-                    const amt = Number(form.budgetAmount)
-                    if (amt > 0 && (amt < avgHourlyMin || amt > avgHourlyMax)) {
-                      return (
-                        <p className="text-xs text-amber-600 dark:text-amber-400">
-                          This rate is outside the average range and may result in fewer matches.
-                        </p>
-                      )
-                    }
-                    return null
-                  })()
-                )}
-              </div>
-            )}
+              )
+            })()}
           </div>
         </div>
       )}
