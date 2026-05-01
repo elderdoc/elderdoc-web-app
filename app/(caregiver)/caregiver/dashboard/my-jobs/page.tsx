@@ -30,7 +30,7 @@ export default async function MyJobsPage() {
       frequency:     careRequests.frequency,
       schedule:      careRequests.schedule,
       startDate:     careRequests.startDate,
-      budgetAmount:  careRequests.budgetAmount,
+      budgetMin:     careRequests.budgetMin,
       clientName:    users.name,
       recipientName: careRecipients.name,
     })
@@ -57,7 +57,7 @@ export default async function MyJobsPage() {
                 ...job,
                 title: job.title ?? `${CARE_TYPE_LABELS[job.careType] ?? job.careType} Request`,
                 careTypeLabel: CARE_TYPE_LABELS[job.careType] ?? job.careType,
-                budgetAmount: job.budgetAmount ?? null,
+                budgetMin: job.budgetMin ?? null,
               }}
             />
           ))}

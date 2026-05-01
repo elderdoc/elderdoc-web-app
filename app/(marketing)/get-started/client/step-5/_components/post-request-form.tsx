@@ -113,9 +113,10 @@ export function PostRequestForm({
           schedule,
           startDate,
           genderPref: genderPref || undefined,
-          languagePref: [],
+          languagesPreferred: [],
+          languagesRequired: [],
           budgetType: budgetType || undefined,
-          budgetAmount: budgetAmount || undefined,
+          budgetMin: budgetAmount || undefined,
           title: title.trim(),
           description: description.trim(),
         })

@@ -29,9 +29,9 @@ export function SuggestedJobCard({ job, rank }: Props) {
     schedule:               null,
     startDate:              null,
     budgetType:             job.budgetType,
-    budgetAmount:           job.budgetAmount,
+    budgetMin:              job.budgetMin,
     genderPref:             null,
-    languagePref:           null,
+    languagesPreferred:     null,
     city:                   job.city,
     state:                  job.state,
     address1:               null,
@@ -76,11 +76,11 @@ export function SuggestedJobCard({ job, rank }: Props) {
                   <span className="capitalize">{job.frequency.replace(/-/g, ' ')}</span>
                 </>
               )}
-              {job.budgetAmount && (
+              {job.budgetMin && (
                 <>
                   <span className="inline-block w-px h-3 bg-border align-middle" />
                   <span className="font-semibold text-foreground">
-                    ${job.budgetAmount}{job.budgetType === 'hourly' ? '/hr' : ''}
+                    ${job.budgetMin}{job.budgetType === 'hourly' ? '/hr' : ''}
                   </span>
                 </>
               )}

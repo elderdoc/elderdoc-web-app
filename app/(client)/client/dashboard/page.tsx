@@ -40,7 +40,7 @@ export default async function ClientDashboard() {
         status:        careRequests.status,
         frequency:     careRequests.frequency,
         budgetType:    careRequests.budgetType,
-        budgetAmount:  careRequests.budgetAmount,
+        budgetMin:     careRequests.budgetMin,
         schedule:      careRequests.schedule,
         createdAt:     careRequests.createdAt,
         recipientName: careRecipients.name,

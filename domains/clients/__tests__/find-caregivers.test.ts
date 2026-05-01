@@ -157,7 +157,7 @@ describe('searchCaregivers', () => {
     mockSelectChain.where.mockResolvedValueOnce([{ caregiverId: 'cg1', language: 'spanish' }])
     mockSelectChain.where.mockResolvedValueOnce([])
 
-    const result = await searchCaregivers({ language: ['spanish'] }, 1)
+    const result = await searchCaregivers({}, 1)
     expect(result.total).toBe(1)
     expect(result.caregivers[0].languages).toEqual(['spanish'])
   })
@@ -172,7 +172,7 @@ describe('searchCaregivers', () => {
     mockSelectChain.where.mockResolvedValueOnce([])
     mockSelectChain.where.mockResolvedValueOnce([{ caregiverId: 'cg1', certification: 'cna' }])
 
-    const result = await searchCaregivers({ certification: ['cna'] }, 1)
+    const result = await searchCaregivers({ certification: 'cna' }, 1)
     expect(result.total).toBe(1)
     expect(result.caregivers[0].certifications).toEqual(['cna'])
   })

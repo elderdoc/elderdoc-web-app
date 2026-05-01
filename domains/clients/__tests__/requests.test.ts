@@ -80,7 +80,7 @@ describe('createCareRequest', () => {
     address: { address1: '123 Main St', city: 'Austin', state: 'Texas' },
     frequency: 'weekly', schedule: [{ day: 'monday', startTime: '09:00', endTime: '17:00' }],
     startDate: '2026-05-01',
-    languagePref: ['english'], title: 'Help for Mom', description: 'Desc',
+    languagesPreferred: ['english'], languagesRequired: [], title: 'Help for Mom', description: 'Desc',
   }
 
   it('throws Unauthorized with no session', async () => {
@@ -109,31 +109,31 @@ describe('createCareRequest', () => {
     expect(result).toEqual({ id: 'new-id' })
   })
 
-  it('passes valid budgetAmount to the insert', async () => {
+  it('passes valid budgetMin to the insert', async () => {
     mockAuth.mockResolvedValue(SESSION as any)
-    await createCareRequest({ ...BASE, budgetType: 'hourly', budgetAmount: '25.00' })
+    await createCareRequest({ ...BASE, budgetType: 'hourly', budgetMin: '25.00' })
     const insertCall = mockChain.values.mock.calls[0][0]
-    expect(insertCall.budgetAmount).toBe('25.00')
+    expect(insertCall.budgetMin).toBe('25.00')
   })
 
-  it('coerces a non-numeric budgetAmount to undefined', async () => {
+  it('coerces a non-numeric budgetMin to undefined', async () => {
     mockAuth.mockResolvedValue(SESSION as any)
-    await createCareRequest({ ...BASE, budgetAmount: 'not-a-number' })
+    await createCareRequest({ ...BASE, budgetMin: 'not-a-number' })
     const insertCall = mockChain.values.mock.calls[0][0]
-    expect(insertCall.budgetAmount).toBeUndefined()
+    expect(insertCall.budgetMin).toBeUndefined()
   })
 
-  it('coerces an empty budgetAmount to undefined', async () => {
+  it('coerces an empty budgetMin to undefined', async () => {
     mockAuth.mockResolvedValue(SESSION as any)
-    await createCareRequest({ ...BASE, budgetAmount: '' })
+    await createCareRequest({ ...BASE, budgetMin: '' })
     const insertCall = mockChain.values.mock.calls[0][0]
-    expect(insertCall.budgetAmount).toBeUndefined()
+    expect(insertCall.budgetMin).toBeUndefined()
   })
 
   it('coerces "Infinity" to undefined', async () => {
     mockAuth.mockResolvedValue(SESSION as any)
-    await createCareRequest({ ...BASE, budgetAmount: 'Infinity' })
+    await createCareRequest({ ...BASE, budgetMin: 'Infinity' })
     const insertCall = mockChain.values.mock.calls[0][0]
-    expect(insertCall.budgetAmount).toBeUndefined()
+    expect(insertCall.budgetMin).toBeUndefined()
   })
 })

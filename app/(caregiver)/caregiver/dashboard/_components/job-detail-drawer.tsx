@@ -18,9 +18,9 @@ export interface JobDetail {
   schedule: Array<{ day: string; startTime: string; endTime: string }> | null
   startDate: string | null
   budgetType: string | null
-  budgetAmount: string | null
+  budgetMin: string | null
   genderPref: string | null
-  languagePref: string[] | null
+  languagesPreferred: string[] | null
   city: string | null
   state: string | null
   address1: string | null
@@ -134,10 +134,10 @@ export function JobDetailDrawer({ job, trigger, onApplied }: Props) {
             <div>
               <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">Details</p>
               <div className="grid grid-cols-2 gap-3">
-                {job.budgetAmount && (
+                {job.budgetMin && (
                   <Tile
                     label="Pay Rate"
-                    value={`$${job.budgetAmount}${job.budgetType === 'hourly' ? '/hr' : job.budgetType === 'daily' ? '/day' : ''}`}
+                    value={`$${job.budgetMin}${job.budgetType === 'hourly' ? '/hr' : job.budgetType === 'daily' ? '/day' : ''}`}
                   />
                 )}
                 {job.startDate && <Tile label="Start Date" value={job.startDate} />}
@@ -180,11 +180,11 @@ export function JobDetailDrawer({ job, trigger, onApplied }: Props) {
             )}
 
             {/* Language preferences */}
-            {job.languagePref && job.languagePref.length > 0 && (
+            {job.languagesPreferred && job.languagesPreferred.length > 0 && (
               <div>
                 <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">Language Preference</p>
                 <div className="flex flex-wrap gap-1.5">
-                  {job.languagePref.map((l) => (
+                  {job.languagesPreferred.map((l) => (
                     <span key={l} className="rounded-md bg-muted px-2.5 py-1 text-xs capitalize">{l}</span>
                   ))}
                 </div>

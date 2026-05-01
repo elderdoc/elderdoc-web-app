@@ -44,7 +44,7 @@ export interface CareRequestCardData {
   status:        string | null
   frequency:     string | null
   budgetType:    string | null
-  budgetAmount:  string | null
+  budgetMin:     string | null
   schedule:      Array<{ day: string; startTime: string; endTime: string }> | null
   createdAt:     Date
   recipientName: string | null
@@ -53,8 +53,8 @@ export interface CareRequestCardData {
 export function CareRequestCard({ req }: { req: CareRequestCardData }) {
   const status = req.status ?? 'draft'
   const careTypeLabel = CARE_TYPE_LABELS[req.careType] ?? req.careType
-  const budget = req.budgetAmount
-    ? `$${Number(req.budgetAmount).toFixed(0)}${BUDGET_SUFFIX[req.budgetType ?? ''] ?? ''}`
+  const budget = req.budgetMin
+    ? `$${Number(req.budgetMin).toFixed(0)}${BUDGET_SUFFIX[req.budgetType ?? ''] ?? ''}`
     : null
   const frequency = req.frequency ? (FREQUENCY_LABELS[req.frequency] ?? req.frequency) : null
   const scheduleCount = req.schedule?.length ?? 0

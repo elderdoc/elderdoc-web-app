@@ -26,8 +26,8 @@ const BUDGET_LABEL: Record<string, string> = {
 function MatchedJobCard({ job, rank }: { job: MatchedJob; rank: number }) {
   const careTypeLabel = CARE_TYPE_LABELS[job.careType] ?? job.careType
   const location = [job.city, job.state].filter(Boolean).join(', ')
-  const budget = job.budgetAmount
-    ? `$${Number(job.budgetAmount).toFixed(0)}${BUDGET_LABEL[job.budgetType ?? ''] ?? ''}`
+  const budget = job.budgetMin
+    ? `$${Number(job.budgetMin).toFixed(0)}${BUDGET_LABEL[job.budgetType ?? ''] ?? ''}`
     : null
 
   return (

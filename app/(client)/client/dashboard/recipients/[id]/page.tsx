@@ -142,7 +142,7 @@ export default async function RecipientDetailPage({ params }: PageProps) {
               <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-3">Functional Status</h2>
               <div className="space-y-4">
                 {CLIENT_STATUS_GROUPS.map((group) => {
-                  const checked = group.items.filter(item => r.clientStatus![item.key])
+                  const checked = group.items.filter(item => (r.clientStatus as Record<string, unknown>)?.[item.key])
                   if (checked.length === 0) return null
                   return (
                     <div key={group.label}>

@@ -26,9 +26,11 @@ export default async function EditRequestPage({ params }: PageProps) {
         schedule:      careRequests.schedule,
         startDate:     careRequests.startDate,
         genderPref:    careRequests.genderPref,
-        languagePref:  careRequests.languagePref,
+        languagesPreferred: careRequests.languagesPreferred,
+        languagesRequired:  careRequests.languagesRequired,
         budgetType:    careRequests.budgetType,
-        budgetAmount:  careRequests.budgetAmount,
+        budgetMin:     careRequests.budgetMin,
+        budgetMax:     careRequests.budgetMax,
         recipientName: careRecipients.name,
       })
       .from(careRequests)

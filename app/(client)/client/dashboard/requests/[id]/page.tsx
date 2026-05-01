@@ -49,9 +49,9 @@ export default async function CareRequestDetailPage({ params }: PageProps) {
         schedule:      careRequests.schedule,
         startDate:     careRequests.startDate,
         genderPref:    careRequests.genderPref,
-        languagePref:  careRequests.languagePref,
+        languagesPreferred: careRequests.languagesPreferred,
         budgetType:    careRequests.budgetType,
-        budgetAmount:  careRequests.budgetAmount,
+        budgetMin:     careRequests.budgetMin,
         createdAt:     careRequests.createdAt,
         recipientName: careRecipients.name,
         recipientRel:  careRecipients.relationship,
@@ -96,8 +96,8 @@ export default async function CareRequestDetailPage({ params }: PageProps) {
 
   const status = req.status ?? 'draft'
   const careTypeLabel = CARE_TYPE_LABELS[req.careType] ?? req.careType
-  const budget = req.budgetAmount
-    ? `$${Number(req.budgetAmount).toFixed(0)}${BUDGET_SUFFIX[req.budgetType ?? ''] ?? ''}`
+  const budget = req.budgetMin
+    ? `$${Number(req.budgetMin).toFixed(0)}${BUDGET_SUFFIX[req.budgetType ?? ''] ?? ''}`
     : null
   const location = [loc?.address1, loc?.city, loc?.state].filter(Boolean).join(', ')
 
@@ -218,18 +218,18 @@ export default async function CareRequestDetailPage({ params }: PageProps) {
           </>
         )}
 
-        {(location || req.languagePref?.length) && (
+        {(location || req.languagesPreferred?.length) && (
           <>
             <hr className="border-border" />
             <section>
               <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-4">Location & Preferences</h2>
               <dl className="space-y-3">
                 {location && <Row label="Location" value={location} />}
-                {req.languagePref && req.languagePref.length > 0 && (
+                {req.languagesPreferred && req.languagesPreferred.length > 0 && (
                   <div className="flex gap-4">
                     <dt className="text-sm text-muted-foreground w-36 shrink-0">Languages</dt>
                     <dd className="flex flex-wrap gap-1.5">
-                      {req.languagePref.map((l) => (
+                      {req.languagesPreferred.map((l: string) => (
                         <span key={l} className="rounded bg-muted px-2 py-0.5 text-xs capitalize">{l}</span>
                       ))}
                     </dd>

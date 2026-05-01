@@ -58,9 +58,9 @@ export default async function FindJobsPage() {
       schedule:               careRequests.schedule,
       startDate:              careRequests.startDate,
       genderPref:             careRequests.genderPref,
-      languagePref:           careRequests.languagePref,
+      languagesPreferred:     careRequests.languagesPreferred,
       budgetType:             careRequests.budgetType,
-      budgetAmount:           careRequests.budgetAmount,
+      budgetMin:              careRequests.budgetMin,
       createdAt:              careRequests.createdAt,
       city:                   careRequestLocations.city,
       state:                  careRequestLocations.state,
@@ -123,9 +123,9 @@ export default async function FindJobsPage() {
 
                   <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
                     {req.startDate && <span>Starts {req.startDate}</span>}
-                    {req.budgetAmount && (
+                    {req.budgetMin && (
                       <span className="font-medium text-foreground">
-                        ${req.budgetAmount}{req.budgetType === 'hourly' ? '/hr' : req.budgetType === 'daily' ? '/day' : ''}
+                        ${req.budgetMin}{req.budgetType === 'hourly' ? '/hr' : req.budgetType === 'daily' ? '/day' : ''}
                       </span>
                     )}
                     {req.recipientName && <span>For: {req.recipientName}</span>}

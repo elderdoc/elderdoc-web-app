@@ -38,7 +38,7 @@ export interface JobCardData {
   frequency: string | null
   schedule: Array<{ day: string; startTime: string; endTime: string }> | null
   startDate: string | null
-  budgetAmount: string | null
+  budgetMin: string | null
   clientName: string | null
   recipientName: string | null
 }
@@ -61,7 +61,7 @@ export function JobCard({ job }: Props) {
   const statusLabel = STATUS_LABELS[job.status ?? 'active'] ?? job.status
   const statusClass = STATUS_CLASSES[job.status ?? 'active'] ?? 'bg-muted text-muted-foreground'
   const freqLabel = job.frequency ? (FREQUENCY_LABELS[job.frequency] ?? job.frequency) : null
-  const rateLabel = job.budgetAmount ? `$${Number(job.budgetAmount).toFixed(0)}/hr` : null
+  const rateLabel = job.budgetMin ? `$${Number(job.budgetMin).toFixed(0)}/hr` : null
 
   return (
     <>

@@ -20,9 +20,11 @@ interface Request {
   schedule: Array<{ day: string; startTime: string; endTime: string }> | null
   startDate: string | null
   genderPref: string | null
-  languagePref: string[] | null
+  languagesPreferred: string[] | null
+  languagesRequired: string[] | null
   budgetType: string | null
-  budgetAmount: string | null
+  budgetMin: string | null
+  budgetMax: string | null
 }
 
 interface Location {
@@ -40,13 +42,15 @@ export function EditRequestForm({ request: req, location }: { request: Request; 
     frequency:     req.frequency ?? '',
     schedule:      req.schedule ?? [] as Array<{ day: string; startTime: string; endTime: string }>,
     startDate:     req.startDate ?? '',
-    genderPref:    req.genderPref ?? '',
-    languagePref:  req.languagePref ?? [],
-    budgetType:    req.budgetType ?? '',
-    budgetAmount:  req.budgetAmount ?? '',
+    genderPref:         req.genderPref ?? '',
+    languagesPreferred: req.languagesPreferred ?? [],
+    languagesRequired:  req.languagesRequired ?? [],
+    budgetType:         req.budgetType ?? '',
+    budgetMin:          req.budgetMin ?? '',
+    budgetMax:          req.budgetMax ?? '',
   })
 
-  function toggle<K extends 'languagePref'>(field: K, key: string) {
+  function toggle<K extends 'languagesPreferred' | 'languagesRequired'>(field: K, key: string) {
     setForm(f => ({
       ...f,
       [field]: (f[field] as string[]).includes(key)
@@ -58,15 +62,17 @@ export function EditRequestForm({ request: req, location }: { request: Request; 
   function handleSave() {
     startTransition(async () => {
       await updateCareRequest(req.id, {
-        title:         form.title || undefined,
-        description:   form.description || undefined,
-        frequency:     form.frequency || undefined,
-        schedule:      form.schedule,
-        startDate:     form.startDate || undefined,
-        genderPref:    form.genderPref || undefined,
-        languagePref:  form.languagePref,
-        budgetType:    form.budgetType || undefined,
-        budgetAmount:  form.budgetAmount || undefined,
+        title:              form.title || undefined,
+        description:        form.description || undefined,
+        frequency:          form.frequency || undefined,
+        schedule:           form.schedule,
+        startDate:          form.startDate || undefined,
+        genderPref:         form.genderPref || undefined,
+        languagesPreferred: form.languagesPreferred,
+        languagesRequired:  form.languagesRequired,
+        budgetType:         form.budgetType || undefined,
+        budgetMin:          form.budgetMin || undefined,
+        budgetMax:          form.budgetMax || undefined,
       })
       router.push(`/client/dashboard/requests/${req.id}`)
       router.refresh()
@@ -140,8 +146,8 @@ export function EditRequestForm({ request: req, location }: { request: Request; 
             <span className="text-sm text-muted-foreground">$</span>
             <input
               type="number"
-              value={form.budgetAmount}
-              onChange={e => setForm(f => ({ ...f, budgetAmount: e.target.value }))}
+              value={form.budgetMin}
+              onChange={e => setForm(f => ({ ...f, budgetMin: e.target.value }))}
               className="w-32 rounded-lg border border-border px-4 py-3 text-sm focus:border-primary focus:outline-none"
               placeholder="0"
             />
@@ -187,9 +193,9 @@ export function EditRequestForm({ request: req, location }: { request: Request; 
               <button
                 key={l.key}
                 type="button"
-                onClick={() => toggle('languagePref', l.key)}
+                onClick={() => toggle('languagesPreferred', l.key)}
                 className={['rounded-xl border-2 px-4 py-2 text-sm font-medium transition-colors',
-                  form.languagePref.includes(l.key) ? 'border-primary bg-primary/5 text-primary' : 'border-border hover:border-primary/50',
+                  form.languagesPreferred.includes(l.key) ? 'border-primary bg-primary/5 text-primary' : 'border-border hover:border-primary/50',
                 ].join(' ')}
               >
                 {l.label}
