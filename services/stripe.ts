@@ -96,6 +96,9 @@ export async function createAndPayInvoice(
       paymentIntentId: `mock_pi_inv_${jobId}`,
     }
   }
+  const convenienceCents = Math.round(feeCents * 8 / 11)
+  const trustCents = feeCents - convenienceCents
+
   await getStripe().invoiceItems.create({
     customer: customerId,
     amount: subtotalCents,
@@ -105,9 +108,16 @@ export async function createAndPayInvoice(
   })
   await getStripe().invoiceItems.create({
     customer: customerId,
-    amount: feeCents,
+    amount: convenienceCents,
     currency: 'usd',
-    description: 'Trust & Support fee (1%)',
+    description: 'Convenience fee (8%)',
+    metadata: { jobId },
+  })
+  await getStripe().invoiceItems.create({
+    customer: customerId,
+    amount: trustCents,
+    currency: 'usd',
+    description: 'Trust & Support fee (3%)',
     metadata: { jobId },
   })
   const invoice = await getStripe().invoices.create({

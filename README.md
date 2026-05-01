@@ -1,36 +1,88 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Elderdoc
+
+A care marketplace platform connecting families with qualified caregivers. Built with Next.js 15, Drizzle ORM, and Stripe.
+
+## Tech Stack
+
+- **Framework:** Next.js 15 (App Router)
+- **Database:** PostgreSQL + Drizzle ORM
+- **Payments:** Stripe (invoices, Connect, escrow)
+- **Storage:** S3-compatible (Cloudflare R2 in production, MinIO locally)
+- **Styling:** Tailwind CSS
+- **Auth:** Custom session-based auth
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+
+- Node.js 20+
+- PostgreSQL
+- MinIO (local S3-compatible storage)
+
+### Setup
 
 ```bash
-bun run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Copy `.env.example` to `.env.local` and fill in the required values:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+cp .env.example .env.local
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Database
 
-## Learn More
+```bash
+# Run migrations
+npm run db:migrate
 
-To learn more about Next.js, take a look at the following resources:
+# Seed with sample data
+npm run db:seed
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Development Server
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+npm run dev
+```
 
-## Deploy on Vercel
+Open [http://localhost:3000](http://localhost:3000).
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Environment Variables
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+| Variable | Description |
+|---|---|
+| `DATABASE_URL` | PostgreSQL connection string |
+| `STRIPE_SECRET_KEY` | Stripe secret key (omit to run in mock mode) |
+| `STRIPE_WEBHOOK_SECRET` | Stripe webhook signing secret |
+| `CRON_SECRET` | Bearer token for cron job endpoints |
+| `STORAGE_ENDPOINT` | S3-compatible endpoint URL |
+| `STORAGE_BUCKET` | S3 bucket name |
+| `STORAGE_ACCESS_KEY` | S3 access key |
+| `STORAGE_SECRET_KEY` | S3 secret key |
+| `ANTHROPIC_API_KEY` | Anthropic API key for AI matching |
+
+## Key Features
+
+- **Care request flow** — multi-step form with schedule, clinical needs, and budget
+- **AI caregiver matching** — ranked suggestions based on care requirements
+- **Shift management** — calendar-based scheduling with clock-in/out
+- **Billing** — automatic weekly invoicing via Stripe with escrow and dispute flow
+- **Caregiver payouts** — Stripe Connect with 7-day hold and auto-release
+
+## Project Structure
+
+```
+app/
+  (client)/       # Client-facing pages
+  (caregiver)/    # Caregiver-facing pages
+  api/            # API routes and cron jobs
+domains/          # Business logic (clients, caregivers, matching, payments)
+db/
+  schema.ts       # Drizzle schema
+  migrations/     # SQL migration files
+services/         # External service clients (Stripe, storage)
+components/       # Shared UI components
+lib/              # Utilities and constants
+```

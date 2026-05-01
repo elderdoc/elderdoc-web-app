@@ -633,6 +633,7 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgRates
                       onChange={v => setForm(f => ({ ...f, sharedEndTime: v }))}
                       increment={increment}
                       placeholder="End time"
+                      minTime={form.sharedStartTime || undefined}
                     />
                   </div>
                 </div>
@@ -655,6 +656,7 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgRates
                           onChange={v => setForm(f => ({ ...f, dayTimes: { ...f.dayTimes, [s.day]: { ...f.dayTimes[s.day], endTime: v } } }))}
                           increment={increment}
                           placeholder="End"
+                          minTime={form.dayTimes[s.day]?.startTime || undefined}
                         />
                         {otherDays.length > 0 && (
                           <div className="relative">
