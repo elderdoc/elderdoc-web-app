@@ -44,50 +44,50 @@ export function Sparkline({
       </defs>
       <path d={areaPath} fill="url(#spark-grad)" />
       <path d={linePath} fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-      {/* Last point dot */}
-      <circle
-        cx={points[points.length - 1][0]}
-        cy={points[points.length - 1][1]}
-        r="3.5"
-        fill={color}
-      />
-      <circle
-        cx={points[points.length - 1][0]}
-        cy={points[points.length - 1][1]}
-        r="6"
-        fill={color}
-        fillOpacity="0.2"
-      />
+      <circle cx={points[points.length - 1][0]} cy={points[points.length - 1][1]} r="3.5" fill={color} />
+      <circle cx={points[points.length - 1][0]} cy={points[points.length - 1][1]} r="6" fill={color} fillOpacity="0.2" />
     </svg>
   )
 }
 
 interface BarChartProps {
-  data: { label: string; value: number }[]
+  data: { label: string; value: number; sublabel?: string }[]
   height?: number
   color?: string
   className?: string
 }
 
-export function BarChart({ data, height = 160, color = 'var(--forest)', className }: BarChartProps) {
+export function BarChart({ data, height = 140, color = 'var(--forest)', className }: BarChartProps) {
   if (data.length === 0) return null
   const max = Math.max(...data.map(d => d.value), 1)
   return (
     <div className={className}>
-      <div className="flex items-end justify-between gap-1.5" style={{ height }}>
+      <div className="flex items-end justify-between gap-2" style={{ height }}>
         {data.map((d, i) => {
-          const h = max > 0 ? (d.value / max) * 100 : 0
+          const pct = max > 0 ? (d.value / max) * 100 : 0
+          const isEmpty = d.value === 0
           return (
-            <div key={i} className="flex-1 flex flex-col items-center gap-2">
-              <div
-                className="w-full rounded-t-md bg-gradient-to-t from-[var(--forest)] to-[var(--forest)]/70 transition-all hover:from-[var(--forest-deep)] relative group/bar"
-                style={{ height: `${Math.max(h, 2)}%` }}
-              >
-                <div className="absolute -top-7 left-1/2 -translate-x-1/2 opacity-0 group-hover/bar:opacity-100 transition-opacity px-2 py-0.5 rounded bg-foreground text-background text-[10px] font-medium tabular-nums whitespace-nowrap">
-                  {d.value}
-                </div>
+            <div key={i} className="flex-1 flex flex-col items-center gap-1.5">
+              {/* value label above bar */}
+              <span className={[
+                'text-[11px] font-semibold tabular-nums leading-none',
+                isEmpty ? 'text-muted-foreground/50' : 'text-foreground/80',
+              ].join(' ')}>
+                {d.value > 0 ? d.value : '—'}
+              </span>
+              <div className="w-full flex items-end" style={{ height: height - 32 }}>
+                <div
+                  className={[
+                    'w-full rounded-t-lg transition-all',
+                    isEmpty
+                      ? 'bg-muted/60'
+                      : 'bg-gradient-to-t from-[var(--forest)] to-[var(--forest)]/70',
+                  ].join(' ')}
+                  style={{ height: `${Math.max(isEmpty ? 8 : pct, 4)}%` }}
+                />
               </div>
-              <div className="text-[10px] text-muted-foreground tabular-nums">{d.label}</div>
+              <span className="text-[10px] text-muted-foreground font-medium">{d.label}</span>
+              {d.sublabel && <span className="text-[9px] text-muted-foreground/60">{d.sublabel}</span>}
             </div>
           )
         })}
@@ -115,14 +115,7 @@ export function Donut({ segments, size = 180, thickness = 22, centerLabel, cente
     <div className={className}>
       <div className="relative" style={{ width: size, height: size }}>
         <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ transform: 'rotate(-90deg)' }}>
-          <circle
-            cx={size / 2}
-            cy={size / 2}
-            r={radius}
-            fill="none"
-            stroke="var(--muted)"
-            strokeWidth={thickness}
-          />
+          <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="var(--muted)" strokeWidth={thickness} />
           {segments.map((s, i) => {
             const len = (s.value / total) * circumference
             const dasharray = `${len} ${circumference - len}`
@@ -131,9 +124,7 @@ export function Donut({ segments, size = 180, thickness = 22, centerLabel, cente
             return (
               <circle
                 key={i}
-                cx={size / 2}
-                cy={size / 2}
-                r={radius}
+                cx={size / 2} cy={size / 2} r={radius}
                 fill="none"
                 stroke={s.color}
                 strokeWidth={thickness}

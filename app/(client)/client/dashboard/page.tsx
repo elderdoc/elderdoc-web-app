@@ -7,7 +7,18 @@ import Link from 'next/link'
 import { Plus, Users, FileText, Sparkles, ArrowRight, Heart, Activity, TrendingUp } from 'lucide-react'
 
 import { CareRequestCard } from './_components/care-request-card'
-import { Sparkline, BarChart, Donut } from '@/components/charts'
+import { BarChart, Donut } from '@/components/charts'
+
+function formatCareType(key: string): string {
+  const map: Record<string, string> = {
+    'personal-care': 'Personal Care',
+    'companionship': 'Companionship',
+    'dementia-care': 'Dementia Care',
+    'mobility-assistance': 'Mobility Assistance',
+    'post-hospital-recovery': 'Post-Hospital Recovery',
+  }
+  return map[key] ?? key.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+}
 
 type ActivityItem =
   | { type: 'recipient'; name: string; createdAt: Date }
@@ -83,9 +94,13 @@ export default async function ClientDashboard() {
   for (const r of shiftRows) {
     shiftsByDay[r.date] = (shiftsByDay[r.date] ?? 0) + 1
   }
-  const sparkData = last7Days.map(d => shiftsByDay[format(d, 'yyyy-MM-dd')] ?? 0)
-  const barData = last7Days.map(d => ({ label: format(d, 'EEE')[0], value: shiftsByDay[format(d, 'yyyy-MM-dd')] ?? 0 }))
-  const totalShifts = sparkData.reduce((s, n) => s + n, 0)
+  const barData = last7Days.map(d => ({
+    label: format(d, 'EEE'),
+    sublabel: format(d, 'M/d'),
+    value: shiftsByDay[format(d, 'yyyy-MM-dd')] ?? 0,
+  }))
+  const totalShifts = barData.reduce((s, d) => s + d.value, 0)
+  const busyDay = barData.reduce((best, d) => d.value > best.value ? d : best, barData[0])
 
   // Care types breakdown for donut
   const careTypeRows = await db
@@ -95,7 +110,7 @@ export default async function ClientDashboard() {
     .groupBy(careRequests.careType)
   const donutColors = ['var(--forest)', 'var(--terracotta)', '#7C9885', '#D4A574', '#A89F8E']
   const donutSegments = careTypeRows.slice(0, 5).map((r, i) => ({
-    label: r.careType,
+    label: formatCareType(r.careType),
     value: Number(r.count),
     color: donutColors[i] ?? donutColors[0],
   }))
@@ -184,47 +199,56 @@ export default async function ClientDashboard() {
 
       {/* Charts row */}
       <section className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-10">
-        {/* Shift activity sparkline */}
-        <div className="md:col-span-2 rounded-[18px] border border-border bg-card p-6 overflow-hidden relative">
-          <div className="flex items-start justify-between gap-4 mb-4">
+        {/* Care activity bar chart */}
+        <div className="md:col-span-2 rounded-[18px] border border-border bg-card p-6 overflow-hidden">
+          <div className="flex items-start justify-between gap-4 mb-1">
             <div>
               <div className="flex items-center gap-2 text-[12.5px] text-muted-foreground">
                 <TrendingUp className="h-3.5 w-3.5" />
                 Last 7 days
               </div>
-              <h3 className="mt-1 text-[18px] font-semibold tracking-[-0.01em]">Care activity</h3>
+              <h3 className="mt-0.5 text-[18px] font-semibold tracking-[-0.01em]">Care activity</h3>
             </div>
-            <div className="text-right">
+            <div className="text-right shrink-0">
               <div className="text-[28px] font-semibold tabular-nums tracking-tight leading-none">{totalShifts}</div>
-              <div className="mt-1 text-[11.5px] text-muted-foreground">shifts</div>
+              <div className="mt-0.5 text-[11.5px] text-muted-foreground">shifts this week</div>
             </div>
           </div>
-          <div className="h-[120px] -mx-2">
-            <Sparkline data={sparkData} width={600} height={120} className="w-full h-full" />
-          </div>
-          <div className="mt-3 grid grid-cols-7 gap-1 text-center">
-            {barData.map((d, i) => (
-              <div key={i} className="text-[11px] tabular-nums text-muted-foreground">
-                {d.label}
+          {totalShifts === 0 ? (
+            <div className="flex flex-col items-center justify-center py-8 text-center">
+              <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center mb-3">
+                <TrendingUp className="h-4 w-4 text-muted-foreground" />
               </div>
-            ))}
-          </div>
+              <p className="text-[13px] text-muted-foreground">No care shifts this week yet.</p>
+              <p className="text-[12px] text-muted-foreground/60 mt-0.5">Shifts will appear here once scheduled.</p>
+            </div>
+          ) : (
+            <>
+              <BarChart data={barData} height={148} className="mt-4" />
+              {busyDay.value > 0 && (
+                <p className="mt-3 text-[12px] text-muted-foreground">
+                  Busiest day: <span className="font-medium text-foreground/80">{busyDay.label}</span> with{' '}
+                  <span className="font-medium text-foreground/80">{busyDay.value} shift{busyDay.value !== 1 ? 's' : ''}</span>
+                </p>
+              )}
+            </>
+          )}
         </div>
 
         {/* Care types donut */}
         <div className="rounded-[18px] border border-border bg-card p-6 flex flex-col">
-          <div className="flex items-center gap-2 text-[12.5px] text-muted-foreground mb-1">
+          <div className="flex items-center gap-2 text-[12.5px] text-muted-foreground mb-0.5">
             <Sparkles className="h-3.5 w-3.5" />
             Breakdown
           </div>
           <h3 className="text-[18px] font-semibold tracking-[-0.01em]">Care types</h3>
           {donutSegments.length === 0 ? (
-            <div className="flex-1 flex items-center justify-center py-6">
-              <div className="text-center">
-                <div className="mx-auto h-12 w-12 rounded-full bg-muted flex items-center justify-center mb-2">
+            <div className="flex-1 flex items-center justify-center py-6 text-center">
+              <div>
+                <div className="mx-auto h-12 w-12 rounded-full bg-muted flex items-center justify-center mb-3">
                   <Sparkles className="h-5 w-5 text-muted-foreground" />
                 </div>
-                <p className="text-[12.5px] text-muted-foreground">No data yet</p>
+                <p className="text-[12.5px] text-muted-foreground">No requests yet</p>
               </div>
             </div>
           ) : (
@@ -238,16 +262,23 @@ export default async function ClientDashboard() {
               />
             </div>
           )}
-          <div className="space-y-1.5 text-[11.5px]">
-            {donutSegments.slice(0, 3).map((s) => (
-              <div key={s.label} className="flex items-center justify-between">
-                <div className="flex items-center gap-1.5 min-w-0">
-                  <span className="h-2 w-2 rounded-full shrink-0" style={{ background: s.color }} />
-                  <span className="truncate text-foreground/80">{s.label}</span>
+          <div className="space-y-2 text-[12px]">
+            {donutSegments.slice(0, 4).map((s) => {
+              const pct = totalRequests > 0 ? Math.round((s.value / totalRequests) * 100) : 0
+              return (
+                <div key={s.label} className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="h-2.5 w-2.5 rounded-full shrink-0" style={{ background: s.color }} />
+                    <span className="truncate text-foreground/80">{s.label}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 shrink-0 tabular-nums text-muted-foreground">
+                    <span>{s.value}</span>
+                    <span className="text-muted-foreground/50">·</span>
+                    <span>{pct}%</span>
+                  </div>
                 </div>
-                <span className="tabular-nums text-muted-foreground">{s.value}</span>
-              </div>
-            ))}
+              )
+            })}
           </div>
         </div>
       </section>
