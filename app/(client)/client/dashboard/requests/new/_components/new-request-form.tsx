@@ -1098,10 +1098,11 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgRates
               })}
             </div>
             {form.budgetType && (() => {
-              const SMIN = 10, SMAX = 100
               const isDaily = form.budgetType === 'daily'
+              const SMIN = 10
+              const SMAX = isDaily ? 400 : 100
               const unit = isDaily ? '/day' : '/hr'
-              const thumbCls = 'appearance-none bg-transparent absolute inset-0 w-full h-full cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-[18px] [&::-webkit-slider-thumb]:w-[18px] [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-primary [&::-webkit-slider-thumb]:shadow-md [&::-webkit-slider-thumb]:transition-transform [&::-webkit-slider-thumb]:hover:scale-110 [&::-webkit-slider-runnable-track]:bg-transparent [&::-moz-range-thumb]:h-[18px] [&::-moz-range-thumb]:w-[18px] [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-white [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-primary [&::-moz-range-thumb]:shadow-md [&::-moz-range-track]:bg-transparent'
+              const thumbCls = 'appearance-none bg-transparent absolute inset-0 w-full h-full cursor-pointer pointer-events-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-moz-range-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-[18px] [&::-webkit-slider-thumb]:w-[18px] [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-primary [&::-webkit-slider-thumb]:shadow-md [&::-webkit-slider-thumb]:transition-transform [&::-webkit-slider-thumb]:hover:scale-110 [&::-webkit-slider-runnable-track]:bg-transparent [&::-moz-range-thumb]:h-[18px] [&::-moz-range-thumb]:w-[18px] [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-white [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-primary [&::-moz-range-thumb]:shadow-md [&::-moz-range-track]:bg-transparent'
 
               const avgLines = form.careTypes.map(ct => {
                 const avg = avgRatesByCareType[ct]
@@ -1134,7 +1135,7 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgRates
                       </div>
                       <div className="flex justify-between mt-1">
                         <span className="text-xs text-muted-foreground">$10</span>
-                        <span className="text-xs text-muted-foreground">$100+</span>
+                        <span className="text-xs text-muted-foreground">${SMAX}+</span>
                       </div>
                     </div>
                     <div className="max-w-[200px]">
@@ -1191,7 +1192,7 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgRates
                     </div>
                     <div className="flex justify-between mt-1">
                       <span className="text-xs text-muted-foreground">$10</span>
-                      <span className="text-xs text-muted-foreground">$100+</span>
+                      <span className="text-xs text-muted-foreground">${SMAX}+</span>
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
@@ -1352,7 +1353,48 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgRates
       {step === 9 && (
         <div className="space-y-4">
           {matchingState === 'matching' && (
-            <LoadingQuotes label="Finding your best matches…" />
+            <div className="py-10 flex flex-col items-center text-center gap-8">
+              {/* Animated avatar stack */}
+              <div className="relative flex items-center justify-center h-24 w-24">
+                <div className="absolute inset-0 rounded-full bg-[var(--forest-soft)] animate-ping opacity-30" />
+                <div className="absolute inset-2 rounded-full bg-[var(--forest-soft)] animate-ping opacity-20" style={{ animationDelay: '0.4s' }} />
+                <div className="relative flex h-24 w-24 items-center justify-center rounded-full bg-[var(--forest-soft)] border-4 border-background shadow-[0_8px_32px_-8px_rgba(15,77,52,0.35)]">
+                  <Sparkles className="h-9 w-9 text-[var(--forest-deep)]" />
+                </div>
+              </div>
+
+              {/* Heading */}
+              <div className="space-y-2">
+                <h2 className="text-[22px] font-semibold tracking-tight">Finding your best matches</h2>
+                <p className="text-[14px] text-muted-foreground max-w-sm leading-relaxed">
+                  We're scanning caregivers in your area based on schedule, skills, and preferences.
+                </p>
+              </div>
+
+              {/* Skeleton cards */}
+              <div className="w-full space-y-3">
+                {[0.2, 0.5, 0.8].map((delay) => (
+                  <div key={delay} className="rounded-xl border border-border bg-card p-4 flex items-center gap-4"
+                    style={{ opacity: 1 - delay * 0.35, animation: `pulse 2s ease-in-out ${delay}s infinite` }}>
+                    <div className="h-12 w-12 shrink-0 rounded-full bg-muted animate-pulse" />
+                    <div className="flex-1 space-y-2">
+                      <div className="h-3 w-32 rounded-full bg-muted animate-pulse" />
+                      <div className="h-2.5 w-48 rounded-full bg-muted animate-pulse" />
+                      <div className="flex gap-1.5">
+                        <div className="h-2 w-16 rounded-full bg-muted animate-pulse" />
+                        <div className="h-2 w-20 rounded-full bg-muted animate-pulse" />
+                      </div>
+                    </div>
+                    <div className="h-8 w-20 shrink-0 rounded-full bg-muted animate-pulse" />
+                  </div>
+                ))}
+              </div>
+
+              {/* Quote */}
+              <div className="max-w-sm">
+                <LoadingQuotes label="" />
+              </div>
+            </div>
           )}
 
           {matchingState === 'error' && (

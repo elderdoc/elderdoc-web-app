@@ -145,7 +145,7 @@ export default async function CaregiverProfilePage({ params }: PageProps) {
               elderdoc
             </span>
           </div>
-          <div className="px-6 sm:px-8 pb-6">
+          <div className="relative z-10 px-6 sm:px-8 pb-6">
             {/* Avatar + action buttons */}
             <div className="flex items-end justify-between gap-4 flex-wrap -mt-12">
               {(p.photoUrl ?? p.image) ? (

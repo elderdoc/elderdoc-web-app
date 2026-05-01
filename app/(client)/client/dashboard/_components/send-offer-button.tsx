@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { sendOffer } from '@/domains/matching/send-offer'
+import { useAppToast } from '@/components/toast'
 
 interface Props {
   requestId: string
@@ -19,6 +20,7 @@ export function SendOfferButton({ requestId, caregiverId, caregiverName, score, 
   const [sent, setSent] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
+  const appToast = useAppToast()
 
   function handleOpen() {
     setMessage(DEFAULT_MESSAGE)
@@ -33,6 +35,7 @@ export function SendOfferButton({ requestId, caregiverId, caregiverName, score, 
         await sendOffer(requestId, caregiverId, score, reason, message.trim() || DEFAULT_MESSAGE)
         setSent(true)
         setOpen(false)
+        appToast.offerSent(caregiverName ?? undefined)
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to send offer.')
       }
