@@ -68,9 +68,16 @@ export default async function RecipientDetailPage({ params }: PageProps) {
       {/* Hero card */}
       <div className="rounded-[20px] border border-border bg-card overflow-hidden shadow-[0_4px_20px_-8px_rgba(15,20,16,0.08)]">
         <div className="relative">
-          {/* Banner gradient */}
-          <div className="h-32 bg-gradient-to-br from-[var(--forest-soft)] via-[var(--cream-deep)] to-[var(--forest-soft)]" />
-          <div className="px-6 sm:px-8 pb-6 -mt-12">
+          {/* Green banner with elderdoc watermark */}
+          <div className="relative h-44 bg-[var(--forest)] overflow-hidden">
+            <span
+              aria-hidden
+              className="pointer-events-none absolute right-6 top-1/2 -translate-y-1/2 select-none text-[80px] font-bold tracking-tight text-white/10 leading-none"
+            >
+              elderdoc
+            </span>
+          </div>
+          <div className="px-6 sm:px-8 pb-6 -mt-14">
             <div className="flex items-end justify-between gap-4 flex-wrap">
               <div className="flex items-end gap-4">
                 {r.photoUrl ? (
