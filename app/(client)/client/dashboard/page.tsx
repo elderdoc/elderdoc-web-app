@@ -1,12 +1,13 @@
 import { requireRole } from '@/domains/auth/session'
 import { db } from '@/services/db'
-import { careRecipients, careRequests, matches } from '@/db/schema'
-import { eq, and, desc, count } from 'drizzle-orm'
-import { formatDistanceToNow } from 'date-fns'
+import { careRecipients, careRequests, matches, shifts, jobs } from '@/db/schema'
+import { eq, and, desc, count, sql } from 'drizzle-orm'
+import { formatDistanceToNow, subDays, format } from 'date-fns'
 import Link from 'next/link'
-import { Plus, Users, FileText, Sparkles, ArrowRight, Heart, Activity } from 'lucide-react'
+import { Plus, Users, FileText, Sparkles, ArrowRight, Heart, Activity, TrendingUp } from 'lucide-react'
 
 import { CareRequestCard } from './_components/care-request-card'
+import { Sparkline, BarChart, Donut } from '@/components/charts'
 
 type ActivityItem =
   | { type: 'recipient'; name: string; createdAt: Date }
@@ -69,6 +70,36 @@ export default async function ClientDashboard() {
   ]
     .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
     .slice(0, 10)
+
+  // Build 7-day shift activity for sparkline
+  const today = new Date()
+  const last7Days = Array.from({ length: 7 }).map((_, i) => subDays(today, 6 - i))
+  const shiftRows = await db
+    .select({ date: shifts.date, status: shifts.status })
+    .from(shifts)
+    .innerJoin(jobs, eq(shifts.jobId, jobs.id))
+    .where(eq(jobs.clientId, userId))
+  const shiftsByDay: Record<string, number> = {}
+  for (const r of shiftRows) {
+    shiftsByDay[r.date] = (shiftsByDay[r.date] ?? 0) + 1
+  }
+  const sparkData = last7Days.map(d => shiftsByDay[format(d, 'yyyy-MM-dd')] ?? 0)
+  const barData = last7Days.map(d => ({ label: format(d, 'EEE')[0], value: shiftsByDay[format(d, 'yyyy-MM-dd')] ?? 0 }))
+  const totalShifts = sparkData.reduce((s, n) => s + n, 0)
+
+  // Care types breakdown for donut
+  const careTypeRows = await db
+    .select({ careType: careRequests.careType, count: count() })
+    .from(careRequests)
+    .where(eq(careRequests.clientId, userId))
+    .groupBy(careRequests.careType)
+  const donutColors = ['var(--forest)', 'var(--terracotta)', '#7C9885', '#D4A574', '#A89F8E']
+  const donutSegments = careTypeRows.slice(0, 5).map((r, i) => ({
+    label: r.careType,
+    value: Number(r.count),
+    color: donutColors[i] ?? donutColors[0],
+  }))
+  const totalRequests = careTypeRows.reduce((s, r) => s + Number(r.count), 0)
 
   const firstName = session.user.name?.split(' ')[0] ?? 'there'
 
@@ -149,6 +180,76 @@ export default async function ClientDashboard() {
             </Link>
           )
         })}
+      </section>
+
+      {/* Charts row */}
+      <section className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-10">
+        {/* Shift activity sparkline */}
+        <div className="md:col-span-2 rounded-[18px] border border-border bg-card p-6 overflow-hidden relative">
+          <div className="flex items-start justify-between gap-4 mb-4">
+            <div>
+              <div className="flex items-center gap-2 text-[12.5px] text-muted-foreground">
+                <TrendingUp className="h-3.5 w-3.5" />
+                Last 7 days
+              </div>
+              <h3 className="mt-1 text-[18px] font-semibold tracking-[-0.01em]">Care activity</h3>
+            </div>
+            <div className="text-right">
+              <div className="text-[28px] font-semibold tabular-nums tracking-tight leading-none">{totalShifts}</div>
+              <div className="mt-1 text-[11.5px] text-muted-foreground">shifts</div>
+            </div>
+          </div>
+          <div className="h-[120px] -mx-2">
+            <Sparkline data={sparkData} width={600} height={120} className="w-full h-full" />
+          </div>
+          <div className="mt-3 grid grid-cols-7 gap-1 text-center">
+            {barData.map((d, i) => (
+              <div key={i} className="text-[11px] tabular-nums text-muted-foreground">
+                {d.label}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Care types donut */}
+        <div className="rounded-[18px] border border-border bg-card p-6 flex flex-col">
+          <div className="flex items-center gap-2 text-[12.5px] text-muted-foreground mb-1">
+            <Sparkles className="h-3.5 w-3.5" />
+            Breakdown
+          </div>
+          <h3 className="text-[18px] font-semibold tracking-[-0.01em]">Care types</h3>
+          {donutSegments.length === 0 ? (
+            <div className="flex-1 flex items-center justify-center py-6">
+              <div className="text-center">
+                <div className="mx-auto h-12 w-12 rounded-full bg-muted flex items-center justify-center mb-2">
+                  <Sparkles className="h-5 w-5 text-muted-foreground" />
+                </div>
+                <p className="text-[12.5px] text-muted-foreground">No data yet</p>
+              </div>
+            </div>
+          ) : (
+            <div className="flex-1 flex items-center justify-center mt-2 mb-3">
+              <Donut
+                segments={donutSegments}
+                size={140}
+                thickness={18}
+                centerValue={String(totalRequests)}
+                centerLabel="requests"
+              />
+            </div>
+          )}
+          <div className="space-y-1.5 text-[11.5px]">
+            {donutSegments.slice(0, 3).map((s) => (
+              <div key={s.label} className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <span className="h-2 w-2 rounded-full shrink-0" style={{ background: s.color }} />
+                  <span className="truncate text-foreground/80">{s.label}</span>
+                </div>
+                <span className="tabular-nums text-muted-foreground">{s.value}</span>
+              </div>
+            ))}
+          </div>
+        </div>
       </section>
 
       {/* Two-column */}
