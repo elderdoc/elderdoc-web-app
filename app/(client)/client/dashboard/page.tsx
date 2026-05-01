@@ -121,7 +121,7 @@ export default async function ClientDashboard() {
   const stats = [
     { label: 'Care Recipients', value: recipientCount.value, href: '/client/dashboard/recipients', icon: Users, color: 'forest' },
     { label: 'Active Requests', value: activeRequestCount.value, href: '/client/dashboard/requests', icon: FileText, color: 'forest' },
-    { label: 'Pending Matches', value: pendingMatchCount.value, href: '/client/dashboard/find-caregivers', icon: Sparkles, color: 'forest' },
+    { label: 'Pending Matches', value: pendingMatchCount.value, href: '/client/dashboard/requests', icon: Sparkles, color: 'forest' },
   ]
 
   return (
