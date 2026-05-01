@@ -19,7 +19,8 @@ export type MatchedJob = {
   distanceMiles: number | null
   description: string | null
   budgetType: string | null
-  budgetAmount: string | null
+  budgetMin: string | null
+  budgetMax: string | null
   clientName: string | null
 }
 
@@ -73,9 +74,11 @@ export async function matchJobsForCaregiver(caregiverProfileId: string): Promise
       careType:     careRequests.careType,
       frequency:    careRequests.frequency,
       schedule:     careRequests.schedule,
-      languagePref: careRequests.languagePref,
-      budgetType:   careRequests.budgetType,
-      budgetAmount: careRequests.budgetAmount,
+      languagesPreferred: careRequests.languagesPreferred,
+      languagesRequired:  careRequests.languagesRequired,
+      budgetType:         careRequests.budgetType,
+      budgetMin:          careRequests.budgetMin,
+      budgetMax:          careRequests.budgetMax,
       description:  careRequests.description,
       clientId:     careRequests.clientId,
       city:         careRequestLocations.city,
@@ -129,9 +132,11 @@ ${JSON.stringify(openRequests.map(r => ({
     careType:     r.careType,
     frequency:    r.frequency,
     schedule:     r.schedule,
-    languagePref: r.languagePref,
-    budgetType:   r.budgetType,
-    budgetAmount: r.budgetAmount,
+    languagesPreferred: r.languagesPreferred,
+    languagesRequired:  r.languagesRequired,
+    budgetType:         r.budgetType,
+    budgetMin:          r.budgetMin,
+    budgetMax:          r.budgetMax,
     description:  r.description,
     state:        r.state,
   })))}`
@@ -182,7 +187,8 @@ ${JSON.stringify(openRequests.map(r => ({
         distanceMiles,
         description:   req?.description ?? null,
         budgetType:    req?.budgetType ?? null,
-        budgetAmount:  req?.budgetAmount ? String(req.budgetAmount) : null,
+        budgetMin:     req?.budgetMin ? String(req.budgetMin) : null,
+        budgetMax:     req?.budgetMax ? String(req.budgetMax) : null,
         clientName:    clientMap.get(req?.clientId ?? '') ?? null,
       }
     })

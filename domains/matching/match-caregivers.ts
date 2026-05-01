@@ -36,8 +36,10 @@ export async function matchCaregivers(requestId: string): Promise<RankedCandidat
       careType:      careRequests.careType,
       frequency:     careRequests.frequency,
       schedule:      careRequests.schedule,
-      languagePref:  careRequests.languagePref,
-      budgetAmount:  careRequests.budgetAmount,
+      languagesPreferred: careRequests.languagesPreferred,
+      languagesRequired:  careRequests.languagesRequired,
+      budgetMin:          careRequests.budgetMin,
+      budgetMax:          careRequests.budgetMax,
       budgetType:    careRequests.budgetType,
       title:         careRequests.title,
       description:   careRequests.description,
@@ -181,9 +183,10 @@ Schedule: ${requestRow.frequency ?? 'unspecified'}, days: ${
   (requestRow.schedule as Array<{ day: string; startTime: string; endTime: string }> | null)
     ?.map(s => `${s.day} ${s.startTime}–${s.endTime}`).join(', ') ?? 'unspecified'
 }
-Language preference: ${(requestRow.languagePref ?? []).join(', ') || 'none'}
+Language preference: ${(requestRow.languagesPreferred ?? []).join(', ') || 'none'}
+Required languages: ${(requestRow.languagesRequired ?? []).join(', ') || 'none'}
 Transportation preference: ${requestRow.transportationPref ?? 'no-preference'}
-Budget: ${requestRow.budgetType ?? ''} ${requestRow.budgetAmount ?? ''}
+Budget: ${requestRow.budgetType ?? ''} $${requestRow.budgetMin ?? '?'}–$${requestRow.budgetMax ?? '?'}
 Notes: ${requestRow.title ?? ''}. ${requestRow.description ?? ''}
 
 CANDIDATES
