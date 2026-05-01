@@ -136,19 +136,21 @@ export default async function FindCaregiversPage({ searchParams }: PageProps) {
   const totalPages = Math.ceil(total / 20)
 
   return (
-    <div className="p-4 lg:p-8 space-y-10">
+    <div className="px-6 lg:px-10 py-8 lg:py-12 max-w-[1200px] mx-auto space-y-10">
       <div>
-        <h1 className="text-2xl font-semibold mb-1">Find Caregivers</h1>
-        <p className="text-sm text-muted-foreground">
-          Browse your intelligently matched caregivers and the full directory.
+        <h1 className="text-[28px] sm:text-[32px] font-semibold tracking-[-0.02em] leading-[1.15]">
+          Find Caregivers
+        </h1>
+        <p className="mt-1.5 text-[14.5px] text-muted-foreground">
+          Browse your matched caregivers and the full directory.
         </p>
       </div>
 
       <FilterForm activeRequests={activeRequests} currentFilters={currentFilters} />
 
-      {/* ── Your Matches ─────────────────────────────────────────────── */}
+      {/* Your Matches */}
       <section>
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground mb-4">
+        <h2 className="text-[20px] font-semibold tracking-tight mb-5">
           Your Matches
         </h2>
 
@@ -210,8 +212,8 @@ export default async function FindCaregiversPage({ searchParams }: PageProps) {
       {/* ── Browse All Caregivers ─────────────────────────────────────── */}
       <section>
         <div className="flex items-baseline justify-between mb-4">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-            Browse All Caregivers
+          <h2 className="text-[20px] font-semibold tracking-tight">
+            Browse all caregivers
           </h2>
           <span className="text-xs text-muted-foreground">{total} caregiver{total !== 1 ? 's' : ''} found</span>
         </div>
