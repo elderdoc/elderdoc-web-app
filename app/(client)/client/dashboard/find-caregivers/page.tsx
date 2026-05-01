@@ -15,23 +15,29 @@ function sp(val: string | string[] | undefined): string | undefined {
   return Array.isArray(val) ? val[0] : val
 }
 
+function spArr(val: string | string[] | undefined): string[] {
+  const raw = Array.isArray(val) ? val[0] : val
+  if (!raw) return []
+  return raw.split(',').map(s => s.trim()).filter(Boolean)
+}
 
 function buildPageUrl(
   base: {
     careType?: string; state?: string
     rateMin?: string; rateMax?: string; experience?: string
-    certification?: string; sort?: string
+    certifications?: string[]; languages?: string[]; sort?: string
   },
   targetPage: number,
 ): string {
   const params = new URLSearchParams()
-  if (base.careType)     params.set('careType', base.careType)
-  if (base.state)        params.set('state', base.state)
-  if (base.rateMin)      params.set('rateMin', base.rateMin)
-  if (base.rateMax)      params.set('rateMax', base.rateMax)
-  if (base.experience)   params.set('experience', base.experience)
-  if (base.sort)         params.set('sort', base.sort)
-  if (base.certification && base.certification !== 'none') params.set('certification', base.certification)
+  if (base.careType)                          params.set('careType', base.careType)
+  if (base.state)                             params.set('state', base.state)
+  if (base.rateMin)                           params.set('rateMin', base.rateMin)
+  if (base.rateMax)                           params.set('rateMax', base.rateMax)
+  if (base.experience)                        params.set('experience', base.experience)
+  if (base.sort)                              params.set('sort', base.sort)
+  if (base.certifications?.length)            params.set('certifications', base.certifications.join(','))
+  if (base.languages?.length)                 params.set('languages', base.languages.join(','))
   params.set('page', String(targetPage))
   const qs = params.toString()
   return `/client/dashboard/find-caregivers${qs ? `?${qs}` : ''}`
@@ -63,17 +69,18 @@ export default async function FindCaregiversPage({ searchParams }: PageProps) {
   const offeredSet  = new Set(existingMatches.map((m) => m.caregiverId))
   const favoriteSet = new Set(favoriteRows.map((f) => f.caregiverId))
 
-  const careType      = sp(resolvedSearchParams.careType)
-  const state         = sp(resolvedSearchParams.state)
-  const rateMin       = sp(resolvedSearchParams.rateMin)
-  const rateMax       = sp(resolvedSearchParams.rateMax)
-  const certification = sp(resolvedSearchParams.certification)
-  const experience    = sp(resolvedSearchParams.experience)
-  const sort          = sp(resolvedSearchParams.sort)
-  const page          = Math.max(1, parseInt(sp(resolvedSearchParams.page) ?? '1', 10) || 1)
+  const careType       = sp(resolvedSearchParams.careType)
+  const state          = sp(resolvedSearchParams.state)
+  const rateMin        = sp(resolvedSearchParams.rateMin)
+  const rateMax        = sp(resolvedSearchParams.rateMax)
+  const certifications = spArr(resolvedSearchParams.certifications)
+  const languages      = spArr(resolvedSearchParams.languages)
+  const experience     = sp(resolvedSearchParams.experience)
+  const sort           = sp(resolvedSearchParams.sort)
+  const page           = Math.max(1, parseInt(sp(resolvedSearchParams.page) ?? '1', 10) || 1)
 
   const currentFilters = {
-    careType, state, rateMin, rateMax, certification, experience, sort,
+    careType, state, rateMin, rateMax, certifications, languages, experience, sort,
     page: String(page),
   }
 
@@ -83,7 +90,7 @@ export default async function FindCaregiversPage({ searchParams }: PageProps) {
       .where(eq(clientLocations.clientId, clientId))
       .limit(1)
       .then((rows) => rows[0] ?? null),
-    searchCaregivers({ careType, state, rateMin, rateMax, certification, experience }, page),
+    searchCaregivers({ careType, state, rateMin, rateMax, certifications, languages, experience }, page),
   ])
 
   const { caregivers, total } = searchResult
@@ -190,7 +197,7 @@ export default async function FindCaregiversPage({ searchParams }: PageProps) {
           <div className="flex items-center justify-center gap-2 mt-6">
             {page > 1 && (
               <a
-                href={buildPageUrl({ careType, state, rateMin, rateMax, experience, certification, sort }, page - 1)}
+                href={buildPageUrl({ careType, state, rateMin, rateMax, experience, certifications, languages, sort }, page - 1)}
                 className="px-3 py-1.5 rounded-md border border-border text-sm hover:bg-muted"
               >
                 ← Prev
@@ -201,7 +208,7 @@ export default async function FindCaregiversPage({ searchParams }: PageProps) {
             </span>
             {page < totalPages && (
               <a
-                href={buildPageUrl({ careType, state, rateMin, rateMax, experience, certification, sort }, page + 1)}
+                href={buildPageUrl({ careType, state, rateMin, rateMax, experience, certifications, languages, sort }, page + 1)}
                 className="px-3 py-1.5 rounded-md border border-border text-sm hover:bg-muted"
               >
                 Next →

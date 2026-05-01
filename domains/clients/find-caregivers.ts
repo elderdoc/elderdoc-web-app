@@ -46,7 +46,8 @@ export type SearchFilters = {
   state?: string
   rateMin?: string
   rateMax?: string
-  certification?: string
+  certifications?: string[]
+  languages?: string[]
   experience?: string
 }
 
@@ -127,10 +128,20 @@ export async function searchCaregivers(
     conditions.push(eq(caregiverProfiles.experience, filters.experience))
   }
 
-  if (filters.certification && filters.certification !== 'none') {
-    conditions.push(
-      sql`EXISTS (SELECT 1 FROM ${caregiverCertifications} WHERE ${caregiverCertifications.caregiverId} = ${caregiverProfiles.id} AND ${caregiverCertifications.certification} = ${filters.certification})`
-    )
+  if (filters.certifications && filters.certifications.length > 0) {
+    for (const cert of filters.certifications) {
+      conditions.push(
+        sql`EXISTS (SELECT 1 FROM ${caregiverCertifications} WHERE ${caregiverCertifications.caregiverId} = ${caregiverProfiles.id} AND ${caregiverCertifications.certification} = ${cert})`
+      )
+    }
+  }
+
+  if (filters.languages && filters.languages.length > 0) {
+    for (const lang of filters.languages) {
+      conditions.push(
+        sql`EXISTS (SELECT 1 FROM ${caregiverLanguages} WHERE ${caregiverLanguages.caregiverId} = ${caregiverProfiles.id} AND ${caregiverLanguages.language} = ${lang})`
+      )
+    }
   }
 
   const whereClause = and(...conditions)

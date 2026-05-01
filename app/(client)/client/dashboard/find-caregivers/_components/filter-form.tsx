@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import { useCallback, useRef, useState } from 'react'
-import { CARE_TYPES, CERTIFICATIONS, US_STATES } from '@/lib/constants'
+import { CARE_TYPES, CERTIFICATIONS, LANGUAGES, US_STATES } from '@/lib/constants'
 import { SelectField } from '@/components/select-field'
 import { MapPin, DollarSign, Briefcase, ArrowUp, ArrowDown, X } from 'lucide-react'
 
@@ -13,7 +13,8 @@ interface Props {
     state?: string
     rateMin?: string
     rateMax?: string
-    certification?: string
+    certifications?: string[]
+    languages?: string[]
     experience?: string
     sort?: string
     page?: string
@@ -21,27 +22,24 @@ interface Props {
 }
 
 const EXPERIENCE_OPTIONS = [
-  { value: '1 year',   label: '1 year' },
-  { value: '2 years',  label: '2 years' },
-  { value: '3 years',  label: '3 years' },
-  { value: '5 years',  label: '5 years' },
+  { value: '1 year',    label: '1 year' },
+  { value: '2 years',   label: '2 years' },
+  { value: '3 years',   label: '3 years' },
+  { value: '5 years',   label: '5 years' },
   { value: '10+ years', label: '10+ years' },
 ]
 
 const CARE_TYPE_OPTIONS = CARE_TYPES.map((ct) => ({ value: ct.key, label: ct.label }))
 const STATE_OPTIONS = US_STATES.map((s) => ({ value: s, label: s }))
 
-// Cycles forward only — X button clears
 function nextDistanceSort(cur?: string) {
   if (!cur || !cur.startsWith('distance')) return 'distance-asc'
   return 'distance-desc'
 }
-
 function nextPriceSort(cur?: string) {
   if (!cur || !cur.startsWith('price')) return 'price-asc'
   return 'price-desc'
 }
-
 function nextJobsSort(cur?: string) {
   if (!cur || !cur.startsWith('jobs')) return 'jobs-desc'
   return 'jobs-asc'
@@ -51,39 +49,44 @@ export function FilterForm({ activeRequests, currentFilters }: Props) {
   const router = useRouter()
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [showCertFilter, setShowCertFilter] = useState(
-    !!currentFilters.certification && currentFilters.certification !== 'none'
+    (currentFilters.certifications?.length ?? 0) > 0
+  )
+  const [showLangFilter, setShowLangFilter] = useState(
+    (currentFilters.languages?.length ?? 0) > 0
   )
 
   const buildParams = useCallback(
-    (overrides: Record<string, string | undefined>) => {
+    (overrides: Record<string, string | string[] | undefined>) => {
       const params = new URLSearchParams()
-      const merged = {
+      const merged: Record<string, string | string[] | undefined> = {
         careType:      currentFilters.careType,
         state:         currentFilters.state,
         rateMin:       currentFilters.rateMin,
         rateMax:       currentFilters.rateMax,
-        certification: currentFilters.certification,
+        certifications: currentFilters.certifications,
+        languages:     currentFilters.languages,
         experience:    currentFilters.experience,
         sort:          currentFilters.sort,
         page:          currentFilters.page,
         ...overrides,
       }
-      if (merged.careType)     params.set('careType', merged.careType!)
-      if (merged.state)        params.set('state', merged.state!)
-      if (merged.rateMin)      params.set('rateMin', merged.rateMin!)
-      if (merged.rateMax)      params.set('rateMax', merged.rateMax!)
-      if (merged.experience)   params.set('experience', merged.experience!)
-      if (merged.sort)         params.set('sort', merged.sort!)
-      if (merged.page)         params.set('page', merged.page!)
-      if (merged.certification && merged.certification !== 'none') {
-        params.set('certification', merged.certification!)
-      }
+      if (merged.careType)    params.set('careType',    merged.careType as string)
+      if (merged.state)       params.set('state',       merged.state as string)
+      if (merged.rateMin)     params.set('rateMin',     merged.rateMin as string)
+      if (merged.rateMax)     params.set('rateMax',     merged.rateMax as string)
+      if (merged.experience)  params.set('experience',  merged.experience as string)
+      if (merged.sort)        params.set('sort',        merged.sort as string)
+      if (merged.page)        params.set('page',        merged.page as string)
+      const certs = merged.certifications as string[] | undefined
+      if (certs?.length)      params.set('certifications', certs.join(','))
+      const langs = merged.languages as string[] | undefined
+      if (langs?.length)      params.set('languages', langs.join(','))
       return params.toString()
     },
     [currentFilters],
   )
 
-  function push(overrides: Record<string, string | undefined>) {
+  function push(overrides: Record<string, string | string[] | undefined>) {
     const qs = buildParams({ ...overrides, page: undefined })
     router.push(`/client/dashboard/find-caregivers${qs ? `?${qs}` : ''}`)
   }
@@ -93,7 +96,21 @@ export function FilterForm({ activeRequests, currentFilters }: Props) {
     debounceRef.current = setTimeout(() => push(overrides), 300)
   }
 
-  const sort = currentFilters.sort
+  function toggleCert(key: string) {
+    const cur = currentFilters.certifications ?? []
+    const next = cur.includes(key) ? cur.filter(c => c !== key) : [...cur, key]
+    push({ certifications: next.length ? next : undefined })
+  }
+
+  function toggleLang(key: string) {
+    const cur = currentFilters.languages ?? []
+    const next = cur.includes(key) ? cur.filter(l => l !== key) : [...cur, key]
+    push({ languages: next.length ? next : undefined })
+  }
+
+  const sort  = currentFilters.sort
+  const certs = currentFilters.certifications ?? []
+  const langs = currentFilters.languages ?? []
 
   return (
     <div className="space-y-5">
@@ -263,23 +280,75 @@ export function FilterForm({ activeRequests, currentFilters }: Props) {
             checked={showCertFilter}
             onChange={e => {
               setShowCertFilter(e.target.checked)
-              if (!e.target.checked) push({ certification: undefined })
+              if (!e.target.checked) push({ certifications: undefined })
             }}
             className="h-4 w-4 rounded border-input accent-primary"
           />
           <span className="text-xs font-medium">Special certifications needed</span>
+          {certs.length > 0 && (
+            <span className="inline-flex items-center justify-center h-4 min-w-4 rounded-full bg-primary text-[10px] font-medium text-primary-foreground px-1">
+              {certs.length}
+            </span>
+          )}
         </label>
         {showCertFilter && (
-          <SelectField
-            options={[
-              { value: 'none', label: 'None' },
-              ...CERTIFICATIONS.map(c => ({ value: c.key, label: c.label })),
-            ]}
-            value={currentFilters.certification ?? 'none'}
-            onChange={val => push({ certification: val === 'none' ? undefined : val })}
-            placeholder="None"
-            className="max-w-xs"
+          <div className="flex flex-wrap gap-2 mt-1">
+            {CERTIFICATIONS.map(c => (
+              <button
+                key={c.key}
+                type="button"
+                onClick={() => toggleCert(c.key)}
+                className={[
+                  'inline-flex h-8 items-center rounded-[8px] border-2 px-3 text-[12px] font-medium transition-colors',
+                  certs.includes(c.key)
+                    ? 'border-primary bg-primary/5 text-primary'
+                    : 'border-border text-muted-foreground hover:border-primary/50 hover:text-foreground',
+                ].join(' ')}
+              >
+                {c.label}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Languages required */}
+      <div>
+        <label className="flex items-center gap-2 cursor-pointer select-none mb-2">
+          <input
+            type="checkbox"
+            checked={showLangFilter}
+            onChange={e => {
+              setShowLangFilter(e.target.checked)
+              if (!e.target.checked) push({ languages: undefined })
+            }}
+            className="h-4 w-4 rounded border-input accent-primary"
           />
+          <span className="text-xs font-medium">Language required</span>
+          {langs.length > 0 && (
+            <span className="inline-flex items-center justify-center h-4 min-w-4 rounded-full bg-primary text-[10px] font-medium text-primary-foreground px-1">
+              {langs.length}
+            </span>
+          )}
+        </label>
+        {showLangFilter && (
+          <div className="flex flex-wrap gap-2 mt-1">
+            {LANGUAGES.map(l => (
+              <button
+                key={l.key}
+                type="button"
+                onClick={() => toggleLang(l.key)}
+                className={[
+                  'inline-flex h-8 items-center rounded-[8px] border-2 px-3 text-[12px] font-medium transition-colors',
+                  langs.includes(l.key)
+                    ? 'border-primary bg-primary/5 text-primary'
+                    : 'border-border text-muted-foreground hover:border-primary/50 hover:text-foreground',
+                ].join(' ')}
+              >
+                {l.label}
+              </button>
+            ))}
+          </div>
         )}
       </div>
     </div>
