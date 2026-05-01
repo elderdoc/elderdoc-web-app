@@ -34,12 +34,13 @@ interface CaregiverCardProps {
   favoriteIsPending?: boolean
   statusBadge?: React.ReactNode
   sendOfferNode?: React.ReactNode
+  unauthenticatedOfferLabel?: string
   className?: string
 }
 
 export function CaregiverCard({
   caregiver, rank, onSendOffer, viewProfileHref, isFavorited, onToggleFavorite,
-  favoriteIsPending, statusBadge, sendOfferNode, className,
+  favoriteIsPending, statusBadge, sendOfferNode, unauthenticatedOfferLabel, className,
 }: CaregiverCardProps) {
   const initials = caregiver.name
     ? caregiver.name.split(' ').filter(Boolean).map(n => n[0].toUpperCase()).slice(0, 2).join('')
@@ -136,9 +137,9 @@ export function CaregiverCard({
             {/* Details */}
             <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[12.5px] text-muted-foreground">
               {caregiver.distanceMiles != null && (
-                <span className="inline-flex items-center gap-1">
+                <span className="inline-flex items-center gap-1" title="Distance from your address">
                   <MapPin className="h-3 w-3 shrink-0" />
-                  {caregiver.distanceMiles < 1 ? '<1 mi' : `${Math.round(caregiver.distanceMiles)} mi`}
+                  {caregiver.distanceMiles < 1 ? '<1 mi' : `${Math.round(caregiver.distanceMiles)} mi`} away
                 </span>
               )}
               {caregiver.experience && (
@@ -191,9 +192,9 @@ export function CaregiverCard({
             <button
               type="button"
               onClick={onSendOffer}
-              className="inline-flex items-center h-9 rounded-full bg-primary px-5 text-[13px] font-medium text-primary-foreground hover:bg-[var(--forest-deep)] hover:shadow-[0_8px_18px_-6px_rgba(15,77,52,0.4)] transition-all whitespace-nowrap"
+              className="inline-flex items-center gap-1.5 h-9 rounded-full bg-primary px-5 text-[13px] font-medium text-primary-foreground hover:bg-[var(--forest-deep)] hover:shadow-[0_8px_18px_-6px_rgba(15,77,52,0.4)] transition-all whitespace-nowrap"
             >
-              Send offer
+              {unauthenticatedOfferLabel ?? 'Send offer'}
             </button>
           ) : null)}
         </div>
