@@ -6,7 +6,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { signOut } from 'next-auth/react'
 import {
   Bell, LogOut, Menu, User, X, Home, Users, FileText, Search, UserCheck,
-  ClipboardList, Calendar, CreditCard, MessageSquare,
+  ClipboardList, Calendar, CreditCard, MessageSquare, Sparkles,
 } from 'lucide-react'
 import {
   DropdownMenu,
@@ -22,6 +22,7 @@ const NAV_LINKS = [
   { href: '/client/dashboard',                label: 'Home',            icon: Home },
   { href: '/client/dashboard/recipients',     label: 'Care Recipients', icon: Users },
   { href: '/client/dashboard/requests',       label: 'Care Requests',   icon: FileText },
+  { href: '/client/dashboard/matches',        label: 'Matches',         icon: Sparkles },
   { href: '/client/dashboard/find-caregivers',label: 'Find Caregivers', icon: Search },
   { href: '/client/dashboard/my-caregivers',  label: 'My Caregivers',   icon: UserCheck },
   { href: '/client/dashboard/care-plans',     label: 'Care Plans',      icon: ClipboardList },
