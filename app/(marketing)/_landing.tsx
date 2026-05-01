@@ -20,7 +20,7 @@ const PILLARS = [
 ]
 
 const STEPS = [
-  { n: 1, t: 'Tell us about your loved one', d: 'Conditions, mobility, language, and routine. We keep it private.', img: 'https://images.unsplash.com/photo-1516483638261-f4dbaf036963?auto=format&fit=crop&w=600&q=70' },
+  { n: 1, t: 'Tell us about your loved one', d: 'Conditions, mobility, language, and routine. We keep it private.', img: 'https://images.unsplash.com/photo-1544027993-37dbfe43562a?auto=format&fit=crop&w=600&q=70' },
   { n: 2, t: 'Describe the care you need',   d: 'Hourly or live-in, weekday mornings or weekend overnights.', img: 'https://images.unsplash.com/photo-1576765608535-5f04d1e3f289?auto=format&fit=crop&w=600&q=70' },
   { n: 3, t: 'Review your top five matches', d: 'Curated, ranked, and explained. No fee until you choose.', img: 'https://images.unsplash.com/photo-1573497019418-b400bb3ab074?auto=format&fit=crop&w=600&q=70' },
   { n: 4, t: 'Begin care, with confidence',  d: 'Weekly billing, escrow protection, and a 7-day window.', img: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&w=600&q=70' },

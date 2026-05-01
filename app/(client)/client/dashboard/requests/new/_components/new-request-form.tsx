@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useTransition, Fragment } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createCareRequest, saveCareRequestCarePlan } from '@/domains/clients/requests'
@@ -992,11 +992,15 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgRates
             )}
           </div>
           <div>
-            <label className="block text-sm font-medium mb-3">Please enter hourly rate *</label>
+            <label className="block text-sm font-medium mb-3">
+              {form.budgetType === 'daily'
+                ? 'Please enter your daily rate for this job *'
+                : 'Please enter your hourly rate for this job *'}
+            </label>
             <div className="flex gap-2 mb-4">
               {BUDGET_TYPES.map((b) => (
                 <button key={b.key} type="button"
-                  onClick={() => setForm((f) => ({ ...f, budgetType: b.key }))}
+                  onClick={() => setForm((f) => ({ ...f, budgetType: b.key, budgetMin: '', budgetMax: '' }))}
                   className={['rounded-xl border-2 px-4 py-3 text-sm font-medium transition-colors', form.budgetType === b.key ? 'border-primary bg-primary/5 text-primary' : 'border-border hover:border-primary/50'].join(' ')}>
                   {b.label}
                 </button>
@@ -1004,12 +1008,9 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgRates
             </div>
             {form.budgetType && (() => {
               const SMIN = 10, SMAX = 100
-              const lo = Math.min(Math.max(Number(form.budgetMin) || SMIN, SMIN), SMAX)
-              const hi = Math.min(Math.max(Number(form.budgetMax) || SMAX, SMIN), SMAX)
-              const loPct = ((lo - SMIN) / (SMAX - SMIN)) * 100
-              const hiPct = ((hi - SMIN) / (SMAX - SMIN)) * 100
+              const isDaily = form.budgetType === 'daily'
+              const unit = isDaily ? '/day' : '/hr'
               const thumbCls = 'appearance-none bg-transparent absolute inset-0 w-full h-full cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-[18px] [&::-webkit-slider-thumb]:w-[18px] [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-primary [&::-webkit-slider-thumb]:shadow-md [&::-webkit-slider-thumb]:transition-transform [&::-webkit-slider-thumb]:hover:scale-110 [&::-webkit-slider-runnable-track]:bg-transparent [&::-moz-range-thumb]:h-[18px] [&::-moz-range-thumb]:w-[18px] [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-white [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-primary [&::-moz-range-thumb]:shadow-md [&::-moz-range-track]:bg-transparent'
-              const unit = form.budgetType === 'hourly' ? '/hr' : '/day'
 
               const avgLines = form.careTypes.map(ct => {
                 const avg = avgRatesByCareType[ct]
@@ -1017,10 +1018,55 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgRates
                 const typeLabel = ct.replace(/-/g, ' ')
                 return (
                   <p key={ct} className="text-xs text-muted-foreground capitalize">
-                    {typeLabel} caregivers typically earn <span className="font-medium text-foreground">${avg.min}–${avg.max}{unit}</span> on average
+                    {typeLabel} jobs typically price <span className="font-medium text-foreground">${avg.min}–${avg.max}{unit}</span>
                   </p>
                 )
               }).filter(Boolean)
+
+              if (isDaily) {
+                const val = Math.min(Math.max(Number(form.budgetMin) || SMIN, SMIN), SMAX)
+                const valPct = ((val - SMIN) / (SMAX - SMIN)) * 100
+                return (
+                  <div className="space-y-4">
+                    <div className="px-1">
+                      <div className="relative h-5 flex items-center">
+                        <div className="absolute inset-x-0 h-[5px] rounded-full bg-muted" />
+                        <div className="absolute h-[5px] rounded-full bg-primary" style={{ left: 0, right: `${100 - valPct}%` }} />
+                        <input
+                          type="range" min={SMIN} max={SMAX} value={val}
+                          onChange={e => {
+                            const v = String(e.target.value)
+                            setForm(f => ({ ...f, budgetMin: v, budgetMax: v }))
+                          }}
+                          className={thumbCls}
+                        />
+                      </div>
+                      <div className="flex justify-between mt-1">
+                        <span className="text-xs text-muted-foreground">$10</span>
+                        <span className="text-xs text-muted-foreground">$100+</span>
+                      </div>
+                    </div>
+                    <div className="max-w-[200px]">
+                      <label className="block text-xs font-medium mb-1">Daily rate</label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">$</span>
+                        <input
+                          type="number" min={SMIN} value={form.budgetMin}
+                          onChange={e => setForm(f => ({ ...f, budgetMin: e.target.value, budgetMax: e.target.value }))}
+                          className="w-full rounded-lg border border-border pl-7 pr-3 py-2.5 text-sm focus:border-primary focus:outline-none"
+                          placeholder="—"
+                        />
+                      </div>
+                    </div>
+                    {avgLines.length > 0 && <div className="space-y-1">{avgLines}</div>}
+                  </div>
+                )
+              }
+
+              const lo = Math.min(Math.max(Number(form.budgetMin) || SMIN, SMIN), SMAX)
+              const hi = Math.min(Math.max(Number(form.budgetMax) || SMAX, SMIN), SMAX)
+              const loPct = ((lo - SMIN) / (SMAX - SMIN)) * 100
+              const hiPct = ((hi - SMIN) / (SMAX - SMIN)) * 100
 
               return (
                 <div className="space-y-4">
@@ -1032,10 +1078,7 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgRates
                         style={{ left: `${loPct}%`, right: `${100 - hiPct}%` }}
                       />
                       <input
-                        type="range"
-                        min={SMIN}
-                        max={SMAX}
-                        value={lo}
+                        type="range" min={SMIN} max={SMAX} value={lo}
                         onChange={e => {
                           const v = Number(e.target.value)
                           setForm(f => ({ ...f, budgetMin: String(v) }))
@@ -1045,10 +1088,7 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgRates
                         className={thumbCls}
                       />
                       <input
-                        type="range"
-                        min={SMIN}
-                        max={SMAX}
-                        value={hi}
+                        type="range" min={SMIN} max={SMAX} value={hi}
                         onChange={e => {
                           const v = Number(e.target.value)
                           setForm(f => ({ ...f, budgetMax: String(v) }))
@@ -1069,9 +1109,7 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgRates
                       <div className="relative">
                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">$</span>
                         <input
-                          type="number"
-                          min={SMIN}
-                          value={form.budgetMin}
+                          type="number" min={SMIN} value={form.budgetMin}
                           onChange={e => setForm(f => ({ ...f, budgetMin: e.target.value }))}
                           className="w-full rounded-lg border border-border pl-7 pr-3 py-2.5 text-sm focus:border-primary focus:outline-none"
                           placeholder="10"
@@ -1083,9 +1121,7 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgRates
                       <div className="relative">
                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">$</span>
                         <input
-                          type="number"
-                          min={SMIN}
-                          value={form.budgetMax}
+                          type="number" min={SMIN} value={form.budgetMax}
                           onChange={e => setForm(f => ({ ...f, budgetMax: e.target.value }))}
                           className="w-full rounded-lg border border-border pl-7 pr-3 py-2.5 text-sm focus:border-primary focus:outline-none"
                           placeholder="100+"
@@ -1093,11 +1129,7 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgRates
                       </div>
                     </div>
                   </div>
-                  {avgLines.length > 0 && (
-                    <div className="space-y-1">
-                      {avgLines}
-                    </div>
-                  )}
+                  {avgLines.length > 0 && <div className="space-y-1">{avgLines}</div>}
                 </div>
               )
             })()}

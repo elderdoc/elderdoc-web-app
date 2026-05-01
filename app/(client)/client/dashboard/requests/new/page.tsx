@@ -1,6 +1,6 @@
 import { requireRole } from '@/domains/auth/session'
 import { db } from '@/services/db'
-import { careRecipients, caregiverProfiles, caregiverCareTypes } from '@/db/schema'
+import { careRecipients, careRequests } from '@/db/schema'
 import { eq, isNotNull, avg } from 'drizzle-orm'
 import { NewRequestForm } from './_components/new-request-form'
 
@@ -31,14 +31,13 @@ export default async function NewRequestPage({ searchParams }: PageProps) {
       .where(eq(careRecipients.clientId, userId)),
     db
       .select({
-        careType: caregiverCareTypes.careType,
-        avgMin:   avg(caregiverProfiles.hourlyMin),
-        avgMax:   avg(caregiverProfiles.hourlyMax),
+        careType: careRequests.careType,
+        avgMin:   avg(careRequests.budgetMin),
+        avgMax:   avg(careRequests.budgetMax),
       })
-      .from(caregiverProfiles)
-      .innerJoin(caregiverCareTypes, eq(caregiverProfiles.id, caregiverCareTypes.caregiverId))
-      .where(isNotNull(caregiverProfiles.hourlyMin))
-      .groupBy(caregiverCareTypes.careType),
+      .from(careRequests)
+      .where(isNotNull(careRequests.budgetMin))
+      .groupBy(careRequests.careType),
   ])
 
   const avgRatesByCareType: Record<string, { min: number; max: number }> = {}
