@@ -1,12 +1,13 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Edit3, Heart, Calendar, MapPin, DollarSign, Users, Clock, Languages, Phone, MessageSquare, Briefcase, CalendarDays, Tag, ChevronRight } from 'lucide-react'
+import { ArrowLeft, Edit3, Heart, Calendar, MapPin, DollarSign, Users, Clock, Languages, Phone, MessageSquare, Briefcase, CalendarDays, Tag, Sparkles, Star } from 'lucide-react'
 import { requireRole } from '@/domains/auth/session'
 import { db } from '@/services/db'
-import { careRequests, careRecipients, careRequestLocations, jobs, caregiverProfiles, users } from '@/db/schema'
-import { eq, and } from 'drizzle-orm'
+import { careRequests, careRecipients, careRequestLocations, jobs, caregiverProfiles, users, matches } from '@/db/schema'
+import { eq, and, desc } from 'drizzle-orm'
 import { formatDistanceToNow } from 'date-fns'
 import { CARE_TYPES, LANGUAGES } from '@/lib/constants'
+import { SendOfferButton } from '../../_components/send-offer-button'
 
 const CARE_TYPE_LABELS = Object.fromEntries(CARE_TYPES.map((c) => [c.key, c.label]))
 const LANGUAGE_LABELS = Object.fromEntries(LANGUAGES.map((l) => [l.key, l.label]))
@@ -50,7 +51,7 @@ export default async function CareRequestDetailPage({ params }: PageProps) {
   const session = await requireRole('client')
   const clientId = session.user.id!
 
-  const [rows, locationRows, jobRows] = await Promise.all([
+  const [rows, locationRows, jobRows, matchRows] = await Promise.all([
     db
       .select({
         id:            careRequests.id,
@@ -100,12 +101,33 @@ export default async function CareRequestDetailPage({ params }: PageProps) {
       .innerJoin(users, eq(caregiverProfiles.userId, users.id))
       .where(and(eq(jobs.requestId, id), eq(jobs.clientId, clientId)))
       .limit(1),
+    db
+      .select({
+        matchId:        matches.id,
+        score:          matches.score,
+        reason:         matches.reason,
+        status:         matches.status,
+        caregiverId:    matches.caregiverId,
+        caregiverName:  users.name,
+        caregiverImage: users.image,
+        profileId:      caregiverProfiles.id,
+        headline:       caregiverProfiles.headline,
+        hourlyMin:      caregiverProfiles.hourlyMin,
+        hourlyMax:      caregiverProfiles.hourlyMax,
+        rating:         caregiverProfiles.rating,
+      })
+      .from(matches)
+      .innerJoin(caregiverProfiles, eq(matches.caregiverId, caregiverProfiles.id))
+      .innerJoin(users, eq(caregiverProfiles.userId, users.id))
+      .where(eq(matches.requestId, id))
+      .orderBy(desc(matches.score)),
   ])
 
   if (!rows.length) notFound()
   const req = rows[0]
   const loc = locationRows[0]
   const job = jobRows[0] ?? null
+  const matchList = matchRows ?? []
 
   const status = req.status ?? 'draft'
   const statusMeta = STATUS_META[status] ?? STATUS_META.draft
@@ -333,6 +355,105 @@ export default async function CareRequestDetailPage({ params }: PageProps) {
             <div className="text-[14.5px] font-medium">
               {[loc?.address1, loc?.city, loc?.state].filter(Boolean).join(', ')}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Matched caregivers */}
+      {matchList.length > 0 && (
+        <div className="mt-4 rounded-[18px] border border-border bg-card p-5">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[var(--forest-soft)]">
+              <Sparkles className="h-3.5 w-3.5 text-[var(--forest-deep)]" />
+            </div>
+            <h2 className="text-[14px] font-semibold">Matched caregivers</h2>
+            <span className="inline-flex items-center justify-center rounded-full bg-muted px-2 py-0.5 text-[11px] tabular-nums text-muted-foreground ml-1">
+              {matchList.length}
+            </span>
+          </div>
+          <div className="space-y-3">
+            {matchList.map((m, idx) => {
+              const initials = (m.caregiverName ?? '?').split(' ').filter(Boolean).map((s: string) => s[0]).slice(0, 2).join('').toUpperCase()
+              const ratingNum = m.rating ? Number(m.rating) : null
+              const MATCH_STATUS: Record<string, { label: string; cls: string }> = {
+                pending:  { label: 'Offer sent',  cls: 'bg-amber-50 text-amber-700' },
+                accepted: { label: 'Accepted',    cls: 'bg-[var(--forest-soft)] text-[var(--forest-deep)]' },
+                declined: { label: 'Declined',    cls: 'bg-rose-50 text-rose-700' },
+              }
+              const statusChip = MATCH_STATUS[m.status ?? 'pending']
+              return (
+                <div key={m.matchId} className="flex items-start gap-4 rounded-xl border border-border bg-muted/20 p-4">
+                  {/* Rank */}
+                  <div className="flex flex-col items-center gap-2 shrink-0">
+                    <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-[11px] font-bold text-primary">
+                      {idx + 1}
+                    </div>
+                    {m.caregiverImage ? (
+                      <img src={m.caregiverImage} alt={m.caregiverName ?? ''} className="h-12 w-12 rounded-full object-cover" />
+                    ) : (
+                      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-[13px] font-semibold text-primary-foreground">
+                        {initials}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Info */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-2 flex-wrap mb-0.5">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="text-[14.5px] font-semibold">{m.caregiverName ?? 'Caregiver'}</p>
+                        {ratingNum && (
+                          <span className="flex items-center gap-0.5 text-[12px] text-amber-500 font-medium">
+                            <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+                            {ratingNum.toFixed(1)}
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-[12.5px] font-semibold text-primary shrink-0">{m.score}% match</span>
+                    </div>
+                    {m.headline && <p className="text-[12.5px] text-muted-foreground">{m.headline}</p>}
+                    {(m.hourlyMin || m.hourlyMax) && (
+                      <p className="text-[12px] text-muted-foreground mt-0.5">${m.hourlyMin}–${m.hourlyMax}/hr</p>
+                    )}
+                    {m.reason && (
+                      <p className="text-[12.5px] italic text-muted-foreground mt-1 line-clamp-2">{m.reason}</p>
+                    )}
+                    {/* Bottom row */}
+                    <div className="mt-2.5 flex items-center justify-between gap-2 flex-wrap">
+                      <span className={`inline-flex rounded-full px-2.5 py-0.5 text-[11.5px] font-medium ${statusChip.cls}`}>
+                        {statusChip.label}
+                      </span>
+                      <div className="flex gap-2 shrink-0">
+                        <Link
+                          href={`/client/dashboard/find-caregivers/${m.profileId}`}
+                          className="inline-flex h-8 items-center rounded-full border border-border bg-card px-3 text-[12px] font-medium hover:bg-muted transition-all"
+                        >
+                          View profile
+                        </Link>
+                        {m.status !== 'accepted' && (
+                          <SendOfferButton
+                            requestId={id}
+                            caregiverId={m.caregiverId}
+                            caregiverName={m.caregiverName}
+                            score={m.score}
+                            reason={m.reason}
+                          />
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+          <div className="mt-4 pt-4 border-t border-border/60 flex items-center justify-between">
+            <p className="text-[12.5px] text-muted-foreground">Not seeing the right fit?</p>
+            <Link
+              href={`/client/dashboard/find-caregivers?requestId=${id}`}
+              className="text-[12.5px] font-medium text-primary hover:underline"
+            >
+              Browse all caregivers →
+            </Link>
           </div>
         </div>
       )}
