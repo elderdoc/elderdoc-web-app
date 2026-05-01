@@ -19,7 +19,7 @@ export async function GET(
 
   const invoice = await getStripe().invoices.retrieve(receiptId, {
     expand: ['charge', 'lines'],
-  }) as Stripe.Invoice & { charge: Stripe.Charge | null }
+  }) as unknown as Stripe.Invoice & { charge: Stripe.Charge | null }
 
   const card = invoice.charge?.payment_method_details?.card
 

@@ -167,7 +167,7 @@ export async function getPaymentIntentCharge(paymentIntentId: string): Promise<S
 
 export async function getInvoicePdfUrl(invoiceId: string): Promise<{ pdfUrl: string | null; hostedUrl: string | null; receiptUrl: string | null }> {
   if (MOCK_MODE || invoiceId.startsWith('mock_in_')) return { pdfUrl: null, hostedUrl: null, receiptUrl: null }
-  const invoice = await getStripe().invoices.retrieve(invoiceId, { expand: ['charge'] }) as Stripe.Invoice & { charge: Stripe.Charge | null }
+  const invoice = await getStripe().invoices.retrieve(invoiceId, { expand: ['charge'] }) as unknown as Stripe.Invoice & { charge: Stripe.Charge | null }
   const receiptUrl = invoice.charge?.receipt_url ?? null
   return {
     pdfUrl: invoice.invoice_pdf ?? null,
