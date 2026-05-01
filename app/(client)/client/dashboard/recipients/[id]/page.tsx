@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
+import { ArrowLeft, Edit3, FileText, Cake, Phone, Activity, MapPin, User2, Heart, Ruler, Weight, ArrowRight, AlertCircle } from 'lucide-react'
 import { requireRole } from '@/domains/auth/session'
-import { BackButton } from '@/components/back-button'
 import { db } from '@/services/db'
 import { careRecipients } from '@/db/schema'
 import { and, eq } from 'drizzle-orm'
@@ -20,11 +20,16 @@ interface PageProps {
   params: Promise<{ id: string }>
 }
 
-function Row({ label, value }: { label: string; value: React.ReactNode }) {
+function InfoRow({ icon: Icon, label, value }: { icon: any; label: string; value: React.ReactNode }) {
   return (
-    <div className="flex gap-4">
-      <dt className="text-sm text-muted-foreground w-36 shrink-0">{label}</dt>
-      <dd className="text-sm font-medium">{value}</dd>
+    <div className="flex items-center gap-3 py-3 border-b border-border/60 last:border-b-0">
+      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-muted text-foreground/70">
+        <Icon className="h-4 w-4" />
+      </div>
+      <div className="min-w-0 flex-1">
+        <div className="text-[12px] text-muted-foreground">{label}</div>
+        <div className="text-[14px] text-foreground font-medium">{value}</div>
+      </div>
     </div>
   )
 }
@@ -46,145 +51,179 @@ export default async function RecipientDetailPage({ params }: PageProps) {
   const location = [r.address?.city, r.address?.state, r.address?.zip].filter(Boolean).join(', ')
 
   return (
-    <div className="p-8">
-      <BackButton label="← Back to Care Recipients" />
+    <div className="relative px-6 lg:px-10 py-8 lg:py-10 max-w-[1100px] mx-auto">
+      {/* Soft glow */}
+      <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
+        <div className="absolute right-[-15%] top-[-10%] h-[400px] w-[400px] rounded-full bg-[var(--forest-soft)] blur-[100px] opacity-40" />
+      </div>
 
-      <div className="flex items-start gap-5 mt-4 mb-8">
-        {r.photoUrl ? (
-          <img src={r.photoUrl} alt={r.name} className="h-20 w-20 rounded-full object-cover shrink-0" />
-        ) : (
-          <div className="flex h-20 w-20 items-center justify-center rounded-full bg-primary text-xl font-bold text-primary-foreground shrink-0">
-            {initials}
-          </div>
-        )}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <h1 className="text-2xl font-bold">{r.name}</h1>
-              {r.relationship && (
-                <p className="text-sm text-muted-foreground mt-0.5 capitalize">
-                  {r.relationship.replace(/-/g, ' ')}
-                </p>
-              )}
-              <p className="text-xs text-muted-foreground mt-1">
-                Added {formatDistanceToNow(r.createdAt, { addSuffix: true })}
-              </p>
-            </div>
-            <div className="flex gap-2 shrink-0">
-              <Link
-                href={`/client/dashboard/recipients/${r.id}/edit`}
-                className="px-3 py-1.5 rounded-md border border-border text-xs font-medium hover:bg-muted whitespace-nowrap"
-              >
-                Edit
-              </Link>
-              <Link
-                href={`/client/dashboard/requests/new?recipientId=${r.id}`}
-                className="px-3 py-1.5 rounded-md bg-primary text-primary-foreground text-xs font-medium whitespace-nowrap"
-              >
-                Create Care Request
-              </Link>
+      <Link
+        href="/client/dashboard/recipients"
+        className="inline-flex items-center gap-1.5 text-[14px] text-foreground/70 hover:text-foreground mb-6 group/back"
+      >
+        <ArrowLeft className="h-4 w-4 transition-transform group-hover/back:-translate-x-0.5" />
+        Back to Care Recipients
+      </Link>
+
+      {/* Hero card */}
+      <div className="rounded-[20px] border border-border bg-card overflow-hidden shadow-[0_4px_20px_-8px_rgba(15,20,16,0.08)]">
+        <div className="relative">
+          {/* Banner gradient */}
+          <div className="h-32 bg-gradient-to-br from-[var(--forest-soft)] via-[var(--cream-deep)] to-[var(--forest-soft)]" />
+          <div className="px-6 sm:px-8 pb-6 -mt-12">
+            <div className="flex items-end justify-between gap-4 flex-wrap">
+              <div className="flex items-end gap-4">
+                {r.photoUrl ? (
+                  <img src={r.photoUrl} alt={r.name} className="h-24 w-24 rounded-2xl object-cover ring-4 ring-card shadow-[0_8px_24px_-8px_rgba(15,20,16,0.2)]" />
+                ) : (
+                  <div className="flex h-24 w-24 items-center justify-center rounded-2xl bg-primary text-[24px] font-bold text-primary-foreground ring-4 ring-card shadow-[0_8px_24px_-8px_rgba(15,77,52,0.4)]">
+                    {initials}
+                  </div>
+                )}
+                <div className="pb-1">
+                  <h1 className="text-[32px] font-semibold tracking-[-0.02em] leading-tight">{r.name}</h1>
+                  <div className="mt-1.5 flex items-center gap-2 flex-wrap">
+                    {r.relationship && (
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--forest-soft)] px-2.5 py-1 text-[12px] font-medium text-[var(--forest-deep)] capitalize">
+                        <Heart className="h-3 w-3" />
+                        {r.relationship.replace(/-/g, ' ')}
+                      </span>
+                    )}
+                    {r.gender && (
+                      <span className="inline-flex items-center rounded-full bg-muted px-2.5 py-1 text-[12px] text-foreground/70 capitalize">
+                        {r.gender}
+                      </span>
+                    )}
+                    <span className="text-[12px] text-muted-foreground">
+                      Added {formatDistanceToNow(r.createdAt, { addSuffix: true })}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <div className="flex gap-2 pb-1">
+                <Link
+                  href={`/client/dashboard/recipients/${r.id}/edit`}
+                  className="inline-flex h-10 items-center gap-1.5 rounded-full border border-border bg-card px-4 text-[13.5px] font-medium hover:border-foreground/30 hover:bg-muted transition-all"
+                >
+                  <Edit3 className="h-3.5 w-3.5" />
+                  Edit
+                </Link>
+                <Link
+                  href={`/client/dashboard/requests/new?recipientId=${r.id}`}
+                  className="inline-flex h-10 items-center gap-1.5 rounded-full bg-primary px-5 text-[13.5px] font-medium text-primary-foreground hover:bg-[var(--forest-deep)] hover:shadow-[0_8px_18px_-6px_rgba(15,77,52,0.4)] transition-all"
+                >
+                  <FileText className="h-3.5 w-3.5" />
+                  Create care request
+                </Link>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="space-y-8">
-        <section>
-          <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-3">Personal Info</h2>
-          <dl className="space-y-3">
-            <Row label="Date of Birth" value={r.dob ?? <span className="text-muted-foreground">—</span>} />
-            <Row label="Gender" value={r.gender ? <span className="capitalize">{r.gender}</span> : <span className="text-muted-foreground">—</span>} />
-            <Row label="Phone" value={r.phone ?? <span className="text-muted-foreground">—</span>} />
-            <Row label="Mobility" value={r.mobilityLevel ? <span className="capitalize">{r.mobilityLevel.replace(/-/g, ' ')}</span> : <span className="text-muted-foreground">—</span>} />
-            {r.height && <Row label="Height" value={r.height} />}
-            {r.weight && <Row label="Weight" value={r.weight} />}
-          </dl>
-        </section>
+      <div className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-5">
+        {/* Personal Info */}
+        <div className="rounded-[18px] border border-border bg-card p-5">
+          <h2 className="text-[15px] font-semibold mb-3">Personal info</h2>
+          <div>
+            <InfoRow icon={Cake}     label="Date of birth" value={r.dob ?? <span className="text-muted-foreground">—</span>} />
+            <InfoRow icon={Phone}    label="Phone"         value={r.phone ?? <span className="text-muted-foreground">—</span>} />
+            <InfoRow icon={Activity} label="Mobility"      value={r.mobilityLevel ? <span className="capitalize">{r.mobilityLevel.replace(/-/g, ' ')}</span> : <span className="text-muted-foreground">—</span>} />
+            {r.height && <InfoRow icon={Ruler} label="Height" value={r.height} />}
+            {r.weight && <InfoRow icon={Weight} label="Weight" value={r.weight} />}
+          </div>
+        </div>
 
-        <>
-          <hr className="border-border" />
-          <section>
-            <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-3">Address</h2>
-            {(r.address?.address1 || location) ? (
-              <dl className="space-y-3">
-                {r.address?.address1 && <Row label="Street" value={r.address.address1} />}
-                {r.address?.address2 && <Row label="Unit" value={r.address.address2} />}
-                {location && <Row label="City / State" value={location} />}
-              </dl>
-            ) : (
-              <p className="text-sm text-muted-foreground">No address on file.</p>
+        {/* Address */}
+        <div className="rounded-[18px] border border-border bg-card p-5">
+          <h2 className="text-[15px] font-semibold mb-3">Address</h2>
+          {(r.address?.address1 || location) ? (
+            <div>
+              {r.address?.address1 && <InfoRow icon={MapPin} label="Street" value={r.address.address1} />}
+              {r.address?.address2 && <InfoRow icon={MapPin} label="Unit" value={r.address.address2} />}
+              {location && <InfoRow icon={MapPin} label="City, State" value={location} />}
+            </div>
+          ) : (
+            <div className="rounded-lg bg-muted/40 p-6 text-center">
+              <MapPin className="h-5 w-5 mx-auto text-muted-foreground mb-2" />
+              <p className="text-[13px] text-muted-foreground">No address on file.</p>
+            </div>
+          )}
+        </div>
+
+        {/* Conditions */}
+        <div className="rounded-[18px] border border-border bg-card p-5">
+          <h2 className="text-[15px] font-semibold mb-3 flex items-center gap-2">
+            Medical conditions
+            {r.conditions && r.conditions.length > 0 && (
+              <span className="inline-flex items-center justify-center rounded-full bg-muted px-2 py-0.5 text-[11px] tabular-nums text-muted-foreground">
+                {r.conditions.length}
+              </span>
             )}
-          </section>
-        </>
+          </h2>
+          {r.conditions && r.conditions.length > 0 ? (
+            <div className="flex flex-wrap gap-1.5">
+              {r.conditions.map((c) => (
+                <span key={c} className="inline-flex rounded-full bg-[var(--forest-soft)] px-2.5 py-1 text-[12px] font-medium text-[var(--forest-deep)]">
+                  {CONDITIONS_LABELS[c] ?? c}
+                </span>
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-lg bg-muted/40 p-6 text-center">
+              <AlertCircle className="h-5 w-5 mx-auto text-muted-foreground mb-2" />
+              <p className="text-[13px] text-muted-foreground">No conditions recorded.</p>
+            </div>
+          )}
+        </div>
+      </div>
 
-        <>
-          <hr className="border-border" />
-          <section>
-            <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-3">Conditions</h2>
-            {r.conditions && r.conditions.length > 0 ? (
-              <div className="flex flex-wrap gap-2">
-                {r.conditions.map((c) => (
-                  <span key={c} className="rounded bg-muted px-2.5 py-1 text-xs font-medium">
-                    {CONDITIONS_LABELS[c] ?? c}
-                  </span>
-                ))}
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground">No conditions recorded.</p>
-            )}
-          </section>
-        </>
-
-        {r.clientStatus && Object.keys(r.clientStatus).some(k => k !== 'amputeeDetails' && k !== 'diet' && k !== 'other') && (
-          <>
-            <hr className="border-border" />
-            <section>
-              <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-3">Functional Status</h2>
-              <div className="space-y-4">
-                {CLIENT_STATUS_GROUPS.map((group) => {
-                  const checked = group.items.filter(item => (r.clientStatus as Record<string, unknown>)?.[item.key])
-                  if (checked.length === 0) return null
-                  return (
-                    <div key={group.label}>
-                      <p className="text-xs text-muted-foreground mb-1.5">{group.label}</p>
-                      <div className="flex flex-wrap gap-2">
-                        {checked.map(item => (
-                          <span key={item.key} className="rounded bg-muted px-2.5 py-1 text-xs font-medium">
-                            {STATUS_LABELS[item.key] ?? item.key}
-                            {item.key === 'amputee' && typeof r.clientStatus!.amputeeDetails === 'string' && r.clientStatus!.amputeeDetails && (
-                              <span className="text-muted-foreground ml-1">({r.clientStatus!.amputeeDetails as string})</span>
-                            )}
-                            {item.key === 'diabetic' && typeof r.clientStatus!.diet === 'string' && r.clientStatus!.diet && (
-                              <span className="text-muted-foreground ml-1">({r.clientStatus!.diet as string})</span>
-                            )}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )
-                })}
-                {typeof r.clientStatus.other === 'string' && r.clientStatus.other && (
-                  <div>
-                    <p className="text-xs text-muted-foreground mb-1">Other</p>
-                    <p className="text-sm">{r.clientStatus.other as string}</p>
+      {/* Functional Status */}
+      {r.clientStatus && Object.keys(r.clientStatus).some(k => k !== 'amputeeDetails' && k !== 'diet' && k !== 'other') && (
+        <div className="mt-5 rounded-[18px] border border-border bg-card p-5">
+          <h2 className="text-[15px] font-semibold mb-4">Functional status</h2>
+          <div className="space-y-4">
+            {CLIENT_STATUS_GROUPS.map((group) => {
+              const checked = group.items.filter(item => (r.clientStatus as Record<string, unknown>)?.[item.key])
+              if (checked.length === 0) return null
+              return (
+                <div key={group.label} className="border-t border-border/60 pt-4 first:border-t-0 first:pt-0">
+                  <p className="text-[12px] font-medium text-muted-foreground uppercase tracking-wide mb-2">{group.label}</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {checked.map(item => (
+                      <span key={item.key} className="inline-flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-1 text-[12px] font-medium">
+                        <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+                        {STATUS_LABELS[item.key] ?? item.key}
+                        {item.key === 'amputee' && typeof r.clientStatus!.amputeeDetails === 'string' && r.clientStatus!.amputeeDetails && (
+                          <span className="text-muted-foreground">· {r.clientStatus!.amputeeDetails as string}</span>
+                        )}
+                        {item.key === 'diabetic' && typeof r.clientStatus!.diet === 'string' && r.clientStatus!.diet && (
+                          <span className="text-muted-foreground">· {r.clientStatus!.diet as string}</span>
+                        )}
+                      </span>
+                    ))}
                   </div>
-                )}
+                </div>
+              )
+            })}
+            {typeof r.clientStatus.other === 'string' && r.clientStatus.other && (
+              <div className="border-t border-border/60 pt-4">
+                <p className="text-[12px] font-medium text-muted-foreground uppercase tracking-wide mb-1.5">Other</p>
+                <p className="text-[14px] leading-relaxed">{r.clientStatus.other as string}</p>
               </div>
-            </section>
-          </>
-        )}
-
-        <>
-          <hr className="border-border" />
-          <section>
-            <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-3">Notes</h2>
-            {r.notes ? (
-              <p className="text-sm leading-relaxed whitespace-pre-line">{r.notes}</p>
-            ) : (
-              <p className="text-sm text-muted-foreground">No notes added.</p>
             )}
-          </section>
-        </>
+          </div>
+        </div>
+      )}
+
+      {/* Notes */}
+      <div className="mt-5 rounded-[18px] border border-border bg-card p-5">
+        <h2 className="text-[15px] font-semibold mb-3">Notes</h2>
+        {r.notes ? (
+          <p className="text-[14.5px] leading-[1.6] whitespace-pre-line text-foreground/85">{r.notes}</p>
+        ) : (
+          <p className="text-[13px] text-muted-foreground">No notes added.</p>
+        )}
       </div>
     </div>
   )

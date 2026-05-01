@@ -12,10 +12,11 @@ import {
   isToday,
 } from 'date-fns'
 import { SelectField } from '@/components/select-field'
-import { TimePicker } from '@/components/ui/time-picker'
+import { TimeDropdown } from '@/components/ui/time-dropdown'
 import {
   Sheet, SheetContent, SheetHeader, SheetTitle,
 } from '@/components/ui/sheet'
+import { Plus } from 'lucide-react'
 
 export type CalendarEvent = {
   id: string
@@ -59,6 +60,8 @@ export function Calendar({ year, month, events, activeJobs, basePath, addShiftAc
   const [formJobId, setFormJobId] = useState(activeJobs[0]?.jobId ?? '')
   const [formStart, setFormStart] = useState('09:00')
   const [formEnd, setFormEnd] = useState('17:00')
+  const [increment, setIncrement] = useState<15 | 30 | 60>(30)
+  const [editIncrement, setEditIncrement] = useState<15 | 30 | 60>(30)
 
   const [editingShiftId, setEditingShiftId] = useState<string | null>(null)
   const [editStart, setEditStart] = useState('09:00')
@@ -282,23 +285,45 @@ export function Calendar({ year, month, events, activeJobs, basePath, addShiftAc
                     </span>
 
                     {editShiftAction && event.status === 'scheduled' && editingShiftId === event.id && (
-                      <div className="space-y-2 pt-1">
-                        <div className="flex gap-2 flex-wrap">
-                          <div>
-                            <label className="text-xs text-muted-foreground block mb-1">Start</label>
-                            <TimePicker value={editStart} onChange={setEditStart} />
-                          </div>
-                          <div>
-                            <label className="text-xs text-muted-foreground block mb-1">End</label>
-                            <TimePicker value={editEnd} onChange={setEditEnd} />
+                      <div className="space-y-3 pt-2">
+                        <div>
+                          <label className="text-[12px] font-medium text-foreground/80 block mb-1.5">Increment</label>
+                          <div className="flex gap-1.5">
+                            {([15, 30, 60] as const).map(inc => (
+                              <button
+                                key={inc}
+                                type="button"
+                                onClick={() => setEditIncrement(inc)}
+                                className={[
+                                  'flex-1 rounded-full border px-3 py-1.5 text-[12px] font-medium transition-all',
+                                  editIncrement === inc
+                                    ? 'border-primary bg-[var(--forest-soft)] text-[var(--forest-deep)]'
+                                    : 'border-border text-foreground/70 hover:border-primary/40 hover:bg-muted',
+                                ].join(' ')}
+                              >
+                                {inc === 60 ? '1 hr' : `${inc} min`}
+                              </button>
+                            ))}
                           </div>
                         </div>
-                        {editError && <p className="text-xs text-destructive">{editError}</p>}
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <label className="text-[12px] font-medium text-foreground/80 block mb-1.5">Start</label>
+                            <TimeDropdown value={editStart} onChange={setEditStart} increment={editIncrement} placeholder="Start" />
+                          </div>
+                          <div>
+                            <label className="text-[12px] font-medium text-foreground/80 block mb-1.5">End</label>
+                            <TimeDropdown value={editEnd} onChange={setEditEnd} increment={editIncrement} placeholder="End" minTime={editStart || undefined} />
+                          </div>
+                        </div>
+                        {editError && <p className="text-[12px] text-destructive">{editError}</p>}
                         <div className="flex gap-2">
                           <button onClick={() => setEditingShiftId(null)} disabled={isPending}
-                            className="flex-1 text-xs py-1.5 rounded-md border border-border hover:bg-muted disabled:opacity-50">Cancel</button>
+                            className="flex-1 h-9 rounded-full border border-border bg-card text-[13px] font-medium hover:bg-muted disabled:opacity-50 transition-colors">
+                            Cancel
+                          </button>
                           <button onClick={() => submitEdit(event)} disabled={isPending}
-                            className="flex-1 text-xs py-1.5 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50">
+                            className="flex-1 h-9 rounded-full bg-primary text-primary-foreground text-[13px] font-medium hover:bg-[var(--forest-deep)] disabled:opacity-50 transition-colors">
                             {isPending ? 'Saving…' : 'Save'}
                           </button>
                         </div>
@@ -319,8 +344,14 @@ export function Calendar({ year, month, events, activeJobs, basePath, addShiftAc
             )}
 
             {addShiftAction && activeJobs.length > 0 && (
-              <div className="border-t border-border pt-4 space-y-3">
-                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Add Shift</p>
+              <div className="border-t border-border pt-5 space-y-4">
+                <div className="flex items-center gap-2">
+                  <div className="h-8 w-8 rounded-full bg-[var(--forest-soft)] flex items-center justify-center text-[var(--forest-deep)]">
+                    <Plus className="h-4 w-4" />
+                  </div>
+                  <p className="text-[14px] font-semibold">Add a shift</p>
+                </div>
+
                 {activeJobs.length > 1 && (
                   <SelectField
                     options={activeJobs.map((job) => ({ value: job.jobId, label: job.label }))}
@@ -329,20 +360,53 @@ export function Calendar({ year, month, events, activeJobs, basePath, addShiftAc
                     placeholder="Select a job…"
                   />
                 )}
-                <div className="flex gap-2 flex-wrap">
-                  <div>
-                    <label className="text-xs text-muted-foreground block mb-1">Start</label>
-                    <TimePicker value={formStart} onChange={setFormStart} />
-                  </div>
-                  <div>
-                    <label className="text-xs text-muted-foreground block mb-1">End</label>
-                    <TimePicker value={formEnd} onChange={setFormEnd} />
+
+                {/* Increment toggle */}
+                <div>
+                  <label className="text-[12px] font-medium text-foreground/80 block mb-1.5">Time increment</label>
+                  <div className="flex gap-1.5">
+                    {([15, 30, 60] as const).map(inc => (
+                      <button
+                        key={inc}
+                        type="button"
+                        onClick={() => setIncrement(inc)}
+                        className={[
+                          'flex-1 rounded-full border px-3 py-1.5 text-[12.5px] font-medium transition-all',
+                          increment === inc
+                            ? 'border-primary bg-[var(--forest-soft)] text-[var(--forest-deep)]'
+                            : 'border-border text-foreground/70 hover:border-primary/40 hover:bg-muted',
+                        ].join(' ')}
+                      >
+                        {inc === 60 ? '1 hour' : `${inc} min`}
+                      </button>
+                    ))}
                   </div>
                 </div>
-                {formError && <p className="text-xs text-destructive">{formError}</p>}
-                <button onClick={openAddConfirm} disabled={isPending}
-                  className="w-full h-8 rounded-lg bg-primary text-primary-foreground text-sm font-medium disabled:opacity-50 hover:bg-primary/90 transition-colors">
-                  Add Shift
+
+                {/* Time dropdowns */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-[12px] font-medium text-foreground/80 block mb-1.5">Start time</label>
+                    <TimeDropdown value={formStart} onChange={setFormStart} increment={increment} placeholder="Start" />
+                  </div>
+                  <div>
+                    <label className="text-[12px] font-medium text-foreground/80 block mb-1.5">End time</label>
+                    <TimeDropdown value={formEnd} onChange={setFormEnd} increment={increment} placeholder="End" minTime={formStart || undefined} />
+                  </div>
+                </div>
+
+                {formError && (
+                  <div className="rounded-[10px] border border-destructive/20 bg-destructive/[0.06] px-3 py-2 text-[12.5px] text-destructive">
+                    {formError}
+                  </div>
+                )}
+                <button
+                  onClick={openAddConfirm}
+                  disabled={isPending}
+                  className="group/cta inline-flex h-11 w-full items-center justify-center gap-1.5 rounded-full bg-primary text-primary-foreground text-[14px] font-medium disabled:opacity-50 hover:bg-[var(--forest-deep)] hover:shadow-[0_8px_18px_-6px_rgba(15,77,52,0.4)] transition-all"
+                >
+                  <Plus className="h-4 w-4" />
+                  Add shift
                 </button>
               </div>
             )}
