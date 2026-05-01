@@ -394,69 +394,104 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgRates
         </div>
       )}
 
-      <div className="mb-8">
-        <h1 className="text-[26px] sm:text-[32px] font-semibold tracking-[-0.02em] leading-[1.15]">
+      <div className="mb-10">
+        <h1 className="text-[28px] sm:text-[36px] md:text-[42px] font-semibold tracking-[-0.025em] leading-[1.1]">
           {STEP_TITLES[step - 1]}
         </h1>
+        {step === 1 && <p className="mt-2 text-[14.5px] text-muted-foreground">Select all that apply. You can choose multiple types.</p>}
+        {step === 2 && <p className="mt-2 text-[14.5px] text-muted-foreground">Pick the person you&apos;re finding care for, or add someone new.</p>}
+        {step === 3 && <p className="mt-2 text-[14.5px] text-muted-foreground">Where will the caregiver be working?</p>}
+        {step === 4 && <p className="mt-2 text-[14.5px] text-muted-foreground">When and how often is care needed?</p>}
+        {step === 5 && <p className="mt-2 text-[14.5px] text-muted-foreground">Tell us about supplies, safety, and infection control.</p>}
+        {step === 6 && <p className="mt-2 text-[14.5px] text-muted-foreground">Caregiver preferences and budget.</p>}
+        {step === 7 && <p className="mt-2 text-[14.5px] text-muted-foreground">Optional notes the caregiver should see before each shift.</p>}
+        {step === 8 && <p className="mt-2 text-[14.5px] text-muted-foreground">Final review before we generate your matches.</p>}
       </div>
 
       {/* Step 1 — Care Type (multi-select) */}
       {step === 1 && (
-        <div className="space-y-3">
-          <p className="text-sm text-muted-foreground">Select all that apply.</p>
-          <div className="grid grid-cols-2 gap-3">
-            {CARE_TYPES.map((ct) => (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {CARE_TYPES.map((ct) => {
+            const selected = form.careTypes.includes(ct.key)
+            return (
               <button
                 key={ct.key}
                 type="button"
                 onClick={() => toggleMulti('careTypes', ct.key)}
                 className={[
-                  'rounded-xl border-2 px-5 py-4 text-sm font-medium transition-colors text-left',
-                  form.careTypes.includes(ct.key) ? 'border-primary bg-primary/5 text-primary' : 'border-border hover:border-primary/50',
+                  'group/ct relative w-full overflow-hidden rounded-[16px] border-2 p-5 text-left transition-all duration-200',
+                  selected
+                    ? 'border-primary bg-[var(--forest-soft)] shadow-[0_8px_24px_-10px_rgba(15,77,52,0.4)] -translate-y-0.5'
+                    : 'border-border bg-card hover:border-primary/40 hover:bg-[var(--forest-soft)]/40 hover:-translate-y-0.5 hover:shadow-[0_8px_20px_-12px_rgba(15,77,52,0.18)]',
                 ].join(' ')}
               >
-                {ct.label}
+                {selected && (
+                  <div className="pointer-events-none absolute right-[-30px] top-[-30px] h-[120px] w-[120px] rounded-full bg-primary/15" />
+                )}
+                <div className="relative flex items-start justify-between gap-3">
+                  <div className="text-[15px] font-semibold tracking-[-0.005em]">{ct.label}</div>
+                  {selected && (
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                      <svg width="12" height="9" viewBox="0 0 12 9" fill="none">
+                        <path d="M1 4.5L4.5 8L11 1" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </span>
+                  )}
+                </div>
               </button>
-            ))}
-          </div>
+            )
+          })}
         </div>
       )}
 
       {/* Step 2 — Recipient */}
       {step === 2 && (
-        <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-3">
-            {recipients.map((r) => {
-              const initials = r.name.split(' ').map((p) => p[0]).slice(0, 2).join('').toUpperCase()
-              return (
-                <button
-                  key={r.id}
-                  type="button"
-                  onClick={() => handleRecipientSelect(r)}
-                  className={[
-                    'flex items-center gap-3 rounded-xl border-2 px-4 py-3 text-sm text-left transition-colors',
-                    form.recipientId === r.id ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50',
-                  ].join(' ')}
-                >
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {recipients.map((r) => {
+            const initials = r.name.split(' ').map((p) => p[0]).slice(0, 2).join('').toUpperCase()
+            const selected = form.recipientId === r.id
+            return (
+              <button
+                key={r.id}
+                type="button"
+                onClick={() => handleRecipientSelect(r)}
+                className={[
+                  'group/rec relative w-full overflow-hidden rounded-[16px] border-2 p-4 text-left transition-all duration-200',
+                  selected
+                    ? 'border-primary bg-[var(--forest-soft)] shadow-[0_8px_24px_-10px_rgba(15,77,52,0.4)] -translate-y-0.5'
+                    : 'border-border bg-card hover:border-primary/40 hover:bg-[var(--forest-soft)]/40 hover:-translate-y-0.5 hover:shadow-[0_8px_20px_-12px_rgba(15,77,52,0.18)]',
+                ].join(' ')}
+              >
+                {selected && (
+                  <div className="pointer-events-none absolute right-[-30px] top-[-30px] h-[120px] w-[120px] rounded-full bg-primary/15" />
+                )}
+                <div className="relative flex items-center gap-3">
                   {r.photoUrl ? (
-                    <img src={r.photoUrl} alt="" className="h-10 w-10 rounded-full object-cover shrink-0" />
+                    <img src={r.photoUrl} alt="" className="h-12 w-12 rounded-full object-cover shrink-0 ring-2 ring-card" />
                   ) : (
-                    <span className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground shrink-0">
+                    <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary text-[14px] font-semibold text-primary-foreground ring-2 ring-card">
                       {initials}
                     </span>
                   )}
-                  <div>
-                    <p className="font-medium">{r.name}</p>
-                    {r.relationship && <p className="text-xs text-muted-foreground capitalize">{r.relationship.replace(/-/g, ' ')}</p>}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[15px] font-semibold tracking-[-0.005em] truncate">{r.name}</p>
+                    {r.relationship && <p className="text-[12.5px] text-muted-foreground capitalize">{r.relationship.replace(/-/g, ' ')}</p>}
                   </div>
-                </button>
-              )
-            })}
-            <CareRecipientModal
-              onRecipientCreated={handleNewRecipientCreated}
-              triggerLabel="+ Add New Recipient"
-            />
-          </div>
+                  {selected && (
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                      <svg width="12" height="9" viewBox="0 0 12 9" fill="none">
+                        <path d="M1 4.5L4.5 8L11 1" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </span>
+                  )}
+                </div>
+              </button>
+            )
+          })}
+          <CareRecipientModal
+            onRecipientCreated={handleNewRecipientCreated}
+            triggerLabel="+ Add New Recipient"
+          />
         </div>
       )}
 
@@ -1249,42 +1284,59 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgRates
 
       {/* Navigation */}
       {!isFinalStep && (
-        <div className="pt-8 mt-8 border-t border-border">
+        <div className="pt-8 mt-10 border-t border-border">
           {!isLastStep && stepHint[step - 1] && !stepValid[step - 1] && (
-            <p className="text-xs text-amber-600 dark:text-amber-400 text-center mb-3">
+            <div className="mb-4 flex items-center gap-2 rounded-[12px] border border-amber-200 bg-amber-50 px-4 py-2.5 text-[13px] text-amber-800">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="shrink-0">
+                <path d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
               {stepHint[step - 1]}
-            </p>
+            </div>
           )}
           {isLastStep && stepHint[7] && !stepValid[7] && (
-            <p className="text-xs text-amber-600 dark:text-amber-400 text-center mb-3">
+            <div className="mb-4 flex items-center gap-2 rounded-[12px] border border-amber-200 bg-amber-50 px-4 py-2.5 text-[13px] text-amber-800">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="shrink-0">
+                <path d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
               {stepHint[7]}
-            </p>
+            </div>
           )}
-          <div className="flex justify-between">
+          <div className="flex items-center justify-between gap-3">
             <button
               type="button"
               onClick={() => step > 1 ? setStep((s) => s - 1) : router.push('/client/dashboard/requests')}
-              className="px-5 py-2.5 text-sm font-medium text-muted-foreground hover:text-foreground"
+              className="group/back inline-flex h-11 items-center gap-1.5 rounded-full border border-border bg-card px-5 text-[14px] font-medium text-foreground transition-all hover:border-foreground/30 hover:bg-muted"
             >
-              Back
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" className="transition-transform group-hover/back:-translate-x-0.5">
+                <path d="M10 3L5 8l5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              {step > 1 ? 'Back' : 'Cancel'}
             </button>
             {isLastStep ? (
               <button
                 type="button"
                 onClick={handleSubmit}
                 disabled={isPending || !stepValid[7]}
-                className="px-6 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium disabled:opacity-40"
+                className="group/cta inline-flex h-11 items-center gap-2 rounded-full bg-primary pl-6 pr-5 text-[14px] font-medium text-primary-foreground transition-all hover:bg-[var(--forest-deep)] hover:shadow-[0_10px_24px_-8px_rgba(15,77,52,0.4)] disabled:opacity-40 disabled:hover:shadow-none"
               >
-                {isPending ? 'Submitting…' : 'Submit Request'}
+                {isPending ? 'Submitting…' : 'Submit request'}
+                {!isPending && (
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="transition-transform group-hover/cta:translate-x-0.5">
+                    <path d="M2 7h10M8 3l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                )}
               </button>
             ) : (
               <button
                 type="button"
                 onClick={() => setStep((s) => s + 1)}
                 disabled={step === 7 ? false : !stepValid[step - 1]}
-                className="px-6 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium disabled:opacity-40"
+                className="group/cta inline-flex h-11 items-center gap-2 rounded-full bg-primary pl-6 pr-5 text-[14px] font-medium text-primary-foreground transition-all hover:bg-[var(--forest-deep)] hover:shadow-[0_10px_24px_-8px_rgba(15,77,52,0.4)] disabled:opacity-40 disabled:hover:shadow-none"
               >
-                Next
+                Continue
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="transition-transform group-hover/cta:translate-x-0.5">
+                  <path d="M2 7h10M8 3l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
               </button>
             )}
           </div>

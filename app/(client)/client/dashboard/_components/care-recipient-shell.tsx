@@ -1,5 +1,7 @@
 'use client'
 
+import { ArrowLeft, ArrowRight, Check } from 'lucide-react'
+
 const STEPS = ['Relationship', 'Basic Info', 'Health & Mobility', 'Notes']
 
 interface Props {
@@ -19,31 +21,42 @@ export function CareRecipientShell({
 }: Props) {
   return (
     <div className="flex flex-col h-full">
-      {/* Step indicator */}
-      <div className="flex items-center gap-2 mb-6">
-        {STEPS.map((_, i) => (
-          <div
-            key={i}
-            className={[
-              'flex-1 h-1 rounded-full transition-colors',
-              i + 1 <= currentStep && !skippedSteps.includes(i + 1) ? 'bg-primary' : 'bg-muted',
-            ].join(' ')}
-          />
-        ))}
+      {/* Step pills */}
+      <div className="flex items-center gap-1.5 mb-5">
+        {STEPS.map((label, i) => {
+          const n = i + 1
+          const isActive = n === currentStep
+          const isSkipped = skippedSteps.includes(n)
+          const isDone = n < currentStep && !isSkipped
+          return (
+            <div
+              key={i}
+              className={[
+                'flex-1 h-2 rounded-full transition-all',
+                isDone ? 'bg-primary' : isActive ? 'bg-primary' : 'bg-muted',
+              ].join(' ')}
+            />
+          )
+        })}
       </div>
 
-      <p className="text-xs text-muted-foreground mb-1">Step {currentStep} of {STEPS.length}</p>
-      <h2 className="text-xl font-semibold mb-6">{title}</h2>
+      <div className="mb-6">
+        <p className="text-[12.5px] font-medium text-muted-foreground">
+          Step <span className="text-foreground tabular-nums">{currentStep}</span> of <span className="tabular-nums">{STEPS.length}</span>
+        </p>
+        <h2 className="mt-1 text-[24px] font-semibold tracking-[-0.02em] leading-tight">{title}</h2>
+      </div>
 
-      <div className="flex-1 overflow-y-auto">{children}</div>
+      <div className="flex-1 overflow-y-auto -mx-1 px-1">{children}</div>
 
-      {/* Buttons */}
-      <div className="flex justify-between pt-6 border-t border-border mt-6">
+      {/* Footer */}
+      <div className="flex items-center justify-between pt-5 border-t border-border mt-5">
         <button
           type="button"
           onClick={onBack}
-          className="px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground"
+          className="group/back inline-flex h-10 items-center gap-1.5 rounded-full border border-border bg-card px-4 text-[13.5px] font-medium text-foreground hover:border-foreground/30 hover:bg-muted transition-colors"
         >
+          <ArrowLeft className="h-3.5 w-3.5 transition-transform group-hover/back:-translate-x-0.5" />
           Back
         </button>
         {currentStep < STEPS.length ? (
@@ -51,18 +64,24 @@ export function CareRecipientShell({
             type="button"
             onClick={onNext}
             disabled={nextDisabled}
-            className="px-5 py-2 rounded-md bg-primary text-primary-foreground text-sm font-medium disabled:opacity-40"
+            className="group/cta inline-flex h-10 items-center gap-2 rounded-full bg-primary pl-5 pr-4 text-[13.5px] font-medium text-primary-foreground transition-all hover:bg-[var(--forest-deep)] hover:shadow-[0_8px_18px_-6px_rgba(15,77,52,0.4)] disabled:opacity-40 disabled:hover:shadow-none"
           >
-            Next
+            Continue
+            <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover/cta:translate-x-0.5" />
           </button>
         ) : (
           <button
             type="button"
             onClick={onSave}
             disabled={isSaving}
-            className="px-5 py-2 rounded-md bg-primary text-primary-foreground text-sm font-medium disabled:opacity-40"
+            className="group/cta inline-flex h-10 items-center gap-2 rounded-full bg-primary pl-5 pr-4 text-[13.5px] font-medium text-primary-foreground transition-all hover:bg-[var(--forest-deep)] hover:shadow-[0_8px_18px_-6px_rgba(15,77,52,0.4)] disabled:opacity-40 disabled:hover:shadow-none"
           >
-            {isSaving ? 'Saving…' : 'Save Recipient'}
+            {isSaving ? 'Saving…' : (
+              <>
+                Save recipient
+                <Check className="h-3.5 w-3.5" />
+              </>
+            )}
           </button>
         )}
       </div>

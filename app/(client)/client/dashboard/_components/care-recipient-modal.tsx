@@ -135,21 +135,30 @@ export function CareRecipientModal({ onRecipientCreated, triggerLabel }: Props) 
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm font-medium whitespace-nowrap"
+        className="group/add relative flex items-center justify-center rounded-[16px] border-2 border-dashed border-border bg-card/50 p-4 text-[14px] font-medium text-foreground/70 transition-all hover:border-primary/40 hover:bg-[var(--forest-soft)]/40 hover:text-primary hover:-translate-y-0.5"
       >
-        {triggerLabel ?? '+ Add Recipient'}
+        <span className="inline-flex items-center gap-2">
+          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--forest-soft)] text-[var(--forest-deep)] transition-transform group-hover/add:scale-110">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <path d="M7 1.5v11M1.5 7h11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            </svg>
+          </span>
+          {triggerLabel ?? 'Add new recipient'}
+        </span>
       </button>
 
       {open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="relative w-full max-w-lg mx-4 rounded-xl bg-background p-6 sm:p-8 shadow-xl max-h-[90vh] flex flex-col overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/15 backdrop-blur-sm p-4">
+          <div className="relative w-full max-w-xl rounded-[18px] bg-card p-6 sm:p-8 shadow-[0_24px_48px_-12px_rgba(15,20,16,0.18)] border border-border max-h-[90vh] flex flex-col overflow-y-auto">
             <button
               type="button"
               onClick={handleClose}
-              className="absolute right-4 top-4 text-muted-foreground hover:text-foreground text-lg leading-none"
+              className="absolute right-4 top-4 inline-flex h-9 w-9 items-center justify-center rounded-full hover:bg-muted text-foreground/70 hover:text-foreground transition-colors"
               aria-label="Close"
             >
-              ✕
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <path d="M3 3l8 8M11 3l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              </svg>
             </button>
 
             <CareRecipientShell
@@ -174,22 +183,37 @@ export function CareRecipientModal({ onRecipientCreated, triggerLabel }: Props) 
             >
               {/* Step 1 — Relationship */}
               {step === 1 && (
-                <div className="grid grid-cols-2 gap-3">
-                  {RELATIONSHIPS.map((rel) => (
-                    <button
-                      key={rel.key}
-                      type="button"
-                      onClick={() => handleRelationshipSelect(rel.key)}
-                      className={[
-                        'rounded-lg border-2 px-4 py-3 text-sm font-medium transition-colors text-left',
-                        form.relationship === rel.key
-                          ? 'border-primary bg-primary/5 text-primary'
-                          : 'border-border hover:border-primary/50',
-                      ].join(' ')}
-                    >
-                      {rel.label}
-                    </button>
-                  ))}
+                <div className="grid grid-cols-2 gap-2.5">
+                  {RELATIONSHIPS.map((rel) => {
+                    const selected = form.relationship === rel.key
+                    return (
+                      <button
+                        key={rel.key}
+                        type="button"
+                        onClick={() => handleRelationshipSelect(rel.key)}
+                        className={[
+                          'group/rel relative w-full overflow-hidden rounded-[14px] border-2 p-4 text-left transition-all duration-200',
+                          selected
+                            ? 'border-primary bg-[var(--forest-soft)] shadow-[0_4px_16px_-8px_rgba(15,77,52,0.32)] -translate-y-0.5'
+                            : 'border-border bg-card hover:border-primary/40 hover:bg-[var(--forest-soft)]/40 hover:-translate-y-0.5',
+                        ].join(' ')}
+                      >
+                        {selected && (
+                          <div className="pointer-events-none absolute right-[-30px] top-[-30px] h-[100px] w-[100px] rounded-full bg-primary/15" />
+                        )}
+                        <div className="relative flex items-center justify-between gap-2">
+                          <span className="text-[14px] font-semibold tracking-[-0.005em]">{rel.label}</span>
+                          {selected && (
+                            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                              <svg width="10" height="8" viewBox="0 0 12 9" fill="none">
+                                <path d="M1 4.5L4.5 8L11 1" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                              </svg>
+                            </span>
+                          )}
+                        </div>
+                      </button>
+                    )
+                  })}
                 </div>
               )}
 
