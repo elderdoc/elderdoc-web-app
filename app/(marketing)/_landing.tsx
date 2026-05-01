@@ -21,7 +21,7 @@ const PILLARS = [
 const STEPS = [
   { n: '01', t: 'Tell us about your loved one.', d: 'Name, conditions, mobility, language preference, the kind of mornings they like. We keep it private. Always.' },
   { n: '02', t: 'Describe the care you need.', d: 'Hourly or live-in, weekday mornings or weekend overnights, a budget that respects everyone. We meet you where you are.' },
-  { n: '03', t: 'Review three matched caregivers.', d: 'Curated, ranked, and explained. Read why each one fits. Talk to them. No fee until you choose.' },
+  { n: '03', t: 'Review your top five matches.', d: 'Curated, ranked, and explained. Read why each one fits. Talk to them. No fee until you choose.' },
   { n: '04', t: 'Begin care, with confidence.', d: 'Weekly billing on a saved card. Funds held in escrow until the work is done. A 7-day window for any disputes.' },
 ]
 
