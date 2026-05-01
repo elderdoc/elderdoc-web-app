@@ -34,10 +34,11 @@
   --color-forest-soft: var(--forest-soft);
   --color-sage: var(--sage);
 
-  /* Typography — single distinctive sans */
+  /* Typography */
   --font-display: 'Geist', system-ui, -apple-system, sans-serif;
   --font-sans: 'Geist', system-ui, -apple-system, sans-serif;
   --font-mono: 'Geist Mono', ui-monospace, Menlo, monospace;
+  --font-serif: 'Instrument Serif', Georgia, serif;
 
   /* Shadows — soft and confident */
   --shadow-sm: 0 1px 2px rgba(15, 20, 16, 0.04);
