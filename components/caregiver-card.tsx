@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { Heart, MapPin } from 'lucide-react'
+import { Heart, MapPin, Clock, Star } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { CARE_TYPES } from '@/lib/constants'
 
@@ -26,20 +26,19 @@ interface CaregiverCardProps {
   caregiver: CaregiverPreview
   rank?: number
   onSendOffer?: () => void
-  /** Show a "View Profile" link instead of Send Offer */
   viewProfileHref?: string
-  /** Favorite toggle — show heart button when provided */
   isFavorited?: boolean
   onToggleFavorite?: () => void
   favoriteIsPending?: boolean
-  /** Optional status badge node rendered next to the name */
   statusBadge?: React.ReactNode
-  /** Replaces the default Send Offer button — use to pass a modal trigger */
   sendOfferNode?: React.ReactNode
   className?: string
 }
 
-export function CaregiverCard({ caregiver, rank, onSendOffer, viewProfileHref, isFavorited, onToggleFavorite, favoriteIsPending, statusBadge, sendOfferNode, className }: CaregiverCardProps) {
+export function CaregiverCard({
+  caregiver, rank, onSendOffer, viewProfileHref, isFavorited, onToggleFavorite,
+  favoriteIsPending, statusBadge, sendOfferNode, className,
+}: CaregiverCardProps) {
   const initials = caregiver.name
     ? caregiver.name.split(' ').filter(Boolean).map(n => n[0].toUpperCase()).slice(0, 2).join('')
     : '?'
@@ -49,145 +48,156 @@ export function CaregiverCard({ caregiver, rank, onSendOffer, viewProfileHref, i
   )
 
   const score = caregiver.matchScore ?? null
-
   const hasActions = onToggleFavorite !== undefined || viewProfileHref || sendOfferNode || onSendOffer
 
   return (
-    <div className={cn('rounded-[12px] border border-border bg-card p-5', className)}>
-      <div className="flex gap-4">
-        {/* Avatar + rank */}
-        <div className="flex flex-col items-center gap-2 shrink-0">
-          <div className="relative">
-            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
-              {caregiver.image ? (
-                <img src={caregiver.image} alt={caregiver.name ?? ''} className="h-14 w-14 rounded-full object-cover" />
-              ) : (
-                <span>{initials}</span>
-              )}
-            </div>
-            {rank !== undefined && (
-              <span className="absolute -top-1 -left-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
-                {rank}
-              </span>
-            )}
-          </div>
-        </div>
-
-        {/* Main content */}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-start justify-between gap-2 flex-wrap">
-            <div className="min-w-0">
-              <div className="flex items-center gap-2 flex-wrap">
-                <p className="text-[15px] font-semibold text-foreground">
-                  {caregiver.name ?? 'Anonymous Caregiver'}
-                </p>
-                {caregiver.rating != null && (
-                  <span className="flex items-center gap-0.5 text-xs text-amber-500 shrink-0 font-medium">
-                    ★ {Number(caregiver.rating).toFixed(1)}
-                  </span>
-                )}
-                {statusBadge}
-              </div>
-              {caregiver.headline && (
-                <p className="mt-0.5 text-sm text-muted-foreground line-clamp-1">
-                  {caregiver.headline}
-                </p>
-              )}
-            </div>
-
-            {/* Match score */}
-            {score !== null && (
-              <div className="flex items-center gap-1 shrink-0">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <svg
-                    key={i}
-                    className={cn('h-4 w-4', i < score ? 'text-primary' : 'text-muted-foreground/30')}
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
-                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                  </svg>
-                ))}
-                <span className="ml-1 text-xs font-medium text-muted-foreground">{score}/5</span>
-              </div>
-            )}
-          </div>
-
-          {/* Match reason */}
-          {caregiver.matchReason && (
-            <p className="mt-2 text-xs text-primary/80 font-medium">
-              ✓ {caregiver.matchReason}
-            </p>
+    <div className={cn(
+      'group/cg rounded-[16px] border border-border bg-card overflow-hidden transition-all',
+      'hover:border-foreground/15 hover:shadow-[0_8px_28px_-12px_rgba(15,20,16,0.12)]',
+      className
+    )}>
+      {/* Optional rank ribbon */}
+      {rank !== undefined && (
+        <div className="flex items-center gap-2 px-5 pt-4 -mb-1">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--forest-soft)] px-2.5 py-1 text-[11px] font-semibold text-[var(--forest-deep)] tabular-nums">
+            <span className="opacity-60">#</span>{rank}
+            <span className="text-[10px] opacity-70 font-medium">match</span>
+          </span>
+          {score !== null && (
+            <span className="inline-flex items-center gap-1 text-[12px] text-foreground/70">
+              <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+              <span className="font-semibold tabular-nums">{score}/5</span>
+            </span>
           )}
+        </div>
+      )}
 
-          {/* Details row */}
-          <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground">
-            {caregiver.distanceMiles != null ? (
-              <span className="flex items-center gap-1"><MapPin className="h-3 w-3 shrink-0" />{caregiver.distanceMiles < 1 ? '<1 mi' : `${Math.round(caregiver.distanceMiles)} mi`} away</span>
-            ) : caregiver.city && caregiver.state ? (
-              <span className="flex items-center gap-1"><MapPin className="h-3 w-3 shrink-0" />{caregiver.city}, {caregiver.state}</span>
-            ) : null}
-            {caregiver.experience && (
-              <span>🕐 {caregiver.experience}</span>
-            )}
-            {caregiver.hourlyMin && caregiver.hourlyMax && (
-              <span className="font-semibold text-foreground">
-                ${Number(caregiver.hourlyMin).toFixed(0)}–${Number(caregiver.hourlyMax).toFixed(0)}/hr
-              </span>
-            )}
+      <div className="p-5">
+        <div className="flex gap-4">
+          {/* Avatar */}
+          <div className="relative shrink-0">
+            <div className="h-14 w-14 overflow-hidden rounded-full ring-2 ring-card shadow-[0_2px_8px_-2px_rgba(15,20,16,0.1)]">
+              {caregiver.image ? (
+                <img src={caregiver.image} alt={caregiver.name ?? ''} className="h-full w-full object-cover" />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center bg-[var(--forest-soft)] text-[14px] font-semibold text-[var(--forest-deep)]">
+                  {initials}
+                </div>
+              )}
+            </div>
           </div>
 
-          {/* Care type tags */}
-          <div className="mt-3 flex flex-wrap gap-1.5">
-            {careTypeLabels.slice(0, 4).map(label => (
-              <span key={label} className="rounded-full bg-muted px-2.5 py-0.5 text-xs text-muted-foreground">
-                {label}
-              </span>
-            ))}
-            {careTypeLabels.length > 4 && (
-              <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs text-muted-foreground">
-                +{careTypeLabels.length - 4} more
-              </span>
+          {/* Main */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h3 className="text-[16px] font-semibold tracking-[-0.01em] truncate">
+                    {caregiver.name ?? 'Caregiver'}
+                  </h3>
+                  {caregiver.rating != null && rank === undefined && (
+                    <span className="inline-flex items-center gap-0.5 text-[12px] text-foreground/70 shrink-0">
+                      <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+                      <span className="font-medium">{Number(caregiver.rating).toFixed(1)}</span>
+                    </span>
+                  )}
+                  {statusBadge}
+                </div>
+                {caregiver.headline && (
+                  <p className="mt-0.5 text-[13.5px] text-muted-foreground line-clamp-1">
+                    {caregiver.headline}
+                  </p>
+                )}
+              </div>
+
+              {/* Rate */}
+              {caregiver.hourlyMin && caregiver.hourlyMax && (
+                <div className="shrink-0 text-right">
+                  <div className="text-[15px] font-semibold tabular-nums tracking-tight text-foreground">
+                    ${Number(caregiver.hourlyMin).toFixed(0)}–${Number(caregiver.hourlyMax).toFixed(0)}
+                  </div>
+                  <div className="text-[11px] text-muted-foreground">per hour</div>
+                </div>
+              )}
+            </div>
+
+            {/* Match reason */}
+            {caregiver.matchReason && (
+              <div className="mt-3 flex items-start gap-1.5 rounded-[10px] bg-[var(--forest-soft)]/50 px-3 py-2 text-[12.5px] text-[var(--forest-deep)]">
+                <span className="shrink-0">✓</span>
+                <span>{caregiver.matchReason}</span>
+              </div>
             )}
+
+            {/* Details */}
+            <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[12.5px] text-muted-foreground">
+              {caregiver.distanceMiles != null ? (
+                <span className="inline-flex items-center gap-1">
+                  <MapPin className="h-3 w-3 shrink-0" />
+                  {caregiver.distanceMiles < 1 ? '<1 mi' : `${Math.round(caregiver.distanceMiles)} mi`} away
+                </span>
+              ) : caregiver.city && caregiver.state ? (
+                <span className="inline-flex items-center gap-1">
+                  <MapPin className="h-3 w-3 shrink-0" />
+                  {caregiver.city}, {caregiver.state}
+                </span>
+              ) : null}
+              {caregiver.experience && (
+                <span className="inline-flex items-center gap-1">
+                  <Clock className="h-3 w-3 shrink-0" />
+                  {caregiver.experience}
+                </span>
+              )}
+            </div>
+
+            {/* Care type tags */}
+            <div className="mt-3 flex flex-wrap gap-1.5">
+              {careTypeLabels.slice(0, 4).map(label => (
+                <span key={label} className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-[11.5px] text-foreground/80">
+                  {label}
+                </span>
+              ))}
+              {careTypeLabels.length > 4 && (
+                <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-[11.5px] text-muted-foreground">
+                  +{careTypeLabels.length - 4}
+                </span>
+              )}
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Actions */}
       {hasActions && (
-        <>
-          <hr className="border-border mt-4" />
-          <div className="flex items-center justify-end gap-2 pt-4">
-            {onToggleFavorite !== undefined && (
-              <button
-                type="button"
-                onClick={onToggleFavorite}
-                disabled={favoriteIsPending}
-                title={isFavorited ? 'Remove from favorites' : 'Add to favorites'}
-                className="inline-flex items-center justify-center h-8 w-8 rounded-md border border-border hover:bg-muted transition-colors"
-              >
-                <Heart className={cn('h-4 w-4', isFavorited ? 'fill-red-500 text-red-500' : 'text-muted-foreground')} />
-              </button>
-            )}
-            {viewProfileHref && (
-              <Link
-                href={viewProfileHref}
-                className="rounded-[8px] border border-border px-4 py-2 text-sm font-medium hover:bg-muted transition-colors whitespace-nowrap"
-              >
-                View Profile
-              </Link>
-            )}
-            {sendOfferNode ?? (onSendOffer ? (
-              <button
-                type="button"
-                onClick={onSendOffer}
-                className="rounded-[8px] bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90 whitespace-nowrap"
-              >
-                Send Offer
-              </button>
-            ) : null)}
-          </div>
-        </>
+        <div className="flex items-center justify-end gap-2 px-5 py-3 bg-[var(--cream-deep)]/40 border-t border-border/60">
+          {onToggleFavorite !== undefined && (
+            <button
+              type="button"
+              onClick={onToggleFavorite}
+              disabled={favoriteIsPending}
+              title={isFavorited ? 'Remove from favorites' : 'Add to favorites'}
+              className="inline-flex items-center justify-center h-9 w-9 rounded-full border border-border bg-card hover:bg-muted transition-colors"
+            >
+              <Heart className={cn('h-4 w-4', isFavorited ? 'fill-red-500 text-red-500' : 'text-muted-foreground')} />
+            </button>
+          )}
+          {viewProfileHref && (
+            <Link
+              href={viewProfileHref}
+              className="inline-flex items-center h-9 rounded-full border border-border bg-card px-4 text-[13px] font-medium hover:border-foreground/30 hover:bg-muted transition-colors whitespace-nowrap"
+            >
+              View profile
+            </Link>
+          )}
+          {sendOfferNode ?? (onSendOffer ? (
+            <button
+              type="button"
+              onClick={onSendOffer}
+              className="inline-flex items-center h-9 rounded-full bg-primary px-5 text-[13px] font-medium text-primary-foreground hover:bg-[var(--forest-deep)] hover:shadow-[0_8px_18px_-6px_rgba(15,77,52,0.4)] transition-all whitespace-nowrap"
+            >
+              Send offer
+            </button>
+          ) : null)}
+        </div>
       )}
     </div>
   )

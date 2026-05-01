@@ -4,6 +4,7 @@ import { careRecipients, careRequests, matches } from '@/db/schema'
 import { eq, and, desc, count } from 'drizzle-orm'
 import { formatDistanceToNow } from 'date-fns'
 import Link from 'next/link'
+import { Plus, Users, FileText, Sparkles, ArrowRight } from 'lucide-react'
 
 import { CareRequestCard } from './_components/care-request-card'
 
@@ -70,114 +71,97 @@ export default async function ClientDashboard() {
     .slice(0, 10)
 
   const firstName = session.user.name?.split(' ')[0] ?? 'there'
-  const today = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
 
   const stats = [
-    { num: '01', label: 'Care Recipients', value: recipientCount.value, href: '/client/dashboard/recipients' },
-    { num: '02', label: 'Active Requests', value: activeRequestCount.value, href: '/client/dashboard/requests' },
-    { num: '03', label: 'Pending Matches', value: pendingMatchCount.value, href: '/client/dashboard/find-caregivers' },
+    { label: 'Care Recipients', value: recipientCount.value, href: '/client/dashboard/recipients', icon: Users },
+    { label: 'Active Requests', value: activeRequestCount.value, href: '/client/dashboard/requests', icon: FileText },
+    { label: 'Pending Matches', value: pendingMatchCount.value, href: '/client/dashboard/find-caregivers', icon: Sparkles },
   ]
 
   return (
-    <div className="px-6 lg:px-12 py-10 lg:py-14 max-w-[1400px] mx-auto">
-      {/* Masthead */}
-      <header className="border-b border-foreground/30 pb-8">
-        <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-          {today}
+    <div className="px-6 lg:px-10 py-8 lg:py-12 max-w-[1200px] mx-auto">
+      {/* Header */}
+      <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between mb-8">
+        <div>
+          <h1 className="text-[28px] sm:text-[34px] font-semibold tracking-[-0.02em] leading-[1.15]">
+            Hi {firstName}, welcome back.
+          </h1>
+          <p className="mt-1.5 text-[14.5px] text-muted-foreground">
+            Here&apos;s what&apos;s happening with your care today.
+          </p>
         </div>
-        <div className="mt-6 flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
-          <div className="max-w-3xl">
-            <p className="ed-eyebrow">A note for {firstName}</p>
-            <h1 className="ed-display mt-3 text-[44px] sm:text-[60px] md:text-[72px]">
-              Good to see you,{' '}
-              <span className="italic font-light text-[var(--forest-deep)]">{firstName}</span>.
-            </h1>
-          </div>
-          <div className="flex shrink-0 gap-2">
-            <Link
-              href="/client/dashboard/recipients/new"
-              className="inline-flex h-10 items-center gap-2 rounded-full border border-foreground/15 bg-transparent px-4 text-[13px] font-medium text-foreground transition-all hover:border-foreground/40 hover:bg-foreground/[0.025]"
-            >
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1.5v9M1.5 6h9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>
-              Recipient
-            </Link>
-            <Link
-              href="/client/dashboard/requests/new"
-              className="inline-flex h-10 items-center gap-2 rounded-full bg-foreground px-5 text-[13px] font-medium text-background transition-all hover:translate-y-[-1px] hover:shadow-[0_8px_18px_-6px_rgba(15,20,16,0.3)]"
-            >
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1.5v9M1.5 6h9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>
-              New Care Request
-            </Link>
-          </div>
+        <div className="flex gap-2">
+          <Link
+            href="/client/dashboard/recipients/new"
+            className="inline-flex h-10 items-center gap-1.5 rounded-full border border-border bg-card px-4 text-[13.5px] font-medium text-foreground transition-all hover:border-foreground/30 hover:bg-muted"
+          >
+            <Plus className="h-4 w-4" />
+            Add recipient
+          </Link>
+          <Link
+            href="/client/dashboard/requests/new"
+            className="inline-flex h-10 items-center gap-1.5 rounded-full bg-primary px-5 text-[13.5px] font-medium text-primary-foreground transition-all hover:bg-[var(--forest-deep)] hover:shadow-[0_8px_18px_-6px_rgba(15,77,52,0.4)]"
+          >
+            <Plus className="h-4 w-4" />
+            New care request
+          </Link>
         </div>
       </header>
 
-      {/* Stats — editorial figures */}
-      <section className="mt-12">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-px bg-border">
-          {stats.map((s) => (
-            <Link
-              key={s.label}
-              href={s.href}
-              className="group/stat relative bg-background p-6 transition-colors hover:bg-card"
-            >
-              <div className="flex items-baseline justify-between">
-                <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-                  {s.num} · {s.label}
-                </span>
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 14 14"
-                  fill="none"
-                  className="text-foreground/30 transition-all group-hover/stat:translate-x-0.5 group-hover/stat:text-foreground"
-                >
-                  <path d="M3 11L11 3M11 3H5M11 3v6" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </div>
-              <div className="ed-figure mt-4 text-[68px] leading-[1] tracking-[-0.045em]">
-                {String(s.value).padStart(2, '0')}
-              </div>
-            </Link>
-          ))}
+      {/* Stats */}
+      <section>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {stats.map((s) => {
+            const Icon = s.icon
+            return (
+              <Link
+                key={s.label}
+                href={s.href}
+                className="group/stat flex items-center justify-between gap-4 rounded-[14px] border border-border bg-card p-5 transition-all hover:border-foreground/15 hover:shadow-[0_8px_24px_-12px_rgba(15,20,16,0.1)] hover:-translate-y-0.5"
+              >
+                <div>
+                  <div className="text-[13px] text-muted-foreground">{s.label}</div>
+                  <div className="mt-1 text-[34px] font-semibold tabular-nums tracking-tight">{String(s.value)}</div>
+                </div>
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[var(--forest-soft)] text-[var(--forest-deep)] transition-transform group-hover/stat:scale-105">
+                  <Icon className="h-5 w-5" />
+                </div>
+              </Link>
+            )
+          })}
         </div>
       </section>
 
-      {/* Two-column editorial split */}
-      <section className="mt-16 grid grid-cols-12 gap-x-6 gap-y-12 lg:gap-x-10">
+      {/* Two-column */}
+      <section className="mt-10 grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Recent Requests */}
-        <div className="col-span-12 lg:col-span-7">
-          <div className="flex items-baseline justify-between border-b border-foreground/30 pb-3">
-            <div>
-              <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-                Section I
-              </p>
-              <h2 className="ed-display mt-1 text-[28px] md:text-[32px]">
-                Recent Requests
-              </h2>
-            </div>
-            <Link href="/client/dashboard/requests" className="ed-link text-[13px]">
-              View all →
+        <div className="lg:col-span-2">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-[20px] font-semibold tracking-tight">Recent requests</h2>
+            <Link href="/client/dashboard/requests" className="inline-flex items-center gap-1 text-[13px] font-medium text-primary hover:underline underline-offset-4">
+              View all <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           </div>
 
           {recentRequests.length === 0 ? (
-            <div className="mt-8 border border-dashed border-border rounded-md p-10 text-center">
-              <p className="font-display text-[20px] tracking-[-0.02em] text-foreground/80">
-                No requests yet.
-              </p>
-              <p className="mt-2 text-[13px] text-muted-foreground">
-                Begin by adding a recipient and creating a care request.
+            <div className="rounded-[14px] border-2 border-dashed border-border bg-card p-10 text-center">
+              <div className="mx-auto h-12 w-12 rounded-full bg-[var(--forest-soft)] flex items-center justify-center mb-4">
+                <FileText className="h-5 w-5 text-[var(--forest-deep)]" />
+              </div>
+              <h3 className="text-[17px] font-semibold">No requests yet</h3>
+              <p className="mt-1.5 text-[14px] text-muted-foreground">
+                Start by creating your first care request.
               </p>
               <Link
                 href="/client/dashboard/requests/new"
-                className="mt-5 inline-flex h-9 items-center gap-2 rounded-full bg-foreground px-4 text-[13px] font-medium text-background transition-all hover:translate-y-[-1px]"
+                className="mt-5 inline-flex h-10 items-center gap-1.5 rounded-full bg-primary px-5 text-[14px] font-medium text-primary-foreground transition-all hover:bg-[var(--forest-deep)]"
               >
+                <Plus className="h-4 w-4" />
                 Create your first request
               </Link>
             </div>
           ) : (
-            <div className="mt-6 space-y-3">
+            <div className="space-y-3">
               {recentRequests.map((req) => (
                 <CareRequestCard key={req.id} req={req} />
               ))}
@@ -185,50 +169,38 @@ export default async function ClientDashboard() {
           )}
         </div>
 
-        {/* Activity Timeline */}
-        <div className="col-span-12 lg:col-span-5">
-          <div className="border-b border-foreground/30 pb-3">
-            <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-              Section II
-            </p>
-            <h2 className="ed-display mt-1 text-[28px] md:text-[32px]">
-              In the Margins
-            </h2>
-          </div>
-
+        {/* Activity */}
+        <div>
+          <h2 className="text-[20px] font-semibold tracking-tight mb-4">Recent activity</h2>
           {activity.length === 0 ? (
-            <p className="mt-8 text-[14px] text-muted-foreground italic">
-              Your activity will appear here as it happens.
-            </p>
+            <div className="rounded-[14px] border border-border bg-card p-6 text-center">
+              <p className="text-[14px] text-muted-foreground">
+                Activity will appear here as it happens.
+              </p>
+            </div>
           ) : (
-            <ol className="mt-6 space-y-0">
-              {activity.map((item, i) => (
-                <li
-                  key={`${i}-${item.type}-${item.createdAt.getTime()}`}
-                  className="group/item relative flex gap-5 border-b border-border py-4 last:border-b-0"
-                >
-                  <span className="font-mono text-[10px] tabular-nums text-muted-foreground/70 mt-1 shrink-0 w-6">
-                    {String(i + 1).padStart(2, '0')}
-                  </span>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[14px] leading-relaxed">
-                      {item.type === 'recipient' ? (
-                        <>You added <span className="font-display italic text-[var(--forest-deep)]">{item.name}</span> as a recipient</>
-                      ) : (
-                        <>You created a <span className="font-display italic text-[var(--forest-deep)]">{item.careType}</span> request</>
-                      )}
-                    </p>
-                    <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
-                      {formatDistanceToNow(item.createdAt, { addSuffix: true })}
-                    </p>
-                  </div>
-                </li>
-              ))}
-            </ol>
+            <div className="rounded-[14px] border border-border bg-card overflow-hidden">
+              <ol className="divide-y divide-border">
+                {activity.map((item, i) => (
+                  <li key={`${i}-${item.type}-${item.createdAt.getTime()}`} className="flex gap-3 px-4 py-3.5">
+                    <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-primary" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[14px] leading-relaxed">
+                        {item.type === 'recipient'
+                          ? <>You added <span className="font-medium">{item.name}</span></>
+                          : <>You created a <span className="font-medium">{item.careType}</span> request</>}
+                      </p>
+                      <p className="mt-0.5 text-[12px] text-muted-foreground">
+                        {formatDistanceToNow(item.createdAt, { addSuffix: true })}
+                      </p>
+                    </div>
+                  </li>
+                ))}
+              </ol>
+            </div>
           )}
         </div>
       </section>
-
     </div>
   )
 }

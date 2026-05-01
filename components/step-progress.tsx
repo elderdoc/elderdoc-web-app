@@ -7,50 +7,49 @@ interface StepProgressProps {
 }
 
 export function StepProgress({ steps, currentStep, className }: StepProgressProps) {
-  const total = steps.length
   return (
-    <div className={cn('w-full', className)}>
-      {/* Compact progress: numeric position + thin bar */}
-      <div className="flex items-baseline justify-between mb-3">
-        <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-          Step <span className="text-foreground font-medium tabular-nums">{String(currentStep).padStart(2, '0')}</span>
-          {' '}/{' '}
-          <span className="tabular-nums">{String(total).padStart(2, '0')}</span>
-        </div>
-        <div className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
-          {steps[currentStep - 1]?.label}
-        </div>
-      </div>
-      <div className="h-px bg-border relative overflow-hidden">
-        <div
-          className="absolute inset-y-0 left-0 bg-foreground transition-[width] duration-500 ease-out"
-          style={{ width: `${(currentStep / total) * 100}%`, height: '2px', top: '-0.5px' }}
-        />
-      </div>
-      {/* Step ticks */}
-      <div className="mt-3 grid gap-1" style={{ gridTemplateColumns: `repeat(${total}, 1fr)` }}>
-        {steps.map((step, i) => {
-          const n = i + 1
-          const isCompleted = n < currentStep
-          const isActive = n === currentStep
-          return (
-            <div key={step.label} className="flex flex-col items-start">
+    <nav aria-label="Progress" className={cn('flex items-start justify-between gap-2 max-w-2xl', className)}>
+      {steps.map((step, index) => {
+        const stepNumber = index + 1
+        const isCompleted = stepNumber < currentStep
+        const isActive    = stepNumber === currentStep
+
+        return (
+          <div key={step.label} className="flex flex-1 items-start gap-0">
+            <div className="flex flex-col items-center gap-2 shrink-0">
+              <div
+                data-testid={isCompleted ? 'step-completed' : isActive ? 'step-active' : 'step-pending'}
+                className={cn(
+                  'flex h-9 w-9 items-center justify-center rounded-full text-[14px] font-semibold transition-all',
+                  isCompleted && 'bg-primary text-primary-foreground shadow-[0_2px_8px_-2px_rgba(15,77,52,0.4)]',
+                  isActive && 'bg-primary text-primary-foreground ring-4 ring-[var(--forest-soft)] shadow-[0_4px_12px_-2px_rgba(15,77,52,0.4)]',
+                  !isCompleted && !isActive && 'bg-card border-2 border-border text-muted-foreground',
+                )}
+              >
+                {isCompleted ? (
+                  <svg width="14" height="11" viewBox="0 0 12 10" fill="none">
+                    <path d="M1 5L4.5 8.5L11 1" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                ) : stepNumber}
+              </div>
               <span className={cn(
-                'font-mono text-[10px] tabular-nums transition-colors',
-                isActive ? 'text-foreground font-medium' : isCompleted ? 'text-foreground/55' : 'text-muted-foreground/40',
-              )}>
-                {String(n).padStart(2, '0')}
-              </span>
-              <span className={cn(
-                'mt-1 text-[11px] truncate w-full transition-colors hidden sm:block',
-                isActive ? 'text-foreground font-medium' : isCompleted ? 'text-foreground/55' : 'text-muted-foreground/50',
+                'text-[12px] font-medium text-center leading-tight max-w-[80px]',
+                isActive ? 'text-foreground' : isCompleted ? 'text-foreground/70' : 'text-muted-foreground/70',
               )}>
                 {step.label}
               </span>
             </div>
-          )
-        })}
-      </div>
-    </div>
+            {index < steps.length - 1 && (
+              <div className="h-9 flex-1 flex items-center px-1 min-w-[20px]">
+                <div className={cn(
+                  'h-[2px] w-full rounded-full transition-colors',
+                  isCompleted ? 'bg-primary' : 'bg-border',
+                )} />
+              </div>
+            )}
+          </div>
+        )
+      })}
+    </nav>
   )
 }

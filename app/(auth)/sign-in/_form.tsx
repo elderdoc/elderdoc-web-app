@@ -3,7 +3,7 @@
 import { useState, useTransition, Suspense } from 'react'
 import { signIn } from 'next-auth/react'
 import Link from 'next/link'
-import { Eye, EyeOff } from 'lucide-react'
+import { Eye, EyeOff, ArrowRight, Heart, ShieldCheck } from 'lucide-react'
 import { registerUser } from '@/domains/auth/register'
 import { useRouter, useSearchParams } from 'next/navigation'
 
@@ -30,8 +30,7 @@ function SignInInner({ stats }: { stats: Stats }) {
   const [isPending, startTransition] = useTransition()
 
   const inputClass =
-    'w-full rounded-[6px] border border-input bg-card/60 px-3.5 py-2.5 text-[14px] text-foreground placeholder:text-muted-foreground outline-none transition-all focus:border-foreground focus:bg-card focus:ring-[3px] focus:ring-foreground/[0.06]'
-  const labelClass = 'block font-mono text-[10px] font-medium uppercase tracking-[0.16em] text-muted-foreground mb-2'
+    'h-11 w-full rounded-[10px] border border-input bg-card px-3.5 text-[15px] text-foreground placeholder:text-muted-foreground/70 outline-none transition-all hover:border-foreground/30 focus:border-primary focus:ring-[3px] focus:ring-primary/15'
 
   function roleRedirect(userRole: string | null) {
     if (callbackUrl) return callbackUrl
@@ -79,101 +78,109 @@ function SignInInner({ stats }: { stats: Stats }) {
     })
   }
 
-  const formatNum = (n: number) => n >= 1000 ? `${(n / 1000).toFixed(1).replace(/\.0$/, '')}k` : String(n)
+  const formatNum = (n: number) => n >= 1000 ? `${(n / 1000).toFixed(1).replace(/\.0$/, '')}k+` : n === 0 ? '—' : String(n)
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-background">
-      <div className="grid min-h-screen lg:grid-cols-12">
-        {/* Left editorial pane */}
-        <div className="hidden lg:flex lg:col-span-6 xl:col-span-7 flex-col justify-between border-r border-border px-12 xl:px-16 py-12">
-          <Link href="/" className="font-display text-[28px] tracking-[-0.045em] leading-none">
+    <div className="min-h-screen bg-background relative overflow-hidden">
+      {/* Soft glow background */}
+      <div className="pointer-events-none absolute inset-0 -z-10">
+        <div className="absolute right-[-10%] top-[-20%] h-[500px] w-[500px] rounded-full bg-[var(--forest-soft)] blur-3xl opacity-50" />
+        <div className="absolute left-[-15%] bottom-[-30%] h-[500px] w-[500px] rounded-full bg-[var(--cream-deep)] blur-3xl opacity-60" />
+      </div>
+
+      <div className="grid min-h-screen lg:grid-cols-2">
+        {/* Left informational pane */}
+        <div className="hidden lg:flex flex-col justify-between border-r border-border px-12 xl:px-16 py-12">
+          <Link href="/" className="text-[22px] font-semibold tracking-tight">
             Elderdoc
           </Link>
 
           <div>
-            <p className="ed-eyebrow">An invitation</p>
-            <h1 className="ed-display mt-5 text-[56px] xl:text-[72px]">
-              Welcome,{' '}
-              <span className="italic font-light text-[var(--forest-deep)]">again</span>.
+            <span className="inline-flex items-center gap-2 rounded-full bg-[var(--forest-soft)] px-3 py-1.5 text-[13px] font-medium text-[var(--forest-deep)]">
+              <Heart className="h-3.5 w-3.5" />
+              Welcome back
+            </span>
+            <h1 className="mt-5 text-[44px] xl:text-[56px] font-semibold tracking-[-0.025em] leading-[1.05]">
+              The right care, made simple.
             </h1>
-            <p className="mt-8 max-w-md text-[16px] leading-[1.6] text-foreground/75">
-              Sign in to coordinate care, review caregiver matches,
-              and manage the people who matter most.
+            <p className="mt-5 max-w-md text-[15px] leading-[1.6] text-foreground/70">
+              Sign in to coordinate care, review caregiver matches, and manage the people who matter most.
             </p>
-            <div className="mt-12 grid grid-cols-3 gap-8 max-w-md">
-              <div>
-                <div className="ed-figure text-[36px] leading-[1] tracking-[-0.04em]">{formatNum(stats.caregivers)}</div>
-                <div className="mt-2 font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">caregivers</div>
-              </div>
-              <div>
-                <div className="ed-figure text-[36px] leading-[1] tracking-[-0.04em]">{formatNum(stats.families)}</div>
-                <div className="mt-2 font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">families</div>
-              </div>
-              <div>
-                <div className="ed-figure text-[36px] leading-[1] tracking-[-0.04em]">{formatNum(stats.matches)}</div>
-                <div className="mt-2 font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">matches</div>
-              </div>
+
+            <div className="mt-10 grid grid-cols-3 gap-4 max-w-sm">
+              {[
+                { v: stats.caregivers, l: 'caregivers' },
+                { v: stats.families, l: 'families' },
+                { v: stats.matches, l: 'matches' },
+              ].map((s) => (
+                <div key={s.l} className="rounded-[12px] border border-border bg-card px-3 py-4 text-center">
+                  <div className="text-[20px] font-semibold tabular-nums tracking-tight">{formatNum(s.v)}</div>
+                  <div className="mt-1 text-[11px] text-muted-foreground">{s.l}</div>
+                </div>
+              ))}
             </div>
           </div>
 
-          <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-            © {new Date().getFullYear()} Elderdoc · Care, considered.
+          <div className="flex items-center gap-2 text-[13px] text-muted-foreground">
+            <ShieldCheck className="h-4 w-4 text-primary" />
+            <span>Background-checked &amp; verified caregivers</span>
           </div>
         </div>
 
         {/* Right form pane */}
-        <div className="flex items-center justify-center px-6 py-12 lg:col-span-6 xl:col-span-5 sm:px-10">
+        <div className="flex items-center justify-center px-6 py-12 sm:px-10">
           <div className="w-full max-w-[420px]">
             <div className="lg:hidden mb-8">
-              <Link href="/" className="font-display text-[24px] tracking-[-0.04em] leading-none">
+              <Link href="/" className="text-[22px] font-semibold tracking-tight">
                 Elderdoc
               </Link>
             </div>
 
             <div>
-              <p className="ed-eyebrow">{tab === 'signin' ? 'Returning' : 'New here'}</p>
-              <h2 className="ed-display mt-3 text-[36px] sm:text-[40px]">
-                {tab === 'signin' ? (
-                  <>Sign in to <span className="italic font-light">continue</span>.</>
-                ) : (
-                  <>Begin with <span className="italic font-light">care</span>.</>
-                )}
+              <h2 className="text-[28px] sm:text-[32px] font-semibold tracking-[-0.02em] leading-[1.15]">
+                {tab === 'signin' ? 'Welcome back' : 'Create your account'}
               </h2>
+              <p className="mt-2 text-[14.5px] text-muted-foreground">
+                {tab === 'signin' ? 'Sign in to continue.' : 'Get started in minutes.'}
+              </p>
             </div>
 
-            <div className="mt-8 flex gap-1 border-b border-foreground/15">
+            {/* Pill tab switcher */}
+            <div className="mt-8 inline-flex p-1 bg-muted rounded-full">
               <button
                 type="button"
                 onClick={() => { setTab('signin'); setError(null) }}
-                className={`relative px-1 pb-3 pt-1 text-[13px] font-medium transition-colors ${
-                  tab === 'signin' ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'
+                className={`px-5 py-2 rounded-full text-[13px] font-medium transition-all ${
+                  tab === 'signin'
+                    ? 'bg-card text-foreground shadow-[0_1px_3px_rgba(15,20,16,0.08)]'
+                    : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
-                Sign In
-                {tab === 'signin' && <span className="absolute -bottom-px left-0 right-0 h-[2px] bg-foreground" />}
+                Sign in
               </button>
               <button
                 type="button"
                 onClick={() => { setTab('register'); setError(null) }}
-                className={`relative ml-4 px-1 pb-3 pt-1 text-[13px] font-medium transition-colors ${
-                  tab === 'register' ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'
+                className={`px-5 py-2 rounded-full text-[13px] font-medium transition-all ${
+                  tab === 'register'
+                    ? 'bg-card text-foreground shadow-[0_1px_3px_rgba(15,20,16,0.08)]'
+                    : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
                 Register
-                {tab === 'register' && <span className="absolute -bottom-px left-0 right-0 h-[2px] bg-foreground" />}
               </button>
             </div>
 
             <div className="mt-7">
               {tab === 'signin' ? (
-                <form onSubmit={handleSignIn} className="space-y-5">
+                <form onSubmit={handleSignIn} className="space-y-4">
                   <div>
-                    <label className={labelClass}>Email</label>
+                    <label className="block text-[13px] font-medium text-foreground mb-1.5">Email</label>
                     <input type="email" autoComplete="email" placeholder="you@example.com"
                       value={email} onChange={e => setEmail(e.target.value)} className={inputClass} required />
                   </div>
                   <div>
-                    <label className={labelClass}>Password</label>
+                    <label className="block text-[13px] font-medium text-foreground mb-1.5">Password</label>
                     <div className="relative">
                       <input type={showPassword ? 'text' : 'password'} autoComplete="current-password" placeholder="••••••••"
                         value={password} onChange={e => setPassword(e.target.value)} className={`${inputClass} pr-11`} required />
@@ -184,40 +191,40 @@ function SignInInner({ stats }: { stats: Stats }) {
                     </div>
                   </div>
                   {error && (
-                    <div className="rounded-md border border-destructive/20 bg-destructive/[0.06] px-3 py-2 text-[12px] text-destructive">
+                    <div className="rounded-[10px] border border-destructive/20 bg-destructive/[0.06] px-3 py-2 text-[13px] text-destructive">
                       {error}
                     </div>
                   )}
                   <button type="submit" disabled={isPending}
-                    className="group/cta inline-flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground text-[14px] font-medium text-background transition-all hover:translate-y-[-1px] hover:shadow-[0_10px_24px_-8px_rgba(15,20,16,0.3)] disabled:opacity-50 disabled:hover:translate-y-0">
+                    className="group/cta inline-flex h-12 w-full items-center justify-center gap-2 rounded-full bg-primary text-[14px] font-medium text-primary-foreground transition-all hover:bg-[var(--forest-deep)] hover:shadow-[0_10px_24px_-8px_rgba(15,77,52,0.4)] disabled:opacity-50">
                     {isPending ? 'Signing in…' : (
                       <>
-                        Sign In
-                        <span className="ml-1 transition-transform group-hover/cta:translate-x-1">→</span>
+                        Sign in
+                        <ArrowRight className="h-4 w-4 transition-transform group-hover/cta:translate-x-0.5" />
                       </>
                     )}
                   </button>
                 </form>
               ) : (
-                <form onSubmit={handleRegister} className="space-y-5">
+                <form onSubmit={handleRegister} className="space-y-4">
                   <div>
-                    <label className={labelClass}>I am a</label>
+                    <label className="block text-[13px] font-medium text-foreground mb-1.5">I am a</label>
                     <div className="grid grid-cols-2 gap-2">
                       {(['client', 'caregiver'] as const).map(r => (
                         <button
                           key={r}
                           type="button"
                           onClick={() => setRole(r)}
-                          className={`relative rounded-md border px-3 py-3 text-left text-[13px] font-medium transition-all capitalize ${
+                          className={`relative rounded-[12px] border-2 p-4 text-left transition-all ${
                             role === r
-                              ? 'border-foreground bg-foreground text-background'
-                              : 'border-border text-foreground/70 hover:border-foreground/40 hover:text-foreground'
+                              ? 'border-primary bg-[var(--forest-soft)] text-foreground'
+                              : 'border-border bg-card text-foreground hover:border-primary/40'
                           }`}
                         >
-                          <div className="font-mono text-[10px] uppercase tracking-[0.14em] opacity-70">
+                          <div className="text-[12px] text-muted-foreground">
                             {r === 'client' ? 'Family' : 'Provider'}
                           </div>
-                          <div className="mt-1 font-display text-[15px] tracking-tight">
+                          <div className="mt-1 text-[15px] font-semibold capitalize">
                             {r === 'client' ? 'Client' : 'Caregiver'}
                           </div>
                         </button>
@@ -225,17 +232,17 @@ function SignInInner({ stats }: { stats: Stats }) {
                     </div>
                   </div>
                   <div>
-                    <label className={labelClass}>Full Name</label>
+                    <label className="block text-[13px] font-medium text-foreground mb-1.5">Full name</label>
                     <input type="text" autoComplete="name" placeholder="Jane Smith"
                       value={name} onChange={e => setName(e.target.value)} className={inputClass} required />
                   </div>
                   <div>
-                    <label className={labelClass}>Email</label>
+                    <label className="block text-[13px] font-medium text-foreground mb-1.5">Email</label>
                     <input type="email" autoComplete="email" placeholder="you@example.com"
                       value={email} onChange={e => setEmail(e.target.value)} className={inputClass} required />
                   </div>
                   <div>
-                    <label className={labelClass}>Password</label>
+                    <label className="block text-[13px] font-medium text-foreground mb-1.5">Password</label>
                     <div className="relative">
                       <input type={showPassword ? 'text' : 'password'} autoComplete="new-password" placeholder="Min. 8 characters"
                         value={password} onChange={e => setPassword(e.target.value)} className={`${inputClass} pr-11`} required />
@@ -246,32 +253,32 @@ function SignInInner({ stats }: { stats: Stats }) {
                     </div>
                   </div>
                   {error && (
-                    <div className="rounded-md border border-destructive/20 bg-destructive/[0.06] px-3 py-2 text-[12px] text-destructive">
+                    <div className="rounded-[10px] border border-destructive/20 bg-destructive/[0.06] px-3 py-2 text-[13px] text-destructive">
                       {error}
                     </div>
                   )}
                   <button type="submit" disabled={isPending}
-                    className="group/cta inline-flex h-12 w-full items-center justify-center gap-2 rounded-full bg-primary text-[14px] font-medium text-primary-foreground transition-all hover:translate-y-[-1px] hover:bg-[var(--forest-deep)] hover:shadow-[0_12px_28px_-8px_rgba(15,77,52,0.4)] disabled:opacity-50 disabled:hover:translate-y-0">
+                    className="group/cta inline-flex h-12 w-full items-center justify-center gap-2 rounded-full bg-primary text-[14px] font-medium text-primary-foreground transition-all hover:bg-[var(--forest-deep)] hover:shadow-[0_10px_24px_-8px_rgba(15,77,52,0.4)] disabled:opacity-50">
                     {isPending ? 'Creating account…' : (
                       <>
-                        Create Account
-                        <span className="ml-1 transition-transform group-hover/cta:translate-x-1">→</span>
+                        Create account
+                        <ArrowRight className="h-4 w-4 transition-transform group-hover/cta:translate-x-0.5" />
                       </>
                     )}
                   </button>
                 </form>
               )}
 
-              <div className="my-6 flex items-center gap-3">
+              <div className="my-5 flex items-center gap-3">
                 <div className="h-px flex-1 bg-border" />
-                <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">or</span>
+                <span className="text-[12px] text-muted-foreground">or</span>
                 <div className="h-px flex-1 bg-border" />
               </div>
 
               <button
                 type="button"
                 onClick={handleGoogleSignIn}
-                className="flex h-11 w-full items-center justify-center gap-3 rounded-full border border-foreground/15 bg-card text-[13px] font-medium text-foreground transition-all hover:border-foreground/40 hover:bg-foreground/[0.025]"
+                className="flex h-11 w-full items-center justify-center gap-3 rounded-full border border-border bg-card text-[14px] font-medium text-foreground transition-all hover:border-foreground/30 hover:bg-muted"
               >
                 <svg width="16" height="16" viewBox="0 0 18 18" aria-hidden="true">
                   <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/>
@@ -282,11 +289,11 @@ function SignInInner({ stats }: { stats: Stats }) {
                 Continue with Google
               </button>
 
-              <p className="mt-6 text-[11px] leading-relaxed text-muted-foreground">
+              <p className="mt-5 text-[12px] leading-relaxed text-muted-foreground">
                 By continuing, you agree to our{' '}
-                <span className="underline underline-offset-2 decoration-border hover:decoration-foreground">Terms</span>
+                <span className="underline underline-offset-2 hover:text-foreground">Terms</span>
                 {' '}and{' '}
-                <span className="underline underline-offset-2 decoration-border hover:decoration-foreground">Privacy Policy</span>.
+                <span className="underline underline-offset-2 hover:text-foreground">Privacy Policy</span>.
               </p>
             </div>
           </div>

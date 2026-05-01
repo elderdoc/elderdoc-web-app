@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { ArrowLeft } from 'lucide-react'
 import { StepProgress } from '@/components/step-progress'
 
 const CLIENT_STEPS_4 = [
@@ -32,37 +33,32 @@ export function StepShell({ currentStep, totalSteps = 4, title, subtitle, childr
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-20 border-b border-border/60 bg-background/85 backdrop-blur-md">
-        <div className="mx-auto flex h-14 max-w-[920px] items-center justify-between px-6">
+      <header className="sticky top-0 z-20 border-b border-border bg-background/95 backdrop-blur-md">
+        <div className="mx-auto flex h-16 max-w-3xl items-center justify-between px-6">
           <Link
             href={backHref}
-            className="group/back inline-flex items-center gap-1.5 text-[13px] text-muted-foreground transition-colors hover:text-foreground"
+            className="group/back inline-flex items-center gap-1.5 text-[14px] text-foreground/70 transition-colors hover:text-foreground"
           >
-            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true" className="transition-transform group-hover/back:-translate-x-0.5">
-              <path d="M10 3L5 8l5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
+            <ArrowLeft className="h-4 w-4 transition-transform group-hover/back:-translate-x-0.5" />
             Back
           </Link>
-          <Link href="/" className="font-display text-[18px] tracking-[-0.04em] leading-none">
+          <Link href="/" className="text-[18px] font-semibold tracking-tight text-foreground">
             Elderdoc
           </Link>
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-[920px] px-6 py-10 md:py-14">
-        {/* Progress bar */}
-        <div className="mb-12">
+      <main className="mx-auto w-full max-w-3xl px-6 py-10 md:py-14">
+        <div className="mb-12 flex justify-center">
           <StepProgress steps={STEPS} currentStep={currentStep} />
         </div>
 
-        {/* Heading area — left-aligned editorial */}
-        <div className="mb-10 max-w-2xl">
-          <p className="ed-eyebrow">A care request</p>
-          <h1 className="ed-display mt-3 text-[36px] sm:text-[44px] md:text-[52px] leading-[1.02] tracking-[-0.035em]">
+        <div className="mb-10 text-center max-w-xl mx-auto animate-rise">
+          <h1 className="text-[28px] sm:text-[34px] md:text-[40px] font-semibold tracking-[-0.02em] leading-[1.1] text-foreground">
             {title}
           </h1>
           {subtitle && (
-            <p className="mt-4 text-[15px] md:text-[16px] leading-[1.6] text-foreground/70">
+            <p className="mt-3 text-[15px] md:text-[16px] leading-[1.55] text-muted-foreground">
               {subtitle}
             </p>
           )}

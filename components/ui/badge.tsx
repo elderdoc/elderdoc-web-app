@@ -6,9 +6,9 @@ import { cn } from "@/lib/utils"
 
 const badgeVariants = cva(
   [
-    "group/badge inline-flex h-[22px] w-fit shrink-0 items-center justify-center gap-1",
-    "px-2 py-0 rounded-full",
-    "font-mono text-[10.5px] font-medium uppercase tracking-[0.06em] whitespace-nowrap",
+    "group/badge inline-flex h-[24px] w-fit shrink-0 items-center justify-center gap-1",
+    "px-2.5 rounded-full",
+    "text-[12px] font-medium leading-none whitespace-nowrap",
     "border border-transparent",
     "transition-all",
     "focus-visible:ring-2 focus-visible:ring-ring/40",
@@ -19,11 +19,11 @@ const badgeVariants = cva(
       variant: {
         default: "bg-primary text-primary-foreground",
         secondary: "bg-foreground text-background",
-        outline: "border-foreground/20 text-foreground bg-transparent",
-        soft: "bg-primary/10 text-[var(--forest-deep)] border-primary/15",
-        warm: "bg-[var(--terracotta)]/10 text-[var(--terracotta)] border-[var(--terracotta)]/20",
+        outline: "border-border text-foreground bg-card",
+        soft: "bg-[var(--forest-soft)] text-[var(--forest-deep)]",
+        warm: "bg-[var(--cream-deep)] text-foreground",
         destructive: "bg-destructive/10 text-destructive border-destructive/15",
-        ghost: "text-muted-foreground hover:bg-foreground/[0.04]",
+        ghost: "text-muted-foreground hover:bg-muted",
         link: "text-primary underline-offset-4 hover:underline rounded-none",
       },
     },

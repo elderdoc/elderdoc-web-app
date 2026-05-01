@@ -360,44 +360,42 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgRates
   const isFinalStep = step === 9
 
   return (
-    <div className="px-6 md:px-10 py-10 md:py-14 max-w-[920px] mx-auto">
+    <div className="px-6 md:px-8 py-10 md:py-12 max-w-3xl mx-auto">
       {!isFinalStep && (
         <button
           type="button"
           onClick={() => router.back()}
-          className="group/back inline-flex items-center gap-1.5 text-[13px] text-muted-foreground transition-colors hover:text-foreground mb-10"
+          className="group/back inline-flex items-center gap-1.5 text-[14px] text-foreground/70 transition-colors hover:text-foreground mb-8"
         >
           <svg width="14" height="14" viewBox="0 0 16 16" fill="none" className="transition-transform group-hover/back:-translate-x-0.5">
             <path d="M10 3L5 8l5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
-          Back to Requests
+          Back
         </button>
       )}
 
-      {/* Progress — editorial */}
+      {/* Progress — friendly */}
       {!isFinalStep && (
-        <div className="mb-12">
-          <div className="flex items-baseline justify-between mb-3">
-            <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-              Step <span className="text-foreground font-medium tabular-nums">{String(step).padStart(2, '0')}</span>
-              {' '}/{' '}<span className="tabular-nums">08</span>
+        <div className="mb-10">
+          <div className="flex items-center justify-between mb-2.5">
+            <div className="text-[13px] font-medium text-muted-foreground">
+              Step <span className="text-foreground tabular-nums">{step}</span> of <span className="tabular-nums">8</span>
             </div>
-            <div className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
-              {STEP_TITLES[step - 1]}
+            <div className="text-[13px] text-muted-foreground">
+              {Math.round((step / 8) * 100)}% complete
             </div>
           </div>
-          <div className="h-px bg-border relative overflow-hidden">
+          <div className="h-2 bg-muted rounded-full overflow-hidden">
             <div
-              className="absolute inset-y-0 left-0 bg-foreground transition-[width] duration-500 ease-out"
-              style={{ width: `${(step / 8) * 100}%`, height: '2px', top: '-0.5px' }}
+              className="h-full bg-primary rounded-full transition-[width] duration-500 ease-out"
+              style={{ width: `${(step / 8) * 100}%` }}
             />
           </div>
         </div>
       )}
 
-      <div className="mb-10 max-w-2xl">
-        <p className="ed-eyebrow">Care request</p>
-        <h1 className="ed-display mt-3 text-[32px] sm:text-[40px] md:text-[48px] leading-[1.02] tracking-[-0.035em]">
+      <div className="mb-8">
+        <h1 className="text-[26px] sm:text-[32px] font-semibold tracking-[-0.02em] leading-[1.15]">
           {STEP_TITLES[step - 1]}
         </h1>
       </div>

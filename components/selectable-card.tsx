@@ -17,9 +17,9 @@ export function SelectableCard({ selected, onSelect, children, className, disabl
       disabled={disabled}
       onClick={disabled ? undefined : onSelect}
       className={cn(
-        'group/sel relative w-full rounded-md border p-4 text-left transition-all duration-200',
-        !selected && !disabled && 'border-border bg-card hover:border-primary/40 hover:translate-y-[-1px] hover:shadow-[0_8px_20px_-12px_rgba(15,77,52,0.18)]',
-        selected && 'border-primary bg-primary text-primary-foreground shadow-[0_8px_20px_-12px_rgba(15,77,52,0.32)]',
+        'group/sel relative w-full rounded-[14px] border-2 p-5 text-left transition-all duration-200',
+        !selected && !disabled && 'border-border bg-card hover:border-primary/40 hover:bg-[var(--forest-soft)]/40',
+        selected && 'border-primary bg-[var(--forest-soft)] shadow-[0_4px_16px_-8px_rgba(15,77,52,0.32)]',
         disabled && 'cursor-not-allowed opacity-50 border-border bg-card',
         className,
       )}
@@ -27,11 +27,11 @@ export function SelectableCard({ selected, onSelect, children, className, disabl
       {selected && (
         <span
           data-testid="check-icon"
-          className="absolute right-3 top-3 flex h-5 w-5 items-center justify-center rounded-full bg-primary-foreground text-primary"
+          className="absolute right-3 top-3 flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground"
           aria-hidden="true"
         >
-          <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
-            <path d="M1 4L3.5 6.5L9 1" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          <svg width="12" height="10" viewBox="0 0 12 10" fill="none">
+            <path d="M1 5L4.5 8.5L11 1" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </span>
       )}

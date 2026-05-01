@@ -1,85 +1,84 @@
 import Link from 'next/link'
+import { ArrowLeft, ArrowRight, Heart, Briefcase } from 'lucide-react'
 
 export default function RoleSelectionPage() {
   return (
     <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-20 border-b border-border/60 bg-background/85 backdrop-blur-md">
-        <div className="mx-auto flex h-14 max-w-[920px] items-center justify-between px-6">
+      <header className="sticky top-0 z-20 border-b border-border bg-background/95 backdrop-blur-md">
+        <div className="mx-auto flex h-16 max-w-3xl items-center justify-between px-6">
           <Link
             href="/"
-            className="group/back inline-flex items-center gap-1.5 text-[13px] text-muted-foreground transition-colors hover:text-foreground"
+            className="group/back inline-flex items-center gap-1.5 text-[14px] text-foreground/70 transition-colors hover:text-foreground"
           >
-            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true" className="transition-transform group-hover/back:-translate-x-0.5">
-              <path d="M10 3L5 8l5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
+            <ArrowLeft className="h-4 w-4 transition-transform group-hover/back:-translate-x-0.5" />
             Back
           </Link>
-          <Link href="/" className="font-display text-[18px] tracking-[-0.04em] leading-none">
+          <Link href="/" className="text-[18px] font-semibold tracking-tight">
             Elderdoc
           </Link>
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-[920px] px-6 py-14 md:py-20">
-        <div className="max-w-2xl">
-          <p className="ed-eyebrow">Welcome</p>
-          <h1 className="ed-display mt-3 text-[40px] sm:text-[52px] md:text-[64px] leading-[1.02] tracking-[-0.04em]">
-            How can we{' '}
-            <span className="italic font-light text-[var(--forest-deep)]">help</span>?
+      <main className="mx-auto w-full max-w-3xl px-6 py-12 md:py-20">
+        <div className="text-center max-w-xl mx-auto animate-rise">
+          <span className="inline-flex items-center gap-2 rounded-full bg-[var(--forest-soft)] px-3 py-1.5 text-[13px] font-medium text-[var(--forest-deep)]">
+            <Heart className="h-3.5 w-3.5" />
+            Welcome
+          </span>
+          <h1 className="mt-5 text-[34px] sm:text-[42px] md:text-[48px] font-semibold tracking-[-0.025em] leading-[1.1]">
+            How can we help?
           </h1>
-          <p className="mt-5 text-[16px] leading-[1.6] text-foreground/70">
-            Two paths through Elderdoc — one for families seeking care, one for caregivers offering it.
-            Pick the one that brought you here.
+          <p className="mt-4 text-[16px] leading-[1.6] text-muted-foreground">
+            Choose the path that brought you here. You can always change later.
           </p>
         </div>
 
-        <div className="mt-12 grid grid-cols-1 gap-px bg-border md:grid-cols-2">
+        <div className="mt-12 grid grid-cols-1 gap-4 md:grid-cols-2">
           <Link
             href="/get-started/client/step-1"
-            className="group/path relative flex flex-col bg-background p-8 md:p-10 transition-all hover:bg-card"
+            className="group/path relative flex flex-col rounded-[18px] border-2 border-border bg-card p-7 transition-all hover:border-primary/40 hover:bg-[var(--forest-soft)]/40 hover:shadow-[0_8px_24px_-12px_rgba(15,77,52,0.18)]"
           >
-            <div className="flex items-baseline justify-between">
-              <span className="font-display text-[44px] leading-none tracking-[-0.04em] text-[var(--forest-deep)]">01</span>
-              <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">For families</span>
+            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[var(--forest-soft)]">
+              <Heart className="h-6 w-6 text-[var(--forest-deep)]" />
             </div>
-            <div className="mt-8 h-px w-full bg-border" />
-            <h2 className="mt-6 font-display text-[26px] md:text-[30px] leading-[1.1] tracking-[-0.025em]">
-              Find trusted care for your loved one.
+            <h2 className="mt-6 text-[22px] font-semibold tracking-[-0.015em] leading-tight">
+              I&apos;m looking for care
             </h2>
-            <p className="mt-3 text-[14px] leading-[1.6] text-foreground/70">
-              Browse and connect with verified caregivers, matched to your specific needs.
+            <p className="mt-2 text-[14.5px] leading-[1.55] text-foreground/70">
+              Find a verified caregiver for your loved one. Matched to your needs in minutes.
             </p>
-            <span className="mt-8 inline-flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.16em] text-foreground transition-all group-hover/path:gap-3">
-              Find a caregiver
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                <path d="M2 7h10M8 3l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
+            <span className="mt-7 inline-flex items-center gap-2 text-[14px] font-medium text-primary">
+              Get started
+              <ArrowRight className="h-4 w-4 transition-transform group-hover/path:translate-x-0.5" />
             </span>
           </Link>
 
           <Link
             href="/sign-in?tab=register&role=caregiver&callbackUrl=%2Fget-started%2Fcaregiver%2Fstep-1"
-            className="group/path relative flex flex-col bg-background p-8 md:p-10 transition-all hover:bg-card"
+            className="group/path relative flex flex-col rounded-[18px] border-2 border-border bg-card p-7 transition-all hover:border-primary/40 hover:bg-[var(--forest-soft)]/40 hover:shadow-[0_8px_24px_-12px_rgba(15,77,52,0.18)]"
           >
-            <div className="flex items-baseline justify-between">
-              <span className="font-display text-[44px] leading-none tracking-[-0.04em] text-[var(--forest-deep)]">02</span>
-              <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">For caregivers</span>
+            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[var(--forest-soft)]">
+              <Briefcase className="h-6 w-6 text-[var(--forest-deep)]" />
             </div>
-            <div className="mt-8 h-px w-full bg-border" />
-            <h2 className="mt-6 font-display text-[26px] md:text-[30px] leading-[1.1] tracking-[-0.025em]">
-              Offer your caregiving services.
+            <h2 className="mt-6 text-[22px] font-semibold tracking-[-0.015em] leading-tight">
+              I&apos;m a caregiver
             </h2>
-            <p className="mt-3 text-[14px] leading-[1.6] text-foreground/70">
-              Join our network of trusted caregivers and connect with families who need you.
+            <p className="mt-2 text-[14.5px] leading-[1.55] text-foreground/70">
+              Join our network. Connect with families who need your care and expertise.
             </p>
-            <span className="mt-8 inline-flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.16em] text-foreground transition-all group-hover/path:gap-3">
-              Become a caregiver
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                <path d="M2 7h10M8 3l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
+            <span className="mt-7 inline-flex items-center gap-2 text-[14px] font-medium text-primary">
+              Apply to join
+              <ArrowRight className="h-4 w-4 transition-transform group-hover/path:translate-x-0.5" />
             </span>
           </Link>
         </div>
+
+        <p className="mt-12 text-center text-[14px] text-muted-foreground">
+          Already have an account?{' '}
+          <Link href="/sign-in" className="text-primary font-medium hover:underline underline-offset-4">
+            Sign in
+          </Link>
+        </p>
       </main>
     </div>
   )

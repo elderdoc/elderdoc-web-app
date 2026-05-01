@@ -1,28 +1,29 @@
 import Link from 'next/link'
+import { Shield, Heart, CheckCircle2, ArrowRight } from 'lucide-react'
 
 const PILLARS = [
   {
-    index: '01',
-    title: 'Verified, every one.',
-    body: 'Every caregiver is background-checked, credentialed, and personally vetted before joining. No exceptions, no shortcuts.',
+    icon: Shield,
+    title: 'Verified caregivers',
+    body: 'Every caregiver is background-checked, credentialed, and personally vetted before joining. No exceptions.',
   },
   {
-    index: '02',
-    title: 'Considered matching.',
-    body: 'We weigh care type, schedule, location, language, and personality — surfacing your three best options, not three hundred.',
+    icon: Heart,
+    title: 'Matched to your needs',
+    body: 'We weigh care type, schedule, location, language, and personality to surface your top five matches.',
   },
   {
-    index: '03',
-    title: 'Care, accounted for.',
-    body: 'Transparent escrow, weekly billing, and a 7-day dispute window. The work is sacred. So is the trust.',
+    icon: CheckCircle2,
+    title: 'Care, accounted for',
+    body: 'Transparent escrow billing, weekly invoicing, and a 7-day dispute window. Your trust is our work.',
   },
 ]
 
 const STEPS = [
-  { n: '01', t: 'Tell us about your loved one.', d: 'Name, conditions, mobility, language preference, the kind of mornings they like. We keep it private. Always.' },
-  { n: '02', t: 'Describe the care you need.', d: 'Hourly or live-in, weekday mornings or weekend overnights, a budget that respects everyone. We meet you where you are.' },
-  { n: '03', t: 'Review your top five matches.', d: 'Curated, ranked, and explained. Read why each one fits. Talk to them. No fee until you choose.' },
-  { n: '04', t: 'Begin care, with confidence.', d: 'Weekly billing on a saved card. Funds held in escrow until the work is done. A 7-day window for any disputes.' },
+  { n: 1, t: 'Tell us about your loved one', d: 'Conditions, mobility, language preference, and routine — we keep it private, always.' },
+  { n: 2, t: 'Describe the care you need',   d: 'Hourly or live-in, weekday mornings or weekend overnights, a budget that works for you.' },
+  { n: 3, t: 'Review your top five matches', d: 'Curated and ranked, with a clear reason for each. Talk to them. No fee until you choose.' },
+  { n: 4, t: 'Begin care, with confidence',  d: 'Weekly billing, escrow protection, and a 7-day dispute window — built in.' },
 ]
 
 interface LandingStats {
@@ -32,38 +33,33 @@ interface LandingStats {
 }
 
 function formatNum(n: number): string {
-  if (n >= 1000) return `${(n / 1000).toFixed(1).replace(/\.0$/, '')}k`
+  if (n >= 1000) return `${(n / 1000).toFixed(1).replace(/\.0$/, '')}k+`
+  if (n === 0) return '—'
   return String(n)
 }
 
 export function Landing({ stats }: { stats: LandingStats }) {
-  const STATS = [
-    { num: formatNum(stats.caregivers), label: 'verified caregivers' },
-    { num: formatNum(stats.families),   label: 'families served' },
-    { num: formatNum(stats.shifts),     label: 'shifts completed' },
-    { num: '7d',                        label: 'dispute window' },
-  ]
-
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <header className="sticky top-0 z-30 border-b border-foreground/10 bg-background/85 backdrop-blur-md">
-        <div className="mx-auto flex h-16 max-w-[1240px] items-center justify-between px-6 md:px-10">
-          <Link href="/" className="font-display text-[22px] tracking-[-0.045em] leading-none">
+      {/* Top bar */}
+      <header className="sticky top-0 z-30 border-b border-border bg-background/90 backdrop-blur-md">
+        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
+          <Link href="/" className="text-[20px] font-semibold tracking-tight">
             Elderdoc
           </Link>
-          <nav className="flex items-center gap-6 text-[13px]">
-            <Link href="#values" className="hidden text-foreground/70 hover:text-foreground sm:inline">
-              Values
+          <nav className="flex items-center gap-2 sm:gap-5 text-[14px]">
+            <Link href="#how" className="hidden text-foreground/70 hover:text-foreground sm:inline px-2">
+              How it works
             </Link>
-            <Link href="#how" className="hidden text-foreground/70 hover:text-foreground sm:inline">
-              The Method
+            <Link href="#values" className="hidden text-foreground/70 hover:text-foreground sm:inline px-2">
+              Why us
             </Link>
-            <Link href="/sign-in" className="text-foreground/80 hover:text-foreground">
+            <Link href="/sign-in" className="text-foreground hover:text-primary px-2">
               Sign in
             </Link>
             <Link
               href="/get-started"
-              className="inline-flex h-9 items-center rounded-full bg-foreground px-4 text-[13px] font-medium text-background transition-all hover:translate-y-[-1px] hover:shadow-[0_8px_18px_-6px_rgba(15,20,16,0.3)]"
+              className="inline-flex h-10 items-center rounded-full bg-primary px-5 text-[14px] font-medium text-primary-foreground transition-all hover:bg-[var(--forest-deep)] hover:shadow-[0_8px_18px_-6px_rgba(15,77,52,0.4)]"
             >
               Get started
             </Link>
@@ -73,77 +69,70 @@ export function Landing({ stats }: { stats: LandingStats }) {
 
       <main>
         {/* HERO */}
-        <section className="px-6 md:px-10 pt-14 md:pt-20 lg:pt-24 pb-20">
-          <div className="mx-auto max-w-[1240px]">
-            <div className="grid grid-cols-12 gap-x-6 gap-y-10 lg:gap-x-10">
-              <aside className="col-span-12 md:col-span-2">
-                <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-foreground/55">
-                  No. 001
-                </div>
-                <div className="mt-3 h-px w-12 bg-foreground" />
-                <div className="mt-3 font-mono text-[10px] uppercase tracking-[0.18em] text-foreground/55 leading-relaxed">
-                  A marketplace<br />for elder care
-                </div>
-              </aside>
+        <section className="relative overflow-hidden">
+          {/* Soft green glow */}
+          <div className="pointer-events-none absolute inset-0 -z-10">
+            <div className="absolute right-[-10%] top-[-20%] h-[600px] w-[600px] rounded-full bg-[var(--forest-soft)] blur-3xl opacity-60" />
+            <div className="absolute left-[-15%] bottom-[-30%] h-[500px] w-[500px] rounded-full bg-[var(--cream-deep)] blur-3xl opacity-70" />
+          </div>
 
-              <div className="col-span-12 md:col-span-10">
-                <p className="ed-eyebrow animate-ed-rise" style={{ animationDelay: '40ms' }}>
-                  Care, considered.
-                </p>
-                <h1
-                  className="ed-display mt-5 text-[40px] sm:text-[56px] md:text-[68px] lg:text-[84px] animate-ed-stagger leading-[0.98]"
-                  style={{ animationDelay: '80ms' }}
-                >
-                  The right{' '}
-                  <span className="italic font-light text-[var(--forest-deep)]">caregiver</span>
-                  ,{' '}
-                  for the people<br className="hidden md:block" />
-                  {' '}who{' '}
-                  <span className="relative inline-block">
-                    <span className="italic font-light">raised you</span>
-                    <span aria-hidden="true" className="absolute left-0 right-0 bottom-[0.05em] h-[3px] bg-[var(--terracotta)]/75" />
-                  </span>
-                  .
+          <div className="mx-auto max-w-6xl px-6 pt-16 md:pt-24 pb-20 md:pb-28">
+            <div className="grid grid-cols-12 gap-x-8 gap-y-10">
+              <div className="col-span-12 lg:col-span-7">
+                <span className="inline-flex items-center gap-2 rounded-full bg-[var(--forest-soft)] px-3 py-1.5 text-[13px] font-medium text-[var(--forest-deep)] animate-rise">
+                  <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+                  Trusted by {formatNum(stats.families)} families
+                </span>
+                <h1 className="mt-6 text-[40px] sm:text-[52px] md:text-[64px] lg:text-[72px] font-semibold tracking-[-0.03em] leading-[1.05] animate-rise" style={{ animationDelay: '60ms' }}>
+                  Trusted care for the people you{' '}
+                  <span className="text-primary">love</span>.
                 </h1>
-              </div>
-            </div>
-
-            <div className="mt-12 md:mt-16 grid grid-cols-12 gap-x-6 gap-y-10 lg:gap-x-10">
-              <div className="col-span-12 md:col-start-3 md:col-span-6">
-                <p className="text-[16px] md:text-[17px] leading-[1.6] text-foreground/80 animate-ed-rise" style={{ animationDelay: '180ms' }}>
-                  Elderdoc connects families with verified, compassionate caregivers
-                  — matched not by algorithm alone, but by care type, schedule,
-                  language, and the small things that make a difference.
+                <p className="mt-6 max-w-xl text-[17px] md:text-[18px] leading-[1.55] text-foreground/75 animate-rise" style={{ animationDelay: '120ms' }}>
+                  Elderdoc connects families with verified, compassionate caregivers — matched to your loved one&apos;s
+                  needs, schedule, and language preferences.
                 </p>
-                <div className="mt-7 flex flex-wrap items-center gap-x-5 gap-y-3 animate-ed-rise" style={{ animationDelay: '260ms' }}>
+                <div className="mt-9 flex flex-wrap items-center gap-3 animate-rise" style={{ animationDelay: '180ms' }}>
                   <Link
                     href="/get-started"
-                    className="group/cta inline-flex h-12 items-center gap-2.5 rounded-full bg-primary pl-6 pr-3 text-[14px] font-medium text-primary-foreground transition-all hover:translate-y-[-1px] hover:shadow-[0_14px_28px_-10px_rgba(14,77,52,0.5)]"
+                    className="group/cta inline-flex h-12 items-center gap-2 rounded-full bg-primary pl-6 pr-5 text-[15px] font-medium text-primary-foreground transition-all hover:translate-y-[-1px] hover:bg-[var(--forest-deep)] hover:shadow-[0_12px_28px_-8px_rgba(15,77,52,0.5)]"
                   >
-                    Get started
-                    <span className="ml-1 inline-flex h-8 w-8 items-center justify-center rounded-full bg-primary-foreground/15 transition-transform group-hover/cta:translate-x-1">
-                      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                        <path d="M2 7h10M8 3l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                    </span>
+                    Find a caregiver
+                    <ArrowRight className="h-4 w-4 transition-transform group-hover/cta:translate-x-0.5" />
                   </Link>
-                  <Link href="#how" className="ed-link text-[14px]">
-                    Read the method →
+                  <Link
+                    href="#how"
+                    className="inline-flex h-12 items-center gap-2 rounded-full border border-border bg-card px-5 text-[15px] font-medium text-foreground transition-all hover:border-foreground/30 hover:bg-muted"
+                  >
+                    How it works
                   </Link>
                 </div>
               </div>
 
-              <div className="col-span-12 md:col-span-4 lg:col-start-9 animate-ed-rise" style={{ animationDelay: '340ms' }}>
-                <div className="border-t border-foreground pt-4">
-                  <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-foreground/60">
-                    A note from the editors
+              {/* Stats card on the side */}
+              <div className="col-span-12 lg:col-span-5 lg:pl-8 animate-rise" style={{ animationDelay: '240ms' }}>
+                <div className="rounded-[20px] border border-border bg-card shadow-[0_8px_30px_-12px_rgba(15,20,16,0.1)] overflow-hidden">
+                  <div className="px-6 py-4 border-b border-border/60 bg-[var(--cream-deep)]/40">
+                    <div className="text-[13px] font-medium text-muted-foreground">Our community</div>
                   </div>
-                  <blockquote className="mt-3 font-display text-[17px] leading-[1.4] tracking-[-0.015em] text-foreground/90">
-                    &ldquo;The opposite of a marketplace is a registry. We chose
-                    neither — and built something more careful instead.&rdquo;
-                  </blockquote>
-                  <div className="mt-3 font-mono text-[10px] uppercase tracking-[0.16em] text-foreground/55">
-                    — The Elderdoc team
+                  <div className="grid grid-cols-3 divide-x divide-border">
+                    <div className="px-4 py-6 text-center">
+                      <div className="text-[28px] font-semibold tabular-nums tracking-tight">{formatNum(stats.caregivers)}</div>
+                      <div className="mt-1 text-[12px] text-muted-foreground">Caregivers</div>
+                    </div>
+                    <div className="px-4 py-6 text-center">
+                      <div className="text-[28px] font-semibold tabular-nums tracking-tight">{formatNum(stats.families)}</div>
+                      <div className="mt-1 text-[12px] text-muted-foreground">Families</div>
+                    </div>
+                    <div className="px-4 py-6 text-center">
+                      <div className="text-[28px] font-semibold tabular-nums tracking-tight">{formatNum(stats.shifts)}</div>
+                      <div className="mt-1 text-[12px] text-muted-foreground">Shifts</div>
+                    </div>
+                  </div>
+                  <div className="px-6 py-4 bg-card border-t border-border/60">
+                    <div className="flex items-center gap-2 text-[13px] text-muted-foreground">
+                      <Shield className="h-3.5 w-3.5 text-primary" />
+                      Background-checked &amp; verified
+                    </div>
                   </div>
                 </div>
               </div>
@@ -151,37 +140,51 @@ export function Landing({ stats }: { stats: LandingStats }) {
           </div>
         </section>
 
-        {/* MARQUEE */}
-        <section className="border-y border-foreground bg-foreground text-background overflow-hidden">
-          <div className="flex animate-[ed-marquee_45s_linear_infinite] py-4 whitespace-nowrap">
-            {[...Array(2)].map((_, i) => (
-              <div key={i} className="flex shrink-0 items-center gap-12 px-6 font-display text-[24px] md:text-[28px] tracking-[-0.02em]">
-                <span>Verified caregivers</span>
-                <span className="text-background/40">◆</span>
-                <span className="italic font-light">Considered matching</span>
-                <span className="text-background/40">◆</span>
-                <span>Transparent billing</span>
-                <span className="text-background/40">◆</span>
-                <span className="italic font-light">7-day dispute window</span>
-                <span className="text-background/40">◆</span>
-                <span>Real families, real care</span>
-                <span className="text-background/40">◆</span>
-              </div>
-            ))}
+        {/* PILLARS — clean three-up */}
+        <section id="values" className="border-t border-border bg-card">
+          <div className="mx-auto max-w-6xl px-6 py-16 md:py-24">
+            <div className="max-w-2xl">
+              <span className="eyebrow">Why Elderdoc</span>
+              <h2 className="mt-3 text-[32px] sm:text-[38px] md:text-[44px] font-semibold tracking-[-0.025em] leading-[1.1]">
+                Care that respects everyone involved.
+              </h2>
+            </div>
+            <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-5">
+              {PILLARS.map(({ icon: Icon, title, body }) => (
+                <div
+                  key={title}
+                  className="rounded-[16px] border border-border bg-background p-6 md:p-7 transition-all hover:border-foreground/15 hover:shadow-[0_8px_24px_-12px_rgba(15,20,16,0.08)]"
+                >
+                  <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[var(--forest-soft)]">
+                    <Icon className="h-5 w-5 text-[var(--forest-deep)]" />
+                  </div>
+                  <h3 className="mt-5 text-[18px] font-semibold tracking-[-0.01em]">{title}</h3>
+                  <p className="mt-2 text-[14.5px] leading-[1.55] text-foreground/70">{body}</p>
+                </div>
+              ))}
+            </div>
           </div>
         </section>
 
-        {/* STATS — real DB numbers */}
-        <section className="px-6 md:px-10 py-16 md:py-20">
-          <div className="mx-auto max-w-[1240px]">
-            <div className="grid grid-cols-2 gap-x-6 gap-y-10 md:grid-cols-4">
-              {STATS.map((s) => (
-                <div key={s.label} className="border-t border-foreground pt-4">
-                  <div className="ed-figure text-[36px] sm:text-[48px] md:text-[56px] leading-[1] tracking-[-0.04em]">
-                    {s.num}
+        {/* HOW IT WORKS */}
+        <section id="how" className="border-t border-border">
+          <div className="mx-auto max-w-6xl px-6 py-16 md:py-24">
+            <div className="max-w-2xl mb-12">
+              <span className="eyebrow">How it works</span>
+              <h2 className="mt-3 text-[32px] sm:text-[38px] md:text-[44px] font-semibold tracking-[-0.025em] leading-[1.1]">
+                Four simple steps. Most families finish in twelve minutes.
+              </h2>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-8">
+              {STEPS.map((step) => (
+                <div key={step.n} className="flex gap-5">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--forest-soft)] text-[var(--forest-deep)] text-[16px] font-semibold tabular-nums">
+                    {step.n}
                   </div>
-                  <div className="mt-3 font-mono text-[10px] uppercase tracking-[0.16em] text-foreground/65">
-                    {s.label}
+                  <div>
+                    <h3 className="text-[18px] font-semibold tracking-[-0.01em]">{step.t}</h3>
+                    <p className="mt-1.5 text-[14.5px] leading-[1.55] text-foreground/70">{step.d}</p>
                   </div>
                 </div>
               ))}
@@ -189,149 +192,71 @@ export function Landing({ stats }: { stats: LandingStats }) {
           </div>
         </section>
 
-        {/* PILLARS */}
-        <section id="values" className="border-t border-border bg-[var(--cream-deep)]/50">
-          <div className="mx-auto max-w-[1240px] px-6 md:px-10 py-16 md:py-20 lg:py-28">
-            <div className="grid grid-cols-12 gap-x-6 gap-y-10 lg:gap-x-10">
-              <div className="col-span-12 lg:col-span-4">
-                <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-foreground/55">
-                  Our values
+        {/* CTA */}
+        <section className="border-t border-border">
+          <div className="mx-auto max-w-6xl px-6 py-16 md:py-24">
+            <div className="rounded-[24px] bg-foreground text-background overflow-hidden relative">
+              <div className="absolute inset-0 opacity-30 pointer-events-none">
+                <div className="absolute right-[-10%] top-[-30%] h-[400px] w-[400px] rounded-full bg-primary/40 blur-3xl" />
+              </div>
+              <div className="relative px-8 md:px-12 py-12 md:py-16 grid grid-cols-12 gap-x-8 gap-y-8 items-end">
+                <div className="col-span-12 md:col-span-8">
+                  <h2 className="text-[32px] sm:text-[44px] md:text-[52px] font-semibold tracking-[-0.025em] leading-[1.05]">
+                    Ready to find the right caregiver?
+                  </h2>
+                  <p className="mt-4 text-[16px] md:text-[17px] leading-[1.55] text-background/75 max-w-md">
+                    Free to browse. No fee until you choose. Most matches happen within a day.
+                  </p>
                 </div>
-                <div className="mt-3 h-px w-12 bg-foreground" />
-                <h2 className="ed-display mt-6 text-[36px] md:text-[44px] lg:text-[52px] leading-[1] tracking-[-0.035em]">
-                  Three things we won&apos;t compromise.
-                </h2>
-              </div>
-
-              <div className="col-span-12 lg:col-start-6 lg:col-span-7">
-                <ol className="grid gap-px bg-border md:grid-cols-3">
-                  {PILLARS.map((p) => (
-                    <li key={p.index} className="bg-background p-6 transition-colors hover:bg-card">
-                      <div className="flex items-baseline gap-3">
-                        <span className="font-display text-[40px] leading-none tracking-[-0.04em] text-[var(--forest-deep)]">
-                          {p.index}
-                        </span>
-                        <span className="h-px flex-1 bg-foreground/15"></span>
-                      </div>
-                      <h3 className="mt-5 font-display text-[20px] leading-[1.15] tracking-[-0.02em]">
-                        {p.title}
-                      </h3>
-                      <p className="mt-3 text-[13.5px] leading-[1.6] text-foreground/75">
-                        {p.body}
-                      </p>
-                    </li>
-                  ))}
-                </ol>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* THE METHOD */}
-        <section id="how" className="border-t border-border">
-          <div className="mx-auto max-w-[1240px] px-6 md:px-10 py-16 md:py-20 lg:py-28">
-            <div className="grid grid-cols-12 gap-x-6 gap-y-12 lg:gap-x-10">
-              <div className="col-span-12 lg:col-span-4">
-                <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-foreground/55">
-                  The method
+                <div className="col-span-12 md:col-span-4 md:text-right">
+                  <Link
+                    href="/get-started"
+                    className="group/cta inline-flex h-13 h-12 items-center gap-2 rounded-full bg-primary pl-6 pr-5 text-[15px] font-medium text-primary-foreground transition-all hover:translate-y-[-1px] hover:bg-[var(--forest-deep)] hover:shadow-[0_14px_32px_-10px_rgba(15,77,52,0.6)]"
+                  >
+                    Get started
+                    <ArrowRight className="h-4 w-4 transition-transform group-hover/cta:translate-x-0.5" />
+                  </Link>
                 </div>
-                <div className="mt-3 h-px w-12 bg-foreground" />
-                <h2 className="ed-display mt-6 text-[36px] md:text-[44px] lg:text-[56px] leading-[1] tracking-[-0.035em]">
-                  Unhurried, by{' '}
-                  <span className="italic font-light">design</span>.
-                </h2>
-                <p className="mt-6 max-w-md text-[15px] leading-[1.6] text-foreground/75">
-                  Care isn&apos;t a category. We move through it slowly — gathering what matters,
-                  then matching with intent. Most families finish in under twelve minutes.
-                </p>
-              </div>
-
-              <div className="col-span-12 lg:col-start-6 lg:col-span-7">
-                <ol>
-                  {STEPS.map((step, i, arr) => (
-                    <li key={step.n} className={`flex gap-6 py-6 ${i < arr.length - 1 ? 'border-b border-border' : ''}`}>
-                      <div className="font-mono text-[11px] uppercase tracking-[0.16em] pt-1.5 text-foreground/55 w-8 shrink-0">
-                        {step.n}
-                      </div>
-                      <div>
-                        <h3 className="font-display text-[22px] md:text-[24px] leading-[1.15] tracking-[-0.025em]">
-                          {step.t}
-                        </h3>
-                        <p className="mt-2 text-[14px] leading-[1.6] text-foreground/75">
-                          {step.d}
-                        </p>
-                      </div>
-                    </li>
-                  ))}
-                </ol>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* CTA Block */}
-        <section className="border-t border-foreground bg-foreground text-background">
-          <div className="mx-auto max-w-[1240px] px-6 md:px-10 py-16 md:py-20">
-            <div className="grid grid-cols-12 items-end gap-x-6 gap-y-8 lg:gap-x-10">
-              <div className="col-span-12 lg:col-span-8">
-                <h2 className="ed-display text-[40px] sm:text-[56px] md:text-[72px] lg:text-[88px] leading-[0.98] tracking-[-0.04em] text-background">
-                  Begin where{' '}
-                  <span className="italic font-light text-[var(--terracotta)]">care</span>{' '}
-                  begins.
-                </h2>
-              </div>
-              <div className="col-span-12 lg:col-span-4 lg:text-right">
-                <Link
-                  href="/get-started"
-                  className="group/cta inline-flex h-14 items-center gap-3 rounded-full bg-background pl-7 pr-3 text-[15px] font-medium text-foreground transition-all hover:translate-y-[-2px] hover:shadow-[0_18px_36px_-12px_rgba(0,0,0,0.5)]"
-                >
-                  Find a caregiver
-                  <span className="ml-1 inline-flex h-9 w-9 items-center justify-center rounded-full bg-foreground text-background transition-transform group-hover/cta:translate-x-1">
-                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                      <path d="M2 7h10M8 3l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  </span>
-                </Link>
               </div>
             </div>
           </div>
         </section>
 
         {/* Footer */}
-        <footer className="border-t border-border">
-          <div className="mx-auto max-w-[1240px] px-6 md:px-10 py-10">
-            <div className="grid grid-cols-12 gap-x-6 gap-y-6 lg:gap-x-10">
+        <footer className="border-t border-border bg-card">
+          <div className="mx-auto max-w-6xl px-6 py-10">
+            <div className="grid grid-cols-12 gap-6">
               <div className="col-span-12 md:col-span-4">
-                <div className="font-display text-[20px] tracking-[-0.03em]">Elderdoc</div>
-                <div className="mt-2 font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
-                  Care, considered.
+                <div className="text-[18px] font-semibold tracking-tight">Elderdoc</div>
+                <div className="mt-2 text-[13px] text-muted-foreground">
+                  Trusted care for the people you love.
                 </div>
               </div>
-              <div className="col-span-12 md:col-span-8 grid grid-cols-2 sm:grid-cols-3 gap-6 text-[13px]">
+              <div className="col-span-12 md:col-span-8 grid grid-cols-2 sm:grid-cols-3 gap-6 text-[14px]">
                 <div>
-                  <div className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">For families</div>
-                  <ul className="mt-3 space-y-1.5">
-                    <li><Link href="/get-started" className="hover:underline">Get started</Link></li>
-                    <li><Link href="/sign-in" className="hover:underline">Sign in</Link></li>
+                  <div className="text-[13px] font-medium text-muted-foreground">For families</div>
+                  <ul className="mt-3 space-y-2">
+                    <li><Link href="/get-started" className="text-foreground/80 hover:text-primary">Get started</Link></li>
+                    <li><Link href="/sign-in" className="text-foreground/80 hover:text-primary">Sign in</Link></li>
                   </ul>
                 </div>
                 <div>
-                  <div className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">For caregivers</div>
-                  <ul className="mt-3 space-y-1.5">
-                    <li><Link href="/get-started" className="hover:underline">Apply to join</Link></li>
+                  <div className="text-[13px] font-medium text-muted-foreground">For caregivers</div>
+                  <ul className="mt-3 space-y-2">
+                    <li><Link href="/get-started" className="text-foreground/80 hover:text-primary">Apply to join</Link></li>
                   </ul>
                 </div>
                 <div>
-                  <div className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">Notes</div>
-                  <ul className="mt-3 space-y-1.5">
-                    <li><Link href="#values" className="hover:underline">Values</Link></li>
-                    <li><Link href="#how" className="hover:underline">The method</Link></li>
+                  <div className="text-[13px] font-medium text-muted-foreground">Learn more</div>
+                  <ul className="mt-3 space-y-2">
+                    <li><Link href="#values" className="text-foreground/80 hover:text-primary">Why us</Link></li>
+                    <li><Link href="#how" className="text-foreground/80 hover:text-primary">How it works</Link></li>
                   </ul>
                 </div>
               </div>
             </div>
             <div className="mt-10 border-t border-border pt-6 text-[12px] text-muted-foreground">
-              © {new Date().getFullYear()} Elderdoc. Care, considered.
+              © {new Date().getFullYear()} Elderdoc.
             </div>
           </div>
         </footer>
