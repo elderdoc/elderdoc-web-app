@@ -58,7 +58,7 @@ export function PaymentHistoryCard({
             <p className="text-sm font-semibold">${(amount + fee).toFixed(2)}</p>
             {fee > 0 && (
               <p className="text-[10px] text-muted-foreground">
-                incl. ${fee.toFixed(2)} Trust &amp; Support fee
+                incl. ${fee.toFixed(2)} fees (11%)
               </p>
             )}
             <span className={`text-xs px-2 py-0.5 rounded-full ${
