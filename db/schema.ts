@@ -170,13 +170,16 @@ export const careRequests = pgTable('care_requests', {
     denturesUpper?: boolean; denturesLower?: boolean; denturesPartial?: boolean
     orientedAlert?: boolean; forgetful?: boolean; confused?: boolean
     urinaryCath?: boolean; feedingTube?: boolean
+    cane?: boolean; walker?: boolean; wheelchair?: boolean
     diabetic?: boolean; diet?: string; other?: string
   }>(),
   transportationPref:   text('transportation_pref'),
   genderPref:   text('gender_pref'),
-  languagePref: text('language_pref').array(),
+  languagesPreferred: text('languages_preferred').array().notNull().default([]),
+  languagesRequired:  text('languages_required').array().notNull().default([]),
   budgetType:   text('budget_type'),
-  budgetAmount: numeric('budget_amount', { precision: 10, scale: 2 }),
+  budgetMin:    numeric('budget_min', { precision: 10, scale: 2 }),
+  budgetMax:    numeric('budget_max', { precision: 10, scale: 2 }),
   status:       text('status', { enum: ['draft', 'active', 'matched', 'filled', 'cancelled'] }).default('draft'),
   createdAt:    timestamp('created_at').defaultNow().notNull(),
 })
