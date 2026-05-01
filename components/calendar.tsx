@@ -166,7 +166,7 @@ export function Calendar({ year, month, events, activeJobs, basePath, addShiftAc
             <div>
               <h2 className="text-base font-semibold mb-1">Cancel shift?</h2>
               <p className="text-sm text-muted-foreground">
-                If this shift starts within 4 hours, payment will still be charged. This cannot be undone.
+                Shifts cancelled with less than 4 hours notice will incur a <span className="font-medium text-foreground">$50 fee</span>. This cannot be undone.
               </p>
             </div>
             <div className="flex gap-2 justify-end">
