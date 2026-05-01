@@ -158,7 +158,7 @@ export async function getUnbilledShiftsForCaregiver(caregiverId: string): Promis
       date: shifts.date,
       startTime: shifts.startTime,
       endTime: shifts.endTime,
-      hourlyRate: careRequests.budgetAmount,
+      hourlyRate: careRequests.budgetMin,
     })
     .from(shifts)
     .innerJoin(jobs, eq(shifts.jobId, jobs.id))
@@ -197,7 +197,7 @@ export async function getUnbilledShiftsForClient(clientId: string): Promise<Unbi
       date: shifts.date,
       startTime: shifts.startTime,
       endTime: shifts.endTime,
-      hourlyRate: careRequests.budgetAmount,
+      hourlyRate: careRequests.budgetMin,
     })
     .from(shifts)
     .innerJoin(jobs, eq(shifts.jobId, jobs.id))

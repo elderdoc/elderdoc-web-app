@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
       date:             shifts.date,
       clientId:         jobs.clientId,
       stripeCustomerId: users.stripeCustomerId,
-      budgetAmount:     careRequests.budgetAmount,
+      budgetMin:        careRequests.budgetMin,
       careType:         careRequests.careType,
     })
     .from(shifts)
@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
       and(
         eq(shifts.status, 'completed'),
         isNull(shifts.billedAt),
-        isNotNull(careRequests.budgetAmount),
+        isNotNull(careRequests.budgetMin),
       )
     )
 
@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
   const errors: { jobId: string; error: string }[] = []
 
   for (const [jobId, jobShifts] of byJob) {
-    const { clientId, stripeCustomerId, budgetAmount, careType } = jobShifts[0]
+    const { clientId, stripeCustomerId, budgetMin, careType } = jobShifts[0]
 
     if (!stripeCustomerId) {
       await db.insert(notifications).values({ userId: clientId, type: 'billing_no_card', payload: { jobId, careType } })
@@ -62,7 +62,7 @@ export async function POST(req: NextRequest) {
       continue
     }
 
-    const rate = Number(budgetAmount)
+    const rate = Number(budgetMin ?? 0)
     let subtotalCents = 0
     for (const shift of jobShifts) {
       subtotalCents += Math.round(calculateShiftHours(shift.startTime, shift.endTime) * rate * 100)
