@@ -9,7 +9,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const cutoff = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000)
+  const cutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
 
   const result = await db
     .update(disputes)
