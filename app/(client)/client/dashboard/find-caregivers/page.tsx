@@ -1,8 +1,8 @@
 import { requireRole } from '@/domains/auth/session'
 import { db } from '@/services/db'
-import { careRequests, careRequestLocations, clientLocations, caregiverFavorites, matches } from '@/db/schema'
-import { and, eq } from 'drizzle-orm'
-import { getMatchesForRequest, searchCaregivers } from '@/domains/clients/find-caregivers'
+import { careRequests, clientLocations, caregiverFavorites, matches, jobs } from '@/db/schema'
+import { and, eq, inArray, sql } from 'drizzle-orm'
+import { searchCaregivers } from '@/domains/clients/find-caregivers'
 import { FilterForm } from './_components/filter-form'
 import { FindCaregiverCard } from './_components/find-caregiver-card'
 import { haversineDistance } from '@/lib/geo'
@@ -18,14 +18,13 @@ function sp(val: string | string[] | undefined): string | undefined {
 
 function buildPageUrl(
   base: {
-    requestId?: string; careType?: string; state?: string
+    careType?: string; state?: string
     rateMin?: string; rateMax?: string; experience?: string
     certification?: string; sort?: string
   },
   targetPage: number,
 ): string {
   const params = new URLSearchParams()
-  if (base.requestId)    params.set('requestId', base.requestId)
   if (base.careType)     params.set('careType', base.careType)
   if (base.state)        params.set('state', base.state)
   if (base.rateMin)      params.set('rateMin', base.rateMin)
@@ -38,11 +37,6 @@ function buildPageUrl(
   return `/client/dashboard/find-caregivers${qs ? `?${qs}` : ''}`
 }
 
-function scoreBadge(score: number) {
-  if (score >= 80) return { label: 'Strong match', classes: 'bg-green-100 text-green-700' }
-  if (score >= 60) return { label: 'Good match',   classes: 'bg-blue-100 text-blue-700' }
-  return { label: 'Possible match', classes: 'bg-muted text-muted-foreground' }
-}
 
 export default async function FindCaregiversPage({ searchParams }: PageProps) {
   const session = await requireRole('client')
@@ -69,7 +63,6 @@ export default async function FindCaregiversPage({ searchParams }: PageProps) {
   const offeredSet  = new Set(existingMatches.map((m) => m.caregiverId))
   const favoriteSet = new Set(favoriteRows.map((f) => f.caregiverId))
 
-  const requestId     = sp(resolvedSearchParams.requestId)
   const careType      = sp(resolvedSearchParams.careType)
   const state         = sp(resolvedSearchParams.state)
   const rateMin       = sp(resolvedSearchParams.rateMin)
@@ -80,39 +73,36 @@ export default async function FindCaregiversPage({ searchParams }: PageProps) {
   const page          = Math.max(1, parseInt(sp(resolvedSearchParams.page) ?? '1', 10) || 1)
 
   const currentFilters = {
-    requestId, careType, state, rateMin, rateMax, certification, experience, sort,
+    careType, state, rateMin, rateMax, certification, experience, sort,
     page: String(page),
   }
 
-  const ownedRequest = requestId
-    ? activeRequests.find((r) => r.id === requestId)
-    : undefined
-
-  const [myMatches, requestLocationRow, clientLocationRow] = await Promise.all([
-    ownedRequest ? getMatchesForRequest(ownedRequest.id, clientId) : Promise.resolve([]),
-    ownedRequest
-      ? db.select({ lat: careRequestLocations.lat, lng: careRequestLocations.lng })
-          .from(careRequestLocations)
-          .where(eq(careRequestLocations.requestId, ownedRequest.id))
-          .limit(1)
-          .then((rows) => rows[0] ?? null)
-      : Promise.resolve(null),
+  const [clientLocationRow, searchResult] = await Promise.all([
     db.select({ lat: clientLocations.lat, lng: clientLocations.lng })
       .from(clientLocations)
       .where(eq(clientLocations.clientId, clientId))
       .limit(1)
       .then((rows) => rows[0] ?? null),
+    searchCaregivers({ careType, state, rateMin, rateMax, certification, experience }, page),
   ])
 
-  const reqLat = requestLocationRow?.lat ? Number(requestLocationRow.lat) : null
-  const reqLng = requestLocationRow?.lng ? Number(requestLocationRow.lng) : null
+  const { caregivers, total } = searchResult
   const clientRefLat = clientLocationRow?.lat ? Number(clientLocationRow.lat) : null
   const clientRefLng = clientLocationRow?.lng ? Number(clientLocationRow.lng) : null
 
-  const { caregivers, total } = await searchCaregivers(
-    { careType, state, rateMin, rateMax, certification, experience },
-    page,
-  )
+  // Job count per caregiver for jobs-done sort
+  const cgIds = caregivers.map((c) => c.caregiverId)
+  const jobCountRows = cgIds.length > 0
+    ? await db
+        .select({
+          caregiverId: jobs.caregiverId,
+          count: sql<number>`count(*)::int`,
+        })
+        .from(jobs)
+        .where(and(inArray(jobs.caregiverId, cgIds), eq(jobs.status, 'completed')))
+        .groupBy(jobs.caregiverId)
+    : []
+  const jobCountMap = new Map(jobCountRows.map((r) => [r.caregiverId, Number(r.count)]))
 
   const caregiversWithDistance = caregivers.map((cg) => {
     const cgLat = cg.lat ? Number(cg.lat) : null
@@ -120,7 +110,7 @@ export default async function FindCaregiversPage({ searchParams }: PageProps) {
     const distanceMiles = clientRefLat && clientRefLng && cgLat && cgLng
       ? haversineDistance(clientRefLat, clientRefLng, cgLat, cgLng)
       : null
-    return { ...cg, distanceMiles }
+    return { ...cg, distanceMiles, jobsCount: jobCountMap.get(cg.caregiverId) ?? 0 }
   })
 
   if (sort === 'distance-asc' || sort === 'distance-desc') {
@@ -131,6 +121,16 @@ export default async function FindCaregiversPage({ searchParams }: PageProps) {
       if (b.distanceMiles == null) return -1
       return (a.distanceMiles - b.distanceMiles) * dir
     })
+  } else if (sort === 'price-asc' || sort === 'price-desc') {
+    const dir = sort === 'price-asc' ? 1 : -1
+    caregiversWithDistance.sort((a, b) => {
+      const aMin = Number(a.hourlyMin ?? 0)
+      const bMin = Number(b.hourlyMin ?? 0)
+      return (aMin - bMin) * dir
+    })
+  } else if (sort === 'jobs-desc' || sort === 'jobs-asc') {
+    const dir = sort === 'jobs-desc' ? -1 : 1
+    caregiversWithDistance.sort((a, b) => (a.jobsCount - b.jobsCount) * dir)
   }
 
   const totalPages = Math.ceil(total / 20)
@@ -142,72 +142,11 @@ export default async function FindCaregiversPage({ searchParams }: PageProps) {
           Find Caregivers
         </h1>
         <p className="mt-1.5 text-[14.5px] text-muted-foreground">
-          Browse your matched caregivers and the full directory.
+          Browse and filter caregivers in the directory.
         </p>
       </div>
 
       <FilterForm activeRequests={activeRequests} currentFilters={currentFilters} />
-
-      {/* Your Matches */}
-      <section>
-        <h2 className="text-[20px] font-semibold tracking-tight mb-5">
-          Your Matches
-        </h2>
-
-        {activeRequests.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            Create a care request to see your matched caregivers.
-          </p>
-        ) : !requestId ? (
-          <p className="text-sm text-muted-foreground">
-            Select a care request above to see your matched caregivers.
-          </p>
-        ) : myMatches.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            No matches yet. Matches appear after you submit a care request.
-          </p>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {myMatches.map((m, i) => {
-              const badge = scoreBadge(m.score)
-              const cgLat = m.lat ? Number(m.lat) : null
-              const cgLng = m.lng ? Number(m.lng) : null
-              const distanceMiles = reqLat && reqLng && cgLat && cgLng
-                ? haversineDistance(reqLat, reqLng, cgLat, cgLng)
-                : null
-              return (
-                <FindCaregiverCard
-                  key={m.matchId}
-                  rank={i + 1}
-                  caregiver={{
-                    id:           m.caregiverId,
-                    name:         m.name,
-                    image:        m.image,
-                    headline:     m.headline,
-                    careTypes:    m.careTypes,
-                    city:         m.city,
-                    state:        m.state,
-                    distanceMiles,
-                    hourlyMin:    m.hourlyMin,
-                    hourlyMax:    m.hourlyMax,
-                    rating:       m.rating,
-                    matchScore:   Math.round(m.score / 20),
-                    matchReason:  m.reason,
-                  }}
-                  statusBadge={
-                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${badge.classes}`}>
-                      {badge.label}
-                    </span>
-                  }
-                  activeRequests={activeRequests}
-                  isFavorited={favoriteSet.has(m.caregiverId)}
-                  alreadyOffered={offeredSet.has(m.caregiverId)}
-                />
-              )
-            })}
-          </div>
-        )}
-      </section>
 
       {/* ── Browse All Caregivers ─────────────────────────────────────── */}
       <section>
@@ -251,7 +190,7 @@ export default async function FindCaregiversPage({ searchParams }: PageProps) {
           <div className="flex items-center justify-center gap-2 mt-6">
             {page > 1 && (
               <a
-                href={buildPageUrl({ requestId, careType, state, rateMin, rateMax, experience, certification, sort }, page - 1)}
+                href={buildPageUrl({ careType, state, rateMin, rateMax, experience, certification, sort }, page - 1)}
                 className="px-3 py-1.5 rounded-md border border-border text-sm hover:bg-muted"
               >
                 ← Prev
@@ -262,7 +201,7 @@ export default async function FindCaregiversPage({ searchParams }: PageProps) {
             </span>
             {page < totalPages && (
               <a
-                href={buildPageUrl({ requestId, careType, state, rateMin, rateMax, experience, certification, sort }, page + 1)}
+                href={buildPageUrl({ careType, state, rateMin, rateMax, experience, certification, sort }, page + 1)}
                 className="px-3 py-1.5 rounded-md border border-border text-sm hover:bg-muted"
               >
                 Next →
