@@ -23,7 +23,6 @@ export default async function ClientDashboard() {
     recentRecipientsRaw,
     recentRequestsActivityRaw,
   ] = await Promise.all([
-    // Count queries
     db.select({ value: count() }).from(careRecipients).where(eq(careRecipients.clientId, userId)),
     db.select({ value: count() }).from(careRequests).where(and(eq(careRequests.clientId, userId), eq(careRequests.status, 'active'))),
     db
@@ -31,7 +30,6 @@ export default async function ClientDashboard() {
       .from(matches)
       .innerJoin(careRequests, eq(matches.requestId, careRequests.id))
       .where(and(eq(careRequests.clientId, userId), eq(matches.status, 'pending'))),
-    // Data queries
     db
       .select({
         id:            careRequests.id,
@@ -71,57 +69,120 @@ export default async function ClientDashboard() {
     .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
     .slice(0, 10)
 
+  const firstName = session.user.name?.split(' ')[0] ?? 'there'
+  const today = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+
+  const stats = [
+    { num: '01', label: 'Care Recipients', value: recipientCount.value, href: '/client/dashboard/recipients' },
+    { num: '02', label: 'Active Requests', value: activeRequestCount.value, href: '/client/dashboard/requests' },
+    { num: '03', label: 'Pending Matches', value: pendingMatchCount.value, href: '/client/dashboard/find-caregivers' },
+  ]
+
   return (
-    <div className="p-4 lg:p-8 space-y-8">
-      {/* Header */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold">Dashboard</h1>
-          <p className="text-sm text-muted-foreground mt-1">Welcome back, {session.user.name?.split(' ')[0]}</p>
-        </div>
-        <div className="flex gap-3">
-          <Link
-            href="/client/dashboard/recipients/new"
-            className="px-4 py-2 rounded-md border border-border text-sm font-medium hover:bg-muted transition-colors"
-          >
-            + Recipient
-          </Link>
-          <Link
-            href="/client/dashboard/requests/new"
-            className="px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm font-medium whitespace-nowrap"
-          >
-            + Care Request
-          </Link>
-        </div>
-      </div>
-
-      {/* Stats Row */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {[
-          { label: 'Care Recipients', value: recipientCount.value },
-          { label: 'Active Requests', value: activeRequestCount.value },
-          { label: 'Pending Matches', value: pendingMatchCount.value },
-        ].map((stat) => (
-          <div key={stat.label} className="rounded-lg border border-border bg-card p-6">
-            <p className="text-sm text-muted-foreground">{stat.label}</p>
-            <p className="mt-2 text-3xl font-bold">{String(stat.value)}</p>
+    <div className="px-6 lg:px-12 py-10 lg:py-14 max-w-[1400px] mx-auto">
+      {/* Masthead */}
+      <header className="border-b border-foreground/30 pb-8">
+        <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+          <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+            Today · {today}
           </div>
-        ))}
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Recent Requests */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold">Recent Requests</h2>
-            <Link href="/client/dashboard/requests" className="text-sm text-primary hover:underline">
-              View all
+          <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+            Issue No. 001 — Family Dashboard
+          </div>
+        </div>
+        <div className="mt-6 flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
+          <div className="max-w-3xl">
+            <p className="ed-eyebrow">A note for {firstName}</p>
+            <h1 className="ed-display mt-3 text-[44px] sm:text-[60px] md:text-[72px]">
+              Good to see you,{' '}
+              <span className="italic font-light text-[var(--forest-deep)]">{firstName}</span>.
+            </h1>
+          </div>
+          <div className="flex shrink-0 gap-2">
+            <Link
+              href="/client/dashboard/recipients/new"
+              className="inline-flex h-10 items-center gap-2 rounded-full border border-foreground/15 bg-transparent px-4 text-[13px] font-medium text-foreground transition-all hover:border-foreground/40 hover:bg-foreground/[0.025]"
+            >
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1.5v9M1.5 6h9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>
+              Recipient
+            </Link>
+            <Link
+              href="/client/dashboard/requests/new"
+              className="inline-flex h-10 items-center gap-2 rounded-full bg-foreground px-5 text-[13px] font-medium text-background transition-all hover:translate-y-[-1px] hover:shadow-[0_8px_18px_-6px_rgba(15,20,16,0.3)]"
+            >
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1.5v9M1.5 6h9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>
+              New Care Request
             </Link>
           </div>
+        </div>
+      </header>
+
+      {/* Stats — editorial figures */}
+      <section className="mt-12">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-px bg-border">
+          {stats.map((s) => (
+            <Link
+              key={s.label}
+              href={s.href}
+              className="group/stat relative bg-background p-6 transition-colors hover:bg-card"
+            >
+              <div className="flex items-baseline justify-between">
+                <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                  {s.num} · {s.label}
+                </span>
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 14 14"
+                  fill="none"
+                  className="text-foreground/30 transition-all group-hover/stat:translate-x-0.5 group-hover/stat:text-foreground"
+                >
+                  <path d="M3 11L11 3M11 3H5M11 3v6" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </div>
+              <div className="ed-figure mt-4 text-[68px] leading-[1] tracking-[-0.045em]">
+                {String(s.value).padStart(2, '0')}
+              </div>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      {/* Two-column editorial split */}
+      <section className="mt-16 grid grid-cols-12 gap-x-6 gap-y-12 lg:gap-x-10">
+        {/* Recent Requests */}
+        <div className="col-span-12 lg:col-span-7">
+          <div className="flex items-baseline justify-between border-b border-foreground/30 pb-3">
+            <div>
+              <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                Section I
+              </p>
+              <h2 className="ed-display mt-1 text-[28px] md:text-[32px]">
+                Recent Requests
+              </h2>
+            </div>
+            <Link href="/client/dashboard/requests" className="ed-link text-[13px]">
+              View all →
+            </Link>
+          </div>
+
           {recentRequests.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No requests yet.</p>
+            <div className="mt-8 border border-dashed border-border rounded-md p-10 text-center">
+              <p className="font-display text-[20px] tracking-[-0.02em] text-foreground/80">
+                No requests yet.
+              </p>
+              <p className="mt-2 text-[13px] text-muted-foreground">
+                Begin by adding a recipient and creating a care request.
+              </p>
+              <Link
+                href="/client/dashboard/requests/new"
+                className="mt-5 inline-flex h-9 items-center gap-2 rounded-full bg-foreground px-4 text-[13px] font-medium text-background transition-all hover:translate-y-[-1px]"
+              >
+                Create your first request
+              </Link>
+            </div>
           ) : (
-            <div className="space-y-2">
+            <div className="mt-6 space-y-3">
               {recentRequests.map((req) => (
                 <CareRequestCard key={req.id} req={req} />
               ))}
@@ -130,22 +191,39 @@ export default async function ClientDashboard() {
         </div>
 
         {/* Activity Timeline */}
-        <div className="space-y-4">
-          <h2 className="text-lg font-semibold">Recent Activity</h2>
+        <div className="col-span-12 lg:col-span-5">
+          <div className="border-b border-foreground/30 pb-3">
+            <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+              Section II
+            </p>
+            <h2 className="ed-display mt-1 text-[28px] md:text-[32px]">
+              In the Margins
+            </h2>
+          </div>
+
           {activity.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No activity yet.</p>
+            <p className="mt-8 text-[14px] text-muted-foreground italic">
+              Your activity will appear here as it happens.
+            </p>
           ) : (
-            <ol className="space-y-3">
+            <ol className="mt-6 space-y-0">
               {activity.map((item, i) => (
-                <li key={`${i}-${item.type}-${item.createdAt.getTime()}`} className="flex items-start gap-3 text-sm">
-                  <span className="mt-0.5 h-2 w-2 shrink-0 rounded-full bg-primary/60" />
-                  <div>
-                    <p>
-                      {item.type === 'recipient'
-                        ? `You added ${item.name} as a care recipient`
-                        : `You created a ${item.careType} care request`}
+                <li
+                  key={`${i}-${item.type}-${item.createdAt.getTime()}`}
+                  className="group/item relative flex gap-5 border-b border-border py-4 last:border-b-0"
+                >
+                  <span className="font-mono text-[10px] tabular-nums text-muted-foreground/70 mt-1 shrink-0 w-6">
+                    {String(i + 1).padStart(2, '0')}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[14px] leading-relaxed">
+                      {item.type === 'recipient' ? (
+                        <>You added <span className="font-display italic text-[var(--forest-deep)]">{item.name}</span> as a recipient</>
+                      ) : (
+                        <>You created a <span className="font-display italic text-[var(--forest-deep)]">{item.careType}</span> request</>
+                      )}
                     </p>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
                       {formatDistanceToNow(item.createdAt, { addSuffix: true })}
                     </p>
                   </div>
@@ -154,7 +232,13 @@ export default async function ClientDashboard() {
             </ol>
           )}
         </div>
-      </div>
+      </section>
+
+      {/* Footer rule */}
+      <footer className="mt-20 border-t border-foreground/20 pt-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+        <span>End of issue</span>
+        <span>Set in Fraunces &amp; Inter Tight</span>
+      </footer>
     </div>
   )
 }
