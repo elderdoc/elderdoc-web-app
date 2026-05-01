@@ -276,9 +276,6 @@ export function Landing({ stats }: { stats: LandingStats }) {
                   </div>
                   <h3 className="mt-6 text-[20px] font-semibold tracking-[-0.015em]">{title}</h3>
                   <p className="mt-2.5 text-[14.5px] leading-[1.6] text-foreground/70">{body}</p>
-                  <div className="mt-5 flex items-center gap-1 text-[13px] font-medium text-primary opacity-0 transition-opacity group-hover/p:opacity-100">
-                    Learn more <ArrowRight className="h-3.5 w-3.5" />
-                  </div>
                 </div>
               ))}
             </div>
