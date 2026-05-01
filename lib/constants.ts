@@ -150,8 +150,9 @@ export const CLIENT_STATUS_GROUPS = [
   {
     label: 'Medical Equipment',
     items: [
-      { key: 'urinaryCath', label: 'Urinary cath' },
-      { key: 'feedingTube', label: 'Feeding tube' },
+      { key: 'cane',       label: 'Cane' },
+      { key: 'walker',     label: 'Walker' },
+      { key: 'wheelchair', label: 'Wheelchair' },
     ],
   },
   {
@@ -295,8 +296,8 @@ export const CARE_DURATIONS = [
 ] as const
 
 export const BUDGET_TYPES = [
-  { key: 'hourly',  label: 'Hourly rate' },
-  { key: 'weekly',  label: 'Fixed weekly' },
+  { key: 'hourly', label: 'Per hour' },
+  { key: 'daily',  label: 'Per day' },
 ] as const
 
 export const US_STATES = [
