@@ -115,7 +115,7 @@ export function Step4Form({ initialCapabilities, initialSpecialNeeds, initialMax
           type="button"
           disabled={isPending}
           onClick={handleContinue}
-          className="rounded-[8px] bg-primary px-6 py-2.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
+          className="h-12 rounded-full bg-primary px-6 text-[14px] font-medium text-primary-foreground transition-all hover:bg-[var(--forest-deep)] hover:shadow-[0_10px_24px_-8px_rgba(15,77,52,0.4)] disabled:opacity-40 disabled:cursor-not-allowed"
         >
           {isPending ? 'Saving…' : 'Continue'}
         </button>

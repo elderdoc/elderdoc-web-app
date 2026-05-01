@@ -128,9 +128,9 @@ export function PostRequestForm({
     })
   }
 
-  const labelClass = 'block text-xs font-medium uppercase tracking-[0.06em] text-muted-foreground mb-2'
+  const labelClass = 'block text-[13px] font-medium text-foreground mb-1.5'
   const inputClass =
-    'w-full rounded-[8px] border border-input bg-background px-3.5 py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary/20'
+    'h-11 w-full rounded-[10px] border border-input bg-card px-3.5 text-[14.5px] text-foreground placeholder:text-muted-foreground/70 outline-none transition-all hover:border-foreground/30 focus:border-primary focus:ring-[3px] focus:ring-primary/15'
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">

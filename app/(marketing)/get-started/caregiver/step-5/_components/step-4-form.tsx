@@ -9,7 +9,7 @@ import { StateSelect } from '@/components/state-select'
 
 const labelClass = 'block text-xs font-medium uppercase tracking-[0.08em] text-muted-foreground mb-1.5'
 const inputClass =
-  'w-full rounded-[8px] border border-input bg-background px-3.5 py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary/20'
+  'h-11 w-full rounded-[10px] border border-input bg-card px-3.5 text-[14.5px] text-foreground placeholder:text-muted-foreground/70 outline-none transition-all hover:border-foreground/30 focus:border-primary focus:ring-[3px] focus:ring-primary/15'
 
 interface Props {
   initialAddress1: string
@@ -280,7 +280,7 @@ export function Step4Form({
           type="button"
           disabled={!isValid || isPending}
           onClick={handleContinue}
-          className="rounded-[8px] bg-primary px-6 py-2.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
+          className="h-12 rounded-full bg-primary px-6 text-[14px] font-medium text-primary-foreground transition-all hover:bg-[var(--forest-deep)] hover:shadow-[0_10px_24px_-8px_rgba(15,77,52,0.4)] disabled:opacity-40 disabled:cursor-not-allowed"
         >
           {isPending ? 'Saving…' : 'Continue'}
         </button>

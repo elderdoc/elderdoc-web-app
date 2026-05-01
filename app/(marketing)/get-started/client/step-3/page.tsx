@@ -2,6 +2,7 @@
 
 import { useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { Search, MapPin } from 'lucide-react'
 import { StepShell } from '../_components/step-shell'
 import { StateSelect } from '@/components/state-select'
 
@@ -40,8 +41,8 @@ function Step3Inner() {
   }
 
   const inputClass =
-    'w-full rounded-[8px] border border-input bg-background px-3.5 py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary/20'
-  const labelClass = 'block text-xs font-medium text-muted-foreground uppercase tracking-[0.06em] mb-1.5'
+    'h-11 w-full rounded-[10px] border border-input bg-card px-3.5 text-[14.5px] text-foreground placeholder:text-muted-foreground/70 outline-none transition-all hover:border-foreground/30 focus:border-primary focus:ring-[3px] focus:ring-primary/15'
+  const labelClass = 'block text-[13px] font-medium text-foreground mb-1.5'
 
   return (
     <StepShell
@@ -50,78 +51,88 @@ function Step3Inner() {
       subtitle="We'll use this to find caregivers near you."
       backHref={`/get-started/client/step-2?relationship=${relationship}&careTypes=${careTypes}`}
     >
-      <div className="mx-auto max-w-lg space-y-5">
-        <div>
-          <label className={labelClass}>Address Line 1</label>
-          <input
-            type="text"
-            placeholder="123 Main Street"
-            value={form.address1}
-            onChange={e => set('address1', e.target.value)}
-            className={inputClass}
-          />
-        </div>
+      <div className="mx-auto max-w-xl">
+        <div className="rounded-[16px] border border-border bg-card p-6 space-y-5">
+          <div className="flex items-center gap-2 text-[12.5px] font-medium text-primary mb-1">
+            <MapPin className="h-3.5 w-3.5" />
+            Address
+          </div>
 
-        <div>
-          <label className={labelClass}>Address Line 2 <span className="normal-case text-muted-foreground/60">(optional)</span></label>
-          <input
-            type="text"
-            placeholder="Apt, suite, unit..."
-            value={form.address2}
-            onChange={e => set('address2', e.target.value)}
-            className={inputClass}
-          />
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className={labelClass}>City</label>
+            <label className={labelClass}>Street address</label>
             <input
               type="text"
-              placeholder="Austin"
-              value={form.city}
-              onChange={e => set('city', e.target.value)}
+              placeholder="123 Main Street"
+              value={form.address1}
+              onChange={e => set('address1', e.target.value)}
               className={inputClass}
             />
           </div>
-          <div>
-            <label className={labelClass}>State</label>
-            <StateSelect value={form.state} onChange={v => set('state', v)} />
-          </div>
-        </div>
 
-        <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className={labelClass}>ZIP Code</label>
+            <label className={labelClass}>
+              Apt, suite, unit <span className="text-muted-foreground/70 font-normal">(optional)</span>
+            </label>
             <input
               type="text"
-              placeholder="90210"
-              maxLength={10}
-              value={form.zip}
-              onChange={e => set('zip', e.target.value.replace(/[^\d-]/g, ''))}
+              placeholder="Unit 4B"
+              value={form.address2}
+              onChange={e => set('address2', e.target.value)}
               className={inputClass}
             />
           </div>
-          <div>
-            <label className={labelClass}>Country</label>
-            <input
-              type="text"
-              value="United States"
-              disabled
-              className={`${inputClass} cursor-not-allowed opacity-50`}
-            />
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className={labelClass}>City</label>
+              <input
+                type="text"
+                placeholder="Austin"
+                value={form.city}
+                onChange={e => set('city', e.target.value)}
+                className={inputClass}
+              />
+            </div>
+            <div>
+              <label className={labelClass}>State</label>
+              <StateSelect value={form.state} onChange={v => set('state', v)} />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className={labelClass}>ZIP code</label>
+              <input
+                type="text"
+                placeholder="90210"
+                maxLength={10}
+                value={form.zip}
+                onChange={e => set('zip', e.target.value.replace(/[^\d-]/g, ''))}
+                className={inputClass}
+              />
+            </div>
+            <div>
+              <label className={labelClass}>Country</label>
+              <input
+                type="text"
+                value="United States"
+                disabled
+                className={`${inputClass} cursor-not-allowed bg-muted/40 text-muted-foreground`}
+              />
+            </div>
           </div>
         </div>
       </div>
 
-      <div className="mt-8 flex justify-center">
+      <div className="mt-10 flex justify-center">
         <button
           type="button"
           disabled={!isValid}
           onClick={handleContinue}
-          className="rounded-[8px] bg-primary px-8 py-2.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
+          className="group/cta inline-flex h-12 items-center gap-2 rounded-full bg-primary pl-6 pr-5 text-[14px] font-medium text-primary-foreground transition-all hover:bg-[var(--forest-deep)] hover:shadow-[0_10px_24px_-8px_rgba(15,77,52,0.4)] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:shadow-none"
         >
-          Find Caregivers
+          Find caregivers
+          <Search className="h-4 w-4" />
         </button>
       </div>
     </StepShell>
