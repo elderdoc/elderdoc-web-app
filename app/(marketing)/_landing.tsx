@@ -291,9 +291,10 @@ export function Landing({ stats }: { stats: LandingStats }) {
             <div className="text-center max-w-2xl mx-auto mb-12 md:mb-16">
               <span className="eyebrow">How it works</span>
               <h2 className="mt-3 text-[36px] sm:text-[44px] md:text-[52px] font-semibold tracking-[-0.03em] leading-[1.05]">
-                Four steps. About{' '}
-                <span className="font-serif italic font-normal text-primary">twelve minutes</span>.
+                Your journey,{' '}
+                <span className="font-serif italic font-normal text-primary">simplified</span>.
               </h2>
+              <p className="mt-4 text-[16px] text-muted-foreground">From first request to first shift — here&apos;s how it works.</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
