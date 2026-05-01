@@ -20,10 +20,14 @@ const PILLARS = [
 ]
 
 const STEPS = [
-  { n: 1, t: 'Tell us about your loved one', d: 'Conditions, mobility, language, and routine. We keep it private.', img: 'https://images.unsplash.com/photo-1544027993-37dbfe43562a?auto=format&fit=crop&w=600&q=70' },
-  { n: 2, t: 'Describe the care you need',   d: 'Hourly or live-in, weekday mornings or weekend overnights.', img: 'https://images.unsplash.com/photo-1576765608535-5f04d1e3f289?auto=format&fit=crop&w=600&q=70' },
-  { n: 3, t: 'Review your top five matches', d: 'Curated, ranked, and explained. No fee until you choose.', img: 'https://images.unsplash.com/photo-1573497019418-b400bb3ab074?auto=format&fit=crop&w=600&q=70' },
-  { n: 4, t: 'Begin care, with confidence',  d: 'Weekly billing, escrow protection, and a 7-day window.', img: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&w=600&q=70' },
+  { n: 1, t: 'Choose care type',         d: 'Personal care, companionship, memory care, and more. Select everything that applies.', img: 'https://images.unsplash.com/photo-1544027993-37dbfe43562a?auto=format&fit=crop&w=600&q=70' },
+  { n: 2, t: 'Add your recipient',        d: 'Tell us who is receiving care — their conditions, mobility, and daily routine.', img: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=600&q=70' },
+  { n: 3, t: 'Set the location',          d: 'Enter where care will happen — home, assisted living, or anywhere in between.', img: 'https://images.unsplash.com/photo-1581579186913-45ac3e6efe93?auto=format&fit=crop&w=600&q=70' },
+  { n: 4, t: 'Build the schedule',        d: 'Pick frequency, days, and shift times. One-time visits or ongoing care — we handle both.', img: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=600&q=70' },
+  { n: 5, t: 'Share care details',        d: 'Supplies needed, health status, and safety measures so caregivers arrive prepared.', img: 'https://images.unsplash.com/photo-1576765608535-5f04d1e3f289?auto=format&fit=crop&w=600&q=70' },
+  { n: 6, t: 'Set preferences & budget',  d: 'Caregiver gender, transportation, languages, and your hourly or daily rate.', img: 'https://images.unsplash.com/photo-1573497019418-b400bb3ab074?auto=format&fit=crop&w=600&q=70' },
+  { n: 7, t: 'Write a care plan',         d: 'Optional shift-by-shift instructions so your caregiver knows exactly what to do.', img: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=600&q=70' },
+  { n: 8, t: 'Review & go live',          d: 'Preview your listing, generate an AI description, and submit for matching.', img: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&w=600&q=70' },
 ]
 
 const TRUST = [
@@ -291,10 +295,10 @@ export function Landing({ stats }: { stats: LandingStats }) {
             <div className="text-center max-w-2xl mx-auto mb-12 md:mb-16">
               <span className="eyebrow">How it works</span>
               <h2 className="mt-3 text-[36px] sm:text-[44px] md:text-[52px] font-semibold tracking-[-0.03em] leading-[1.05]">
-                Your journey,{' '}
-                <span className="font-serif italic font-normal text-primary">simplified</span>.
+                Eight steps. About{' '}
+                <span className="font-serif italic font-normal text-primary">fifteen minutes</span>.
               </h2>
-              <p className="mt-4 text-[16px] text-muted-foreground">From first request to first shift — here&apos;s how it works.</p>
+              <p className="mt-4 text-[16px] text-muted-foreground">From first request to first shift — here&apos;s exactly how it works.</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -305,7 +309,7 @@ export function Landing({ stats }: { stats: LandingStats }) {
                   style={{ animationDelay: `${i * 80}ms` }}
                 >
                   {/* Image */}
-                  <div className="aspect-[4/5] rounded-[18px] overflow-hidden bg-[var(--cream-deep)] mb-5 relative">
+                  <div className="aspect-[3/4] rounded-[18px] overflow-hidden bg-[var(--cream-deep)] mb-5 relative">
                     <img
                       src={step.img}
                       alt=""
