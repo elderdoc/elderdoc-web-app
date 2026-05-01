@@ -127,14 +127,23 @@ function SectionEditor({
                   </label>
                   {isActive && entry && (
                     <div className="mt-3 ml-7 flex flex-wrap gap-2 items-center">
-                      <select
-                        value={entry.frequency}
-                        onChange={(e) => setFrequency(item.key, e.target.value as CareTaskEntry['frequency'])}
-                        className="h-9 rounded-[8px] border border-input bg-card px-3 text-[12.5px] outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/15"
-                      >
-                        <option value="every-visit">Every visit</option>
-                        <option value="as-needed">As needed</option>
-                      </select>
+                      <div className="inline-flex rounded-full border border-border bg-muted/40 p-0.5 gap-0.5">
+                        {(['every-visit', 'as-needed'] as const).map((freq) => (
+                          <button
+                            key={freq}
+                            type="button"
+                            onClick={() => setFrequency(item.key, freq)}
+                            className={[
+                              'h-7 rounded-full px-3 text-[12px] font-medium transition-all whitespace-nowrap',
+                              entry.frequency === freq
+                                ? 'bg-primary text-primary-foreground shadow-sm'
+                                : 'text-foreground/70 hover:text-foreground',
+                            ].join(' ')}
+                          >
+                            {freq === 'every-visit' ? 'Every visit' : 'As needed'}
+                          </button>
+                        ))}
+                      </div>
                       <input
                         type="text"
                         placeholder="Notes (optional)"
