@@ -13,6 +13,7 @@ import {
 } from 'date-fns'
 import { SelectField } from '@/components/select-field'
 import { TimeDropdown } from '@/components/ui/time-dropdown'
+import { useAppToast } from '@/components/toast'
 import {
   Sheet, SheetContent, SheetHeader, SheetTitle,
 } from '@/components/ui/sheet'
@@ -57,6 +58,7 @@ export function Calendar({ year, month, events, activeJobs, basePath, addShiftAc
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
   const [isPending, startTransition] = useTransition()
   const [formError, setFormError] = useState<string | null>(null)
+  const t = useAppToast()
   const [formJobId, setFormJobId] = useState(activeJobs[0]?.jobId ?? '')
   const [formStart, setFormStart] = useState('09:00')
   const [formEnd, setFormEnd] = useState('17:00')
@@ -107,6 +109,7 @@ export function Calendar({ year, month, events, activeJobs, basePath, addShiftAc
         setConfirmAddShift(false)
         setFormStart('09:00')
         setFormEnd('17:00')
+        t.shiftAdded()
       }
     })
   }
@@ -138,6 +141,7 @@ export function Calendar({ year, month, events, activeJobs, basePath, addShiftAc
         setEditError(result.error)
       } else {
         setEditingShiftId(null)
+        t.shiftUpdated()
       }
     })
   }
@@ -149,6 +153,7 @@ export function Calendar({ year, month, events, activeJobs, basePath, addShiftAc
         setEditError(result.error)
       } else {
         setCancelShiftId(null)
+        t.shiftCancelled(result.lateCancellation)
         if (result.lateCancellation) setLateCancelWarning(true)
       }
     })

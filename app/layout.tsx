@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Geist, Geist_Mono, Instrument_Serif } from 'next/font/google'
 import './globals.css'
+import { ToastProvider } from '@/components/toast'
 
 const geist = Geist({
   subsets: ['latin'],
@@ -34,7 +35,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       className={`${geist.variable} ${geistMono.variable} ${instrumentSerif.variable}`}
     >
       <body className="min-h-screen bg-background text-foreground antialiased">
-        {children}
+        <ToastProvider>{children}</ToastProvider>
       </body>
     </html>
   )

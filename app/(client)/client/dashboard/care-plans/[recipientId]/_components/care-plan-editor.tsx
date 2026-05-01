@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { upsertCarePlan, type CarePlanSectionKey } from '@/domains/clients/care-plan-actions'
+import { useAppToast } from '@/components/toast'
 import type { CarePlanDetail } from '@/domains/clients/care-plans'
 import type { CareTaskEntry } from '@/db/schema'
 import { CARE_PLAN_SECTIONS } from '@/lib/constants'
@@ -202,12 +203,14 @@ function SectionEditor({
 export function CarePlanEditor({ recipientId, carePlan }: Props) {
   const [isPending, startTransition] = useTransition()
   const [globalError, setGlobalError] = useState<string | null>(null)
+  const t = useAppToast()
 
   function handleSave(sectionKey: CarePlanSectionKey, entries: CareTaskEntry[]) {
     setGlobalError(null)
     startTransition(async () => {
       const result = await upsertCarePlan(recipientId, { [sectionKey]: entries })
-      if (result.error) setGlobalError(result.error)
+      if (result.error) { setGlobalError(result.error); t.error(result.error) }
+      else t.carePlanSaved()
     })
   }
 

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Save, Check, User as UserIcon, Phone, Mail, MapPin } from 'lucide-react'
 import { updateClientProfile } from '@/domains/clients/profile'
 import { formatUSPhone } from '@/lib/phone'
+import { useAppToast } from '@/components/toast'
 
 interface User {
   id: string
@@ -31,6 +32,7 @@ export function ClientProfileForm({ user, location }: { user: User; location: Lo
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [saved, setSaved] = useState(false)
+  const t = useAppToast()
   const [form, setForm] = useState({
     name:     user.name ?? '',
     phone:    user.phone ?? '',
@@ -51,6 +53,7 @@ export function ClientProfileForm({ user, location }: { user: User; location: Lo
         state:    form.state    || undefined,
       })
       setSaved(true)
+      t.profileSaved()
       router.refresh()
       setTimeout(() => setSaved(false), 3000)
     })

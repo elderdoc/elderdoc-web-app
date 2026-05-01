@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Save, Check, User as UserIcon, Phone, FileText, DollarSign, GraduationCap, Heart, Award, Languages, Briefcase, MapPin, Plane } from 'lucide-react'
 import { updateCaregiverProfile } from '@/domains/caregivers/profile'
 import { formatUSPhone } from '@/lib/phone'
+import { useAppToast } from '@/components/toast'
 import {
   CARE_TYPES, CERTIFICATIONS, LANGUAGES, WORK_TYPES,
   START_AVAILABILITY, TRAVEL_DISTANCES,
@@ -55,6 +56,7 @@ export function CaregiverProfileForm({ profile: p }: { profile: Profile }) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [saved, setSaved] = useState(false)
+  const t = useAppToast()
   const [form, setForm] = useState({
     name:              p.name ?? '',
     phone:             p.phone ?? '',
@@ -119,6 +121,7 @@ export function CaregiverProfileForm({ profile: p }: { profile: Profile }) {
         state:             form.state || undefined,
       })
       setSaved(true)
+      t.profileSaved()
       router.refresh()
       setTimeout(() => setSaved(false), 3000)
     })

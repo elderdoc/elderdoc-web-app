@@ -3,19 +3,22 @@
 import { useState } from 'react'
 import { sendOffer } from '@/domains/matching/send-offer'
 import { SelectField } from '@/components/select-field'
+import { useAppToast } from '@/components/toast'
 
 interface Props {
   caregiverId: string
   activeRequests: { id: string; title: string | null; careType: string }[]
   alreadyOffered?: boolean
+  caregiverName?: string
 }
 
 type State = 'idle' | 'open' | 'pending' | 'sent' | 'error'
 
-export function SendOfferModal({ caregiverId, activeRequests, alreadyOffered }: Props) {
+export function SendOfferModal({ caregiverId, activeRequests, alreadyOffered, caregiverName }: Props) {
   const [state, setState] = useState<State>(alreadyOffered ? 'sent' : 'idle')
   const [selectedRequestId, setSelectedRequestId] = useState<string>('')
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const t = useAppToast()
 
   if (activeRequests.length === 0) {
     return (
@@ -49,6 +52,7 @@ export function SendOfferModal({ caregiverId, activeRequests, alreadyOffered }: 
     try {
       await sendOffer(selectedRequestId, caregiverId, 0, 'Manually selected')
       setState('sent')
+      t.offerSent(caregiverName)
     } catch (err) {
       setErrorMessage(err instanceof Error ? err.message : 'Failed to send offer.')
       setState('error')
