@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
+import { Save, Check, User as UserIcon, Phone, Mail, MapPin } from 'lucide-react'
 import { updateClientProfile } from '@/domains/clients/profile'
 import { formatUSPhone } from '@/lib/phone'
 
@@ -22,6 +23,10 @@ interface Location {
   state: string | null
 }
 
+const inputClass =
+  'w-full rounded-[10px] border border-border bg-card h-11 px-3.5 text-[14px] focus:border-[var(--forest)] focus:outline-none focus:ring-2 focus:ring-[var(--forest-soft)] transition-shadow'
+const labelClass = 'block text-[13px] font-medium text-foreground/80 mb-1.5'
+
 export function ClientProfileForm({ user, location }: { user: User; location: Location | null }) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
@@ -34,9 +39,6 @@ export function ClientProfileForm({ user, location }: { user: User; location: Lo
     city:     location?.city ?? '',
     state:    location?.state ?? '',
   })
-
-  const initials = (user.name ?? user.email).split(' ').map(p => p[0]).slice(0, 2).join('').toUpperCase()
-  const memberSince = new Date(user.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
 
   function handleSave() {
     startTransition(async () => {
@@ -55,136 +57,130 @@ export function ClientProfileForm({ user, location }: { user: User; location: Lo
   }
 
   return (
-    <div className="space-y-6 max-w-lg">
-      {/* Avatar */}
-      <div className="flex items-center gap-4">
-        {user.image ? (
-          <img src={user.image} alt={user.name ?? ''} className="h-16 w-16 rounded-full object-cover" />
-        ) : (
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary text-xl font-bold text-primary-foreground">
-            {initials}
+    <div className="space-y-5">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        {/* Contact info */}
+        <div className="rounded-[18px] border border-border bg-card p-5">
+          <h2 className="text-[15px] font-semibold mb-4 flex items-center gap-2">
+            <UserIcon className="h-4 w-4 text-muted-foreground" />
+            Contact info
+          </h2>
+          <div className="space-y-3.5">
+            <div>
+              <label className={labelClass}>Full name</label>
+              <input
+                type="text"
+                value={form.name}
+                onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+                className={inputClass}
+              />
+            </div>
+            <div>
+              <label className={labelClass}>
+                <span className="inline-flex items-center gap-1.5">
+                  <Mail className="h-3.5 w-3.5 text-muted-foreground" />
+                  Email
+                </span>
+              </label>
+              <input
+                type="email"
+                value={user.email}
+                disabled
+                className={`${inputClass} bg-muted text-muted-foreground cursor-not-allowed`}
+              />
+            </div>
+            <div>
+              <label className={labelClass}>
+                <span className="inline-flex items-center gap-1.5">
+                  <Phone className="h-3.5 w-3.5 text-muted-foreground" />
+                  Phone
+                </span>
+              </label>
+              <input
+                type="tel"
+                value={form.phone}
+                onChange={e => setForm(f => ({ ...f, phone: formatUSPhone(e.target.value) }))}
+                className={inputClass}
+                placeholder="(555) 000-0000"
+              />
+            </div>
           </div>
-        )}
-        <div>
-          <p className="font-semibold">{user.name ?? 'No name set'}</p>
-          <p className="text-sm text-muted-foreground">{user.email}</p>
+        </div>
+
+        {/* Address */}
+        <div className="rounded-[18px] border border-border bg-card p-5">
+          <h2 className="text-[15px] font-semibold mb-4 flex items-center gap-2">
+            <MapPin className="h-4 w-4 text-muted-foreground" />
+            Address
+          </h2>
+          <div className="space-y-3.5">
+            <div>
+              <label className={labelClass}>Street address</label>
+              <input
+                type="text"
+                value={form.address1}
+                onChange={e => setForm(f => ({ ...f, address1: e.target.value }))}
+                className={inputClass}
+                placeholder="123 Main St"
+              />
+            </div>
+            <div>
+              <label className={labelClass}>Unit / Apt <span className="text-muted-foreground font-normal">(optional)</span></label>
+              <input
+                type="text"
+                value={form.address2}
+                onChange={e => setForm(f => ({ ...f, address2: e.target.value }))}
+                className={inputClass}
+                placeholder="Apt 4B"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className={labelClass}>City</label>
+                <input
+                  type="text"
+                  value={form.city}
+                  onChange={e => setForm(f => ({ ...f, city: e.target.value }))}
+                  className={inputClass}
+                />
+              </div>
+              <div>
+                <label className={labelClass}>State</label>
+                <input
+                  type="text"
+                  value={form.state}
+                  onChange={e => setForm(f => ({ ...f, state: e.target.value }))}
+                  className={inputClass}
+                />
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
-      <hr className="border-border" />
-
-      {/* Contact info */}
-      <div className="space-y-4">
-        <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Contact</h2>
-        <div>
-          <label className="block text-sm font-medium mb-1">Full Name</label>
-          <input
-            type="text"
-            value={form.name}
-            onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-            className="w-full rounded-lg border border-border px-4 py-3 text-sm focus:border-primary focus:outline-none"
-          />
+      {/* Save bar */}
+      <div className="rounded-[18px] border border-border bg-card p-4 flex items-center justify-between gap-3">
+        <div className="text-[13px] text-muted-foreground">
+          Changes are saved to your account.
         </div>
-        <div>
-          <label className="block text-sm font-medium mb-1">Email</label>
-          <input
-            type="email"
-            value={user.email}
-            disabled
-            className="w-full rounded-lg border border-border px-4 py-3 text-sm bg-muted text-muted-foreground cursor-not-allowed"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium mb-1">Phone</label>
-          <input
-            type="tel"
-            value={form.phone}
-            onChange={e => setForm(f => ({ ...f, phone: formatUSPhone(e.target.value) }))}
-            className="w-full rounded-lg border border-border px-4 py-3 text-sm focus:border-primary focus:outline-none"
-            placeholder="(555) 000-0000"
-          />
+        <div className="flex items-center gap-3">
+          {saved && (
+            <span className="inline-flex items-center gap-1.5 text-[13px] text-[var(--forest-deep)]">
+              <Check className="h-4 w-4" />
+              Saved
+            </span>
+          )}
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={isPending || !form.name.trim()}
+            className="inline-flex h-10 items-center gap-1.5 rounded-full bg-primary px-5 text-[13.5px] font-medium text-primary-foreground hover:bg-[var(--forest-deep)] hover:shadow-[0_8px_18px_-6px_rgba(15,77,52,0.4)] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-none whitespace-nowrap"
+          >
+            <Save className="h-4 w-4" />
+            {isPending ? 'Saving…' : 'Save changes'}
+          </button>
         </div>
       </div>
-
-      <hr className="border-border" />
-
-      {/* Address */}
-      <div className="space-y-4">
-        <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Location</h2>
-        <div>
-          <label className="block text-sm font-medium mb-1">Street Address</label>
-          <input
-            type="text"
-            value={form.address1}
-            onChange={e => setForm(f => ({ ...f, address1: e.target.value }))}
-            className="w-full rounded-lg border border-border px-4 py-3 text-sm focus:border-primary focus:outline-none"
-            placeholder="123 Main St"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium mb-1">Unit / Apt (optional)</label>
-          <input
-            type="text"
-            value={form.address2}
-            onChange={e => setForm(f => ({ ...f, address2: e.target.value }))}
-            className="w-full rounded-lg border border-border px-4 py-3 text-sm focus:border-primary focus:outline-none"
-            placeholder="Apt 4B"
-          />
-        </div>
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="block text-sm font-medium mb-1">City</label>
-            <input
-              type="text"
-              value={form.city}
-              onChange={e => setForm(f => ({ ...f, city: e.target.value }))}
-              className="w-full rounded-lg border border-border px-4 py-3 text-sm focus:border-primary focus:outline-none"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">State</label>
-            <input
-              type="text"
-              value={form.state}
-              onChange={e => setForm(f => ({ ...f, state: e.target.value }))}
-              className="w-full rounded-lg border border-border px-4 py-3 text-sm focus:border-primary focus:outline-none"
-            />
-          </div>
-        </div>
-      </div>
-
-      <div className="flex items-center gap-3">
-        <button
-          type="button"
-          onClick={handleSave}
-          disabled={isPending || !form.name.trim()}
-          className="px-6 py-2.5 rounded-md bg-primary text-primary-foreground text-sm font-medium disabled:opacity-50 whitespace-nowrap"
-        >
-          {isPending ? 'Saving…' : 'Save Changes'}
-        </button>
-        {saved && <p className="text-sm text-green-600">Saved!</p>}
-      </div>
-
-      <hr className="border-border" />
-
-      {/* Account info (read-only) */}
-      <section>
-        <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-4">Account Information</h2>
-        <dl className="space-y-3">
-          <div className="flex gap-4">
-            <dt className="text-sm text-muted-foreground w-36 shrink-0">Account Type</dt>
-            <dd className="text-sm font-medium capitalize">{user.role ?? 'Client'}</dd>
-          </div>
-          <div className="flex gap-4">
-            <dt className="text-sm text-muted-foreground w-36 shrink-0">Member Since</dt>
-            <dd className="text-sm font-medium">{memberSince}</dd>
-          </div>
-          <div className="flex gap-4">
-            <dt className="text-sm text-muted-foreground w-36 shrink-0">User ID</dt>
-            <dd className="text-sm font-medium font-mono text-muted-foreground">{user.id}</dd>
-          </div>
-        </dl>
-      </section>
     </div>
   )
 }

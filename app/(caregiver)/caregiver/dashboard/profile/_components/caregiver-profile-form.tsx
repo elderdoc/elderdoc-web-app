@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
+import { Save, Check, User as UserIcon, Phone, FileText, DollarSign, GraduationCap, Heart, Award, Languages, Briefcase, MapPin, Plane } from 'lucide-react'
 import { updateCaregiverProfile } from '@/domains/caregivers/profile'
 import { formatUSPhone } from '@/lib/phone'
 import {
@@ -24,6 +25,7 @@ interface Profile {
   experience: string | null
   education: string | null
   relocatable: boolean | null
+  rating?: string | null
   careTypes: string[]
   certifications: string[]
   languages: string[]
@@ -34,6 +36,19 @@ interface Profile {
   address2: string
   city: string
   state: string
+}
+
+const inputClass =
+  'w-full rounded-[10px] border border-border bg-card h-11 px-3.5 text-[14px] focus:border-[var(--forest)] focus:outline-none focus:ring-2 focus:ring-[var(--forest-soft)] transition-shadow'
+const labelClass = 'block text-[13px] font-medium text-foreground/80 mb-1.5'
+
+function chipClass(active: boolean) {
+  return [
+    'inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] font-medium border transition-all',
+    active
+      ? 'border-[var(--forest)] bg-[var(--forest-soft)] text-[var(--forest-deep)]'
+      : 'border-border bg-card text-foreground/80 hover:border-foreground/30 hover:bg-muted',
+  ].join(' ')
 }
 
 export function CaregiverProfileForm({ profile: p }: { profile: Profile }) {
@@ -109,201 +124,254 @@ export function CaregiverProfileForm({ profile: p }: { profile: Profile }) {
     })
   }
 
-  const initials = (p.name ?? p.email).split(' ').map(x => x[0]).slice(0, 2).join('').toUpperCase()
-
   return (
-    <div className="space-y-8">
-      {/* Avatar */}
-      <div className="flex items-center gap-4">
-        {(p.photoUrl ?? p.image) ? (
-          <img src={(p.photoUrl ?? p.image)!} alt={p.name ?? ''} className="h-16 w-16 rounded-full object-cover" />
-        ) : (
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary text-xl font-bold text-primary-foreground">
-            {initials}
+    <div className="space-y-5">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        {/* Basic info */}
+        <div className="rounded-[18px] border border-border bg-card p-5">
+          <h2 className="text-[15px] font-semibold mb-4 flex items-center gap-2">
+            <UserIcon className="h-4 w-4 text-muted-foreground" />
+            Basic info
+          </h2>
+          <div className="space-y-3.5">
+            <div>
+              <label className={labelClass}>Full name</label>
+              <input type="text" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} className={inputClass} />
+            </div>
+            <div>
+              <label className={labelClass}>
+                <span className="inline-flex items-center gap-1.5">
+                  <Phone className="h-3.5 w-3.5 text-muted-foreground" />
+                  Phone
+                </span>
+              </label>
+              <input type="tel" value={form.phone} onChange={e => setForm(f => ({ ...f, phone: formatUSPhone(e.target.value) }))} className={inputClass} placeholder="(555) 000-0000" />
+            </div>
+            <div>
+              <label className={labelClass}>Headline</label>
+              <input type="text" value={form.headline} onChange={e => setForm(f => ({ ...f, headline: e.target.value }))} className={inputClass} placeholder="e.g. Experienced senior caregiver" />
+            </div>
+            <div>
+              <label className={labelClass}>
+                <span className="inline-flex items-center gap-1.5">
+                  <FileText className="h-3.5 w-3.5 text-muted-foreground" />
+                  About you
+                </span>
+              </label>
+              <textarea
+                value={form.about}
+                onChange={e => setForm(f => ({ ...f, about: e.target.value }))}
+                rows={4}
+                className="w-full rounded-[10px] border border-border bg-card p-3.5 text-[14px] focus:border-[var(--forest)] focus:outline-none focus:ring-2 focus:ring-[var(--forest-soft)] transition-shadow resize-none"
+              />
+            </div>
           </div>
-        )}
-        <div>
-          <p className="font-semibold">{p.name ?? 'No name set'}</p>
-          <p className="text-sm text-muted-foreground">{p.email}</p>
+        </div>
+
+        {/* Rate & experience */}
+        <div className="rounded-[18px] border border-border bg-card p-5">
+          <h2 className="text-[15px] font-semibold mb-4 flex items-center gap-2">
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
+            Rate & experience
+          </h2>
+          <div className="space-y-3.5">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className={labelClass}>Min rate ($/hr)</label>
+                <input type="number" value={form.hourlyMin} onChange={e => setForm(f => ({ ...f, hourlyMin: e.target.value }))} className={inputClass} />
+              </div>
+              <div>
+                <label className={labelClass}>Max rate ($/hr)</label>
+                <input type="number" value={form.hourlyMax} onChange={e => setForm(f => ({ ...f, hourlyMax: e.target.value }))} className={inputClass} />
+              </div>
+            </div>
+            <div>
+              <label className={labelClass}>
+                <span className="inline-flex items-center gap-1.5">
+                  <Briefcase className="h-3.5 w-3.5 text-muted-foreground" />
+                  Experience
+                </span>
+              </label>
+              <input type="text" value={form.experience} onChange={e => setForm(f => ({ ...f, experience: e.target.value }))} className={inputClass} placeholder="e.g. 5 years" />
+            </div>
+            <div>
+              <label className={labelClass}>
+                <span className="inline-flex items-center gap-1.5">
+                  <GraduationCap className="h-3.5 w-3.5 text-muted-foreground" />
+                  Education
+                </span>
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {EDUCATION_OPTIONS.map(e => (
+                  <button
+                    key={e.key}
+                    type="button"
+                    onClick={() => setForm(f => ({ ...f, education: e.key }))}
+                    className={chipClass(form.education === e.key)}
+                  >
+                    {e.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
-      <hr className="border-border" />
-
-      {/* Basic info */}
-      <section>
-        <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-4">Basic Info</h2>
-        <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-1">Full Name</label>
-              <input type="text" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-                className="w-full rounded-lg border border-border px-4 py-3 text-sm focus:border-primary focus:outline-none" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Phone</label>
-              <input type="tel" value={form.phone} onChange={e => setForm(f => ({ ...f, phone: formatUSPhone(e.target.value) }))}
-                className="w-full rounded-lg border border-border px-4 py-3 text-sm focus:border-primary focus:outline-none" placeholder="(555) 000-0000" />
-            </div>
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Headline</label>
-            <input type="text" value={form.headline} onChange={e => setForm(f => ({ ...f, headline: e.target.value }))}
-              className="w-full rounded-lg border border-border px-4 py-3 text-sm focus:border-primary focus:outline-none" placeholder="e.g. Experienced senior caregiver" />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">About</label>
-            <textarea value={form.about} onChange={e => setForm(f => ({ ...f, about: e.target.value }))} rows={4}
-              className="w-full rounded-lg border border-border px-4 py-3 text-sm focus:border-primary focus:outline-none resize-none" />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-1">Min Hourly Rate ($)</label>
-              <input type="number" value={form.hourlyMin} onChange={e => setForm(f => ({ ...f, hourlyMin: e.target.value }))}
-                className="w-full rounded-lg border border-border px-4 py-3 text-sm focus:border-primary focus:outline-none" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Max Hourly Rate ($)</label>
-              <input type="number" value={form.hourlyMax} onChange={e => setForm(f => ({ ...f, hourlyMax: e.target.value }))}
-                className="w-full rounded-lg border border-border px-4 py-3 text-sm focus:border-primary focus:outline-none" />
-            </div>
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Experience</label>
-            <input type="text" value={form.experience} onChange={e => setForm(f => ({ ...f, experience: e.target.value }))}
-              className="w-full rounded-lg border border-border px-4 py-3 text-sm focus:border-primary focus:outline-none" placeholder="e.g. 5 years" />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-2">Education</label>
-            <div className="flex flex-wrap gap-2">
-              {EDUCATION_OPTIONS.map(e => (
-                <button key={e.key} type="button" onClick={() => setForm(f => ({ ...f, education: e.key }))}
-                  className={['rounded-xl border-2 px-4 py-2 text-sm font-medium transition-colors',
-                    form.education === e.key ? 'border-primary bg-primary/5 text-primary' : 'border-border hover:border-primary/50',
-                  ].join(' ')}>{e.label}</button>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <hr className="border-border" />
-
-      {/* Care types */}
-      <section>
-        <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-4">Care Types</h2>
+      {/* Care Types */}
+      <div className="rounded-[18px] border border-border bg-card p-5">
+        <h2 className="text-[15px] font-semibold mb-3 flex items-center gap-2">
+          <Heart className="h-4 w-4 text-muted-foreground" />
+          Care types
+          <span className="inline-flex items-center justify-center rounded-full bg-muted px-2 py-0.5 text-[11px] tabular-nums text-muted-foreground">
+            {form.careTypes.length}
+          </span>
+        </h2>
         <div className="flex flex-wrap gap-2">
           {CARE_TYPES.map(c => (
-            <button key={c.key} type="button" onClick={() => toggleArr('careTypes', c.key)}
-              className={['rounded-xl border-2 px-4 py-2 text-sm font-medium transition-colors',
-                form.careTypes.includes(c.key) ? 'border-primary bg-primary/5 text-primary' : 'border-border hover:border-primary/50',
-              ].join(' ')}>{c.label}</button>
+            <button key={c.key} type="button" onClick={() => toggleArr('careTypes', c.key)} className={chipClass(form.careTypes.includes(c.key))}>
+              {c.label}
+            </button>
           ))}
         </div>
-      </section>
+      </div>
 
-      <hr className="border-border" />
-
-      {/* Certifications & Languages */}
-      <section>
-        <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-4">Certifications</h2>
-        <div className="flex flex-wrap gap-2">
-          {CERTIFICATIONS.map(c => (
-            <button key={c.key} type="button" onClick={() => toggleArr('certifications', c.key)}
-              className={['rounded-xl border-2 px-4 py-2 text-sm font-medium transition-colors',
-                form.certifications.includes(c.key) ? 'border-primary bg-primary/5 text-primary' : 'border-border hover:border-primary/50',
-              ].join(' ')}>{c.label}</button>
-          ))}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        {/* Certifications */}
+        <div className="rounded-[18px] border border-border bg-card p-5">
+          <h2 className="text-[15px] font-semibold mb-3 flex items-center gap-2">
+            <Award className="h-4 w-4 text-muted-foreground" />
+            Certifications
+            <span className="inline-flex items-center justify-center rounded-full bg-muted px-2 py-0.5 text-[11px] tabular-nums text-muted-foreground">
+              {form.certifications.length}
+            </span>
+          </h2>
+          <div className="flex flex-wrap gap-2">
+            {CERTIFICATIONS.map(c => (
+              <button key={c.key} type="button" onClick={() => toggleArr('certifications', c.key)} className={chipClass(form.certifications.includes(c.key))}>
+                {c.label}
+              </button>
+            ))}
+          </div>
         </div>
-      </section>
 
-      <section>
-        <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-4">Languages</h2>
-        <div className="flex flex-wrap gap-2">
-          {LANGUAGES.map(l => (
-            <button key={l.key} type="button" onClick={() => toggleArr('languages', l.key)}
-              className={['rounded-xl border-2 px-4 py-2 text-sm font-medium transition-colors',
-                form.languages.includes(l.key) ? 'border-primary bg-primary/5 text-primary' : 'border-border hover:border-primary/50',
-              ].join(' ')}>{l.label}</button>
-          ))}
+        {/* Languages */}
+        <div className="rounded-[18px] border border-border bg-card p-5">
+          <h2 className="text-[15px] font-semibold mb-3 flex items-center gap-2">
+            <Languages className="h-4 w-4 text-muted-foreground" />
+            Languages
+            <span className="inline-flex items-center justify-center rounded-full bg-muted px-2 py-0.5 text-[11px] tabular-nums text-muted-foreground">
+              {form.languages.length}
+            </span>
+          </h2>
+          <div className="flex flex-wrap gap-2">
+            {LANGUAGES.map(l => (
+              <button key={l.key} type="button" onClick={() => toggleArr('languages', l.key)} className={chipClass(form.languages.includes(l.key))}>
+                {l.label}
+              </button>
+            ))}
+          </div>
         </div>
-      </section>
-
-      <hr className="border-border" />
+      </div>
 
       {/* Availability */}
-      <section>
-        <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-4">Availability</h2>
+      <div className="rounded-[18px] border border-border bg-card p-5">
+        <h2 className="text-[15px] font-semibold mb-4 flex items-center gap-2">
+          <Briefcase className="h-4 w-4 text-muted-foreground" />
+          Availability
+        </h2>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-2">Work Type</label>
+            <label className={labelClass}>Work type</label>
             <div className="flex flex-wrap gap-2">
               {WORK_TYPES.map(w => (
-                <button key={w.key} type="button" onClick={() => toggleArr('workTypes', w.key)}
-                  className={['rounded-xl border-2 px-4 py-2 text-sm font-medium transition-colors',
-                    form.workTypes.includes(w.key) ? 'border-primary bg-primary/5 text-primary' : 'border-border hover:border-primary/50',
-                  ].join(' ')}>{w.label}</button>
+                <button key={w.key} type="button" onClick={() => toggleArr('workTypes', w.key)} className={chipClass(form.workTypes.includes(w.key))}>
+                  {w.label}
+                </button>
               ))}
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium mb-2">Start Availability</label>
+            <label className={labelClass}>Start availability</label>
             <div className="flex flex-wrap gap-2">
               {START_AVAILABILITY.map(s => (
-                <button key={s.key} type="button" onClick={() => setForm(f => ({ ...f, startAvailability: s.key }))}
-                  className={['rounded-xl border-2 px-4 py-2 text-sm font-medium transition-colors',
-                    form.startAvailability === s.key ? 'border-primary bg-primary/5 text-primary' : 'border-border hover:border-primary/50',
-                  ].join(' ')}>{s.label}</button>
+                <button key={s.key} type="button" onClick={() => setForm(f => ({ ...f, startAvailability: s.key }))} className={chipClass(form.startAvailability === s.key)}>
+                  {s.label}
+                </button>
               ))}
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium mb-2">Travel Distance</label>
+            <label className={labelClass}>Travel distance</label>
             <div className="flex flex-wrap gap-2">
               {TRAVEL_DISTANCES.map(t => (
-                <button key={t.key} type="button" onClick={() => toggleTravel(t.miles)}
-                  className={['rounded-xl border-2 px-4 py-2 text-sm font-medium transition-colors',
-                    form.travelDistances.includes(t.miles) ? 'border-primary bg-primary/5 text-primary' : 'border-border hover:border-primary/50',
-                  ].join(' ')}>{t.label}</button>
+                <button key={t.key} type="button" onClick={() => toggleTravel(t.miles)} className={chipClass(form.travelDistances.includes(t.miles))}>
+                  {t.label}
+                </button>
               ))}
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            <input type="checkbox" id="relocatable" checked={form.relocatable}
+          <label className="inline-flex items-center gap-2.5 rounded-full border border-border bg-card px-3 py-2 cursor-pointer hover:bg-muted transition-colors">
+            <input
+              type="checkbox"
+              checked={form.relocatable}
               onChange={e => setForm(f => ({ ...f, relocatable: e.target.checked }))}
-              className="h-4 w-4 accent-primary" />
-            <label htmlFor="relocatable" className="text-sm font-medium">Open to relocation</label>
-          </div>
+              className="h-4 w-4 accent-[var(--forest)]"
+            />
+            <span className="inline-flex items-center gap-1.5 text-[13px] font-medium">
+              <Plane className="h-3.5 w-3.5 text-muted-foreground" />
+              Open to relocation
+            </span>
+          </label>
         </div>
-      </section>
-
-      <hr className="border-border" />
+      </div>
 
       {/* Location */}
-      <section>
-        <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-4">Location</h2>
-        <div className="space-y-3">
-          <input type="text" value={form.address1} onChange={e => setForm(f => ({ ...f, address1: e.target.value }))}
-            className="w-full rounded-lg border border-border px-4 py-3 text-sm focus:border-primary focus:outline-none" placeholder="Street address" />
+      <div className="rounded-[18px] border border-border bg-card p-5">
+        <h2 className="text-[15px] font-semibold mb-4 flex items-center gap-2">
+          <MapPin className="h-4 w-4 text-muted-foreground" />
+          Location
+        </h2>
+        <div className="space-y-3.5">
+          <div>
+            <label className={labelClass}>Street address</label>
+            <input type="text" value={form.address1} onChange={e => setForm(f => ({ ...f, address1: e.target.value }))} className={inputClass} placeholder="123 Main St" />
+          </div>
           <div className="grid grid-cols-2 gap-3">
-            <input type="text" value={form.city} onChange={e => setForm(f => ({ ...f, city: e.target.value }))}
-              className="w-full rounded-lg border border-border px-4 py-3 text-sm focus:border-primary focus:outline-none" placeholder="City" />
-            <input type="text" value={form.state} onChange={e => setForm(f => ({ ...f, state: e.target.value }))}
-              className="w-full rounded-lg border border-border px-4 py-3 text-sm focus:border-primary focus:outline-none" placeholder="State" />
+            <div>
+              <label className={labelClass}>City</label>
+              <input type="text" value={form.city} onChange={e => setForm(f => ({ ...f, city: e.target.value }))} className={inputClass} />
+            </div>
+            <div>
+              <label className={labelClass}>State</label>
+              <input type="text" value={form.state} onChange={e => setForm(f => ({ ...f, state: e.target.value }))} className={inputClass} />
+            </div>
           </div>
         </div>
-      </section>
+      </div>
 
-      <div className="flex items-center gap-3 pb-8">
-        <button
-          type="button"
-          onClick={handleSave}
-          disabled={isPending || !form.name.trim()}
-          className="px-6 py-2.5 rounded-md bg-primary text-primary-foreground text-sm font-medium disabled:opacity-50 whitespace-nowrap"
-        >
-          {isPending ? 'Saving…' : 'Save Changes'}
-        </button>
-        {saved && <p className="text-sm text-green-600">Saved!</p>}
+      {/* Save bar */}
+      <div className="rounded-[18px] border border-border bg-card p-4 flex items-center justify-between gap-3">
+        <div className="text-[13px] text-muted-foreground">
+          Changes are saved to your caregiver profile.
+        </div>
+        <div className="flex items-center gap-3">
+          {saved && (
+            <span className="inline-flex items-center gap-1.5 text-[13px] text-[var(--forest-deep)]">
+              <Check className="h-4 w-4" />
+              Saved
+            </span>
+          )}
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={isPending || !form.name.trim()}
+            className="inline-flex h-10 items-center gap-1.5 rounded-full bg-primary px-5 text-[13.5px] font-medium text-primary-foreground hover:bg-[var(--forest-deep)] hover:shadow-[0_8px_18px_-6px_rgba(15,77,52,0.4)] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-none whitespace-nowrap"
+          >
+            <Save className="h-4 w-4" />
+            {isPending ? 'Saving…' : 'Save changes'}
+          </button>
+        </div>
       </div>
     </div>
   )
