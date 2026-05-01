@@ -123,25 +123,22 @@ export function CaregiverCard({
 
             {/* Match reason */}
             {caregiver.matchReason && (
-              <div className="mt-3 flex items-start gap-1.5 rounded-[10px] bg-[var(--forest-soft)]/50 px-3 py-2 text-[12.5px] text-[var(--forest-deep)]">
-                <span className="shrink-0">✓</span>
-                <span>{caregiver.matchReason}</span>
+              <div className="mt-3">
+                <span className="inline-flex items-start gap-1.5 rounded-full bg-[var(--forest-soft)]/70 px-2.5 py-1 text-[12.5px] text-[var(--forest-deep)]">
+                  <span className="shrink-0">✓</span>
+                  <span>{caregiver.matchReason}</span>
+                </span>
               </div>
             )}
 
             {/* Details */}
             <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[12.5px] text-muted-foreground">
-              {caregiver.distanceMiles != null ? (
+              {caregiver.distanceMiles != null && (
                 <span className="inline-flex items-center gap-1">
                   <MapPin className="h-3 w-3 shrink-0" />
-                  {caregiver.distanceMiles < 1 ? '<1 mi' : `${Math.round(caregiver.distanceMiles)} mi`} away
+                  {caregiver.distanceMiles < 1 ? '<1 mi' : `${Math.round(caregiver.distanceMiles)} mi`}
                 </span>
-              ) : caregiver.city && caregiver.state ? (
-                <span className="inline-flex items-center gap-1">
-                  <MapPin className="h-3 w-3 shrink-0" />
-                  {caregiver.city}, {caregiver.state}
-                </span>
-              ) : null}
+              )}
               {caregiver.experience && (
                 <span className="inline-flex items-center gap-1">
                   <Clock className="h-3 w-3 shrink-0" />
