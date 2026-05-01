@@ -10,7 +10,7 @@ import {
   GENDER_PREFERENCES, LANGUAGES, BUDGET_TYPES,
   INFECTION_CONTROL_ITEMS, SAFETY_MEASURE_ITEMS, CLIENT_STATUS_GROUPS,
 } from '@/lib/constants'
-import { MapPin } from 'lucide-react'
+import { MapPin, Heart, Users, CalendarDays, ClipboardList, Settings2, BookOpen, Sparkles, DollarSign } from 'lucide-react'
 import { LoadingQuotes } from '@/components/loading-quotes'
 import { StateSelect } from '@/components/state-select'
 import { DatePicker } from '@/components/date-picker'
@@ -80,17 +80,19 @@ const EMPTY: RequestForm = {
   carePlan: EMPTY_CARE_PLAN,
 }
 
-const STEP_TITLES = [
-  'What type of care is needed?',
-  'Who needs care?',
-  'Where will care take place?',
-  'Schedule',
-  'Care Details',
-  'Preferences',
-  'Care Plan',
-  'Review & generate',
-  'Your Top Matches',
-]
+const STEP_META = [
+  { icon: Heart,         short: 'Care type',     title: 'What type of care is needed?',         sub: 'Select all that apply — you can choose more than one.' },
+  { icon: Users,         short: 'Recipient',     title: 'Who are we finding care for?',          sub: 'Select the person receiving care, or add someone new.' },
+  { icon: MapPin,        short: 'Location',      title: 'Where will care take place?',           sub: 'This is the address where the caregiver will work.' },
+  { icon: CalendarDays,  short: 'Schedule',      title: 'When and how often is care needed?',    sub: 'Set the frequency, days, shift times, and start date.' },
+  { icon: ClipboardList, short: 'Care details',  title: 'Any special care requirements?',        sub: 'Supplies, safety measures, and health status of the recipient.' },
+  { icon: Settings2,     short: 'Preferences',   title: 'Caregiver preferences & budget',        sub: 'Gender, transportation, languages, and your pay range.' },
+  { icon: BookOpen,      short: 'Care plan',     title: 'Build the care plan',                   sub: 'Optional shift-by-shift instructions the caregiver will see.' },
+  { icon: Sparkles,      short: 'Review',        title: 'Review & finalize your listing',        sub: 'Generate a polished description, then submit for matching.' },
+] as const
+
+const inputCls = 'w-full rounded-[10px] border border-border bg-card h-11 px-3.5 text-[14px] focus:border-[var(--forest)] focus:outline-none focus:ring-2 focus:ring-[var(--forest-soft)] transition-shadow'
+const labelCls = 'block text-[13px] font-medium text-foreground/80 mb-1.5'
 
 interface Props {
   initialRecipients: RecipientOption[]
@@ -360,53 +362,79 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgRates
   const isFinalStep = step === 9
 
   return (
-    <div className="px-6 md:px-8 py-10 md:py-12 max-w-3xl mx-auto">
+    <div className="px-6 md:px-8 py-10 md:py-14 max-w-2xl mx-auto">
+      {/* Breadcrumb */}
       {!isFinalStep && (
-        <button
-          type="button"
-          onClick={() => router.back()}
-          className="group/back inline-flex items-center gap-1.5 text-[14px] text-foreground/70 transition-colors hover:text-foreground mb-8"
-        >
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" className="transition-transform group-hover/back:-translate-x-0.5">
-            <path d="M10 3L5 8l5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-          Back
-        </button>
+        <div className="flex items-center gap-1.5 text-[13px] text-muted-foreground mb-10">
+          <Link href="/client/dashboard/requests" className="hover:text-foreground transition-colors">
+            Care requests
+          </Link>
+          <span>/</span>
+          <span className="text-foreground font-medium">New request</span>
+        </div>
       )}
 
-      {/* Progress — friendly */}
+      {/* Step dot indicator */}
       {!isFinalStep && (
         <div className="mb-10">
-          <div className="flex items-center justify-between mb-2.5">
-            <div className="text-[13px] font-medium text-muted-foreground">
-              Step <span className="text-foreground tabular-nums">{step}</span> of <span className="tabular-nums">8</span>
-            </div>
-            <div className="text-[13px] text-muted-foreground">
-              {Math.round((step / 8) * 100)}% complete
-            </div>
+          <div className="flex items-center">
+            {Array.from({ length: 8 }, (_, i) => {
+              const n = i + 1
+              const done = n < step
+              const current = n === step
+              return (
+                <Fragment key={n}>
+                  <button
+                    type="button"
+                    onClick={() => { if (done) setStep(n) }}
+                    title={STEP_META[i].short}
+                    className={[
+                      'relative flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-bold transition-all duration-200',
+                      done
+                        ? 'bg-primary text-primary-foreground shadow-[0_2px_6px_-2px_rgba(15,77,52,0.5)] hover:bg-[var(--forest-deep)] cursor-pointer'
+                        : current
+                        ? 'bg-primary text-primary-foreground ring-[3px] ring-primary/25 shadow-[0_2px_6px_-2px_rgba(15,77,52,0.4)]'
+                        : 'bg-muted text-muted-foreground/60 cursor-default',
+                    ].join(' ')}
+                  >
+                    {done ? (
+                      <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+                        <path d="M1 4L3.5 6.5L9 1" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    ) : n}
+                  </button>
+                  {n < 8 && (
+                    <div className={['flex-1 h-[2px] rounded-full mx-1 transition-all duration-500', n < step ? 'bg-primary' : 'bg-border'].join(' ')} />
+                  )}
+                </Fragment>
+              )
+            })}
           </div>
-          <div className="h-2 bg-muted rounded-full overflow-hidden">
-            <div
-              className="h-full bg-primary rounded-full transition-[width] duration-500 ease-out"
-              style={{ width: `${(step / 8) * 100}%` }}
-            />
+          <div className="mt-3 flex items-center gap-1.5">
+            <span className="text-[12px] text-muted-foreground tabular-nums">Step {step} of 8</span>
+            <span className="text-[12px] text-muted-foreground">·</span>
+            <span className="text-[12px] font-semibold text-foreground">{STEP_META[step - 1].short}</span>
           </div>
         </div>
       )}
 
-      <div className="mb-10">
-        <h1 className="text-[28px] sm:text-[36px] md:text-[42px] font-semibold tracking-[-0.025em] leading-[1.1]">
-          {STEP_TITLES[step - 1]}
-        </h1>
-        {step === 1 && <p className="mt-2 text-[14.5px] text-muted-foreground">Select all that apply. You can choose multiple types.</p>}
-        {step === 2 && <p className="mt-2 text-[14.5px] text-muted-foreground">Pick the person you&apos;re finding care for, or add someone new.</p>}
-        {step === 3 && <p className="mt-2 text-[14.5px] text-muted-foreground">Where will the caregiver be working?</p>}
-        {step === 4 && <p className="mt-2 text-[14.5px] text-muted-foreground">When and how often is care needed?</p>}
-        {step === 5 && <p className="mt-2 text-[14.5px] text-muted-foreground">Tell us about supplies, safety, and infection control.</p>}
-        {step === 6 && <p className="mt-2 text-[14.5px] text-muted-foreground">Caregiver preferences and budget.</p>}
-        {step === 7 && <p className="mt-2 text-[14.5px] text-muted-foreground">Optional notes the caregiver should see before each shift.</p>}
-        {step === 8 && <p className="mt-2 text-[14.5px] text-muted-foreground">Final review before we generate your matches.</p>}
-      </div>
+      {/* Step header */}
+      {!isFinalStep && (() => {
+        const StepIcon = STEP_META[step - 1].icon
+        return (
+          <div className="mb-10">
+            <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--forest-soft)]">
+              <StepIcon className="h-5 w-5 text-[var(--forest-deep)]" />
+            </div>
+            <h1 className="text-[28px] sm:text-[36px] font-semibold tracking-[-0.025em] leading-[1.1]">
+              {STEP_META[step - 1].title}
+            </h1>
+            <p className="mt-2.5 text-[15px] text-muted-foreground leading-relaxed">
+              {STEP_META[step - 1].sub}
+            </p>
+          </div>
+        )
+      })()}
 
       {/* Step 1 — Care Type (multi-select) */}
       {step === 1 && (
@@ -510,26 +538,26 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgRates
             </label>
           )}
           <div>
-            <label className="block text-sm font-medium mb-1">Address Line 1 *</label>
+            <label className={labelCls}>Address Line 1 *</label>
             <input type="text" value={form.address.address1}
               onChange={(e) => setForm((f) => ({ ...f, address: { ...f.address, address1: e.target.value } }))}
-              className="w-full rounded-lg border border-border px-4 py-3 text-sm focus:border-primary focus:outline-none" />
+              className={inputCls} />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Address Line 2</label>
+            <label className={labelCls}>Address Line 2</label>
             <input type="text" value={form.address.address2}
               onChange={(e) => setForm((f) => ({ ...f, address: { ...f.address, address2: e.target.value } }))}
-              className="w-full rounded-lg border border-border px-4 py-3 text-sm focus:border-primary focus:outline-none" />
+              className={inputCls} />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium mb-1">City *</label>
+              <label className={labelCls}>City *</label>
               <input type="text" value={form.address.city}
                 onChange={(e) => setForm((f) => ({ ...f, address: { ...f.address, city: e.target.value } }))}
-                className="w-full rounded-lg border border-border px-4 py-3 text-sm focus:border-primary focus:outline-none" />
+                className={inputCls} />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">State *</label>
+              <label className={labelCls}>State *</label>
               <StateSelect
                 value={form.address.state}
                 onChange={(val) => setForm((f) => ({ ...f, address: { ...f.address, state: val } }))}
@@ -537,9 +565,9 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgRates
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Country</label>
+            <label className={labelCls}>Country</label>
             <input type="text" value="United States" disabled
-              className="w-full rounded-lg border border-border px-4 py-3 text-sm bg-muted" />
+              className="w-full rounded-[10px] border border-border bg-muted h-11 px-3.5 text-[14px] opacity-60" />
           </div>
         </div>
       )}
@@ -548,7 +576,7 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgRates
       {step === 4 && (
         <div className="space-y-8">
           <div>
-            <label className="block text-sm font-medium mb-3">Frequency *</label>
+            <label className={labelCls}>Frequency *</label>
             <div className="grid grid-cols-3 gap-2">
               {CARE_FREQUENCIES.map((f) => (
                 <button key={f.key} type="button"
@@ -623,7 +651,7 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgRates
           {/* Time increment selector */}
           {form.frequency && form.frequency !== 'as-needed' && (
             <div>
-              <label className="block text-sm font-medium mb-2">Time increment</label>
+              <label className={labelCls}>Time increment</label>
               <div className="flex gap-2">
                 {([15, 30, 60] as const).map(inc => (
                   <button
@@ -645,7 +673,7 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgRates
           {/* Shift time — all frequencies except as-needed */}
           {form.frequency && form.frequency !== 'as-needed' && (
             <div>
-              <label className="block text-sm font-medium mb-3">Shift Time *</label>
+              <label className={labelCls}>Shift Time *</label>
               {(form.frequency === 'weekly' || form.frequency === 'bi-weekly') && form.schedule.length > 0 && (
                 <label className="flex items-center gap-2 text-sm mb-4 cursor-pointer">
                   <input
@@ -745,7 +773,7 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgRates
             </div>
           )}
           <div>
-            <label className="block text-sm font-medium mb-1">Start Date *</label>
+            <label className={labelCls}>Start Date *</label>
             <DatePicker
               value={form.startDate}
               onChange={(val) => setForm((f) => ({ ...f, startDate: val }))}
@@ -755,7 +783,7 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgRates
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">
+            <label className={labelCls}>
               End date <span className="font-normal text-muted-foreground">(optional)</span>
             </label>
             <DatePicker
@@ -774,26 +802,26 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgRates
         <div className="space-y-8">
           {/* Supplies needed */}
           <div>
-            <label className="block text-sm font-medium mb-2">Supplies needed (optional)</label>
+            <label className={labelCls}>Supplies needed <span className="font-normal text-muted-foreground">(optional)</span></label>
             <textarea
               value={form.suppliesNeeded}
               onChange={e => setForm(f => ({ ...f, suppliesNeeded: e.target.value }))}
               rows={3}
-              className="w-full rounded-lg border border-border px-4 py-3 text-sm focus:border-primary focus:outline-none resize-none"
+              className="w-full rounded-[10px] border border-border bg-card px-3.5 py-3 text-[14px] focus:border-[var(--forest)] focus:outline-none focus:ring-2 focus:ring-[var(--forest-soft)] transition-shadow resize-none"
               placeholder="e.g. Gloves, masks, gown, hand sanitizer"
             />
           </div>
 
           {/* Infection control */}
           <div>
-            <label className="block text-sm font-medium mb-3">Infection control precautions</label>
-            <div className="flex gap-3 mb-3">
+            <label className={labelCls}>Infection control precautions</label>
+            <div className="inline-flex rounded-full border border-border bg-muted/40 p-0.5 gap-0.5 mb-3">
               {['Yes', 'No'].map(opt => (
                 <button key={opt} type="button"
                   onClick={() => setForm(f => ({ ...f, infectionControlEnabled: opt === 'Yes' }))}
-                  className={['rounded-xl border-2 px-5 py-2 text-sm font-medium transition-colors',
+                  className={['h-8 rounded-full px-5 text-[12.5px] font-medium transition-all',
                     (opt === 'Yes' ? form.infectionControlEnabled : !form.infectionControlEnabled)
-                      ? 'border-primary bg-primary/5 text-primary' : 'border-border hover:border-primary/50',
+                      ? 'bg-primary text-primary-foreground shadow-sm' : 'text-foreground/70 hover:text-foreground',
                   ].join(' ')}>
                   {opt}
                 </button>
@@ -822,14 +850,14 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgRates
 
           {/* Safety measures */}
           <div>
-            <label className="block text-sm font-medium mb-3">Safety measures</label>
-            <div className="flex gap-3 mb-3">
+            <label className={labelCls}>Safety measures</label>
+            <div className="inline-flex rounded-full border border-border bg-muted/40 p-0.5 gap-0.5 mb-3">
               {['Yes', 'No'].map(opt => (
                 <button key={opt} type="button"
                   onClick={() => setForm(f => ({ ...f, safetyMeasuresEnabled: opt === 'Yes' }))}
-                  className={['rounded-xl border-2 px-5 py-2 text-sm font-medium transition-colors',
+                  className={['h-8 rounded-full px-5 text-[12.5px] font-medium transition-all',
                     (opt === 'Yes' ? form.safetyMeasuresEnabled : !form.safetyMeasuresEnabled)
-                      ? 'border-primary bg-primary/5 text-primary' : 'border-border hover:border-primary/50',
+                      ? 'bg-primary text-primary-foreground shadow-sm' : 'text-foreground/70 hover:text-foreground',
                   ].join(' ')}>
                   {opt}
                 </button>
@@ -858,7 +886,7 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgRates
 
           {/* Recipient status */}
           <div>
-            <label className="block text-sm font-medium mb-4">Recipient status (optional)</label>
+            <label className={labelCls}>Recipient status <span className="font-normal text-muted-foreground">(optional)</span></label>
             <div className="space-y-6">
               {CLIENT_STATUS_GROUPS.map(group => (
                 <div key={group.label}>
@@ -883,7 +911,7 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgRates
                             <input type="text"
                               value={typeof form.careRequestClientStatus.amputeeDetails === 'string' ? form.careRequestClientStatus.amputeeDetails : ''}
                               onChange={e => setForm(f => ({ ...f, careRequestClientStatus: { ...f.careRequestClientStatus, amputeeDetails: e.target.value } }))}
-                              className="rounded-lg border border-border px-3 py-2 text-xs focus:border-primary focus:outline-none"
+                              className="w-full rounded-[10px] border border-border bg-card h-9 px-3 text-[13px] focus:border-[var(--forest)] focus:outline-none focus:ring-2 focus:ring-[var(--forest-soft)] transition-shadow"
                               placeholder="e.g. left leg below knee" />
                           )}
                         </div>
@@ -897,7 +925,7 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgRates
                 <input type="text"
                   value={typeof form.careRequestClientStatus.other === 'string' ? form.careRequestClientStatus.other : ''}
                   onChange={e => setForm(f => ({ ...f, careRequestClientStatus: { ...f.careRequestClientStatus, other: e.target.value } }))}
-                  className="w-full rounded-lg border border-border px-4 py-3 text-sm focus:border-primary focus:outline-none"
+                  className={inputCls}
                   placeholder="Specify any other relevant status…" />
               </div>
               <div>
@@ -906,7 +934,7 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgRates
                   type="text"
                   value={typeof form.careRequestClientStatus.diet === 'string' ? form.careRequestClientStatus.diet : ''}
                   onChange={e => setForm(f => ({ ...f, careRequestClientStatus: { ...f.careRequestClientStatus, diet: e.target.value } }))}
-                  className="w-full rounded-lg border border-border px-4 py-3 text-sm focus:border-primary focus:outline-none"
+                  className={inputCls}
                   placeholder="e.g. Diabetic, low sodium, pureed…"
                 />
               </div>
@@ -1047,13 +1075,13 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgRates
                       </div>
                     </div>
                     <div className="max-w-[200px]">
-                      <label className="block text-xs font-medium mb-1">Daily rate</label>
+                      <label className="block text-[13px] font-medium text-foreground/80 mb-1.5">Daily rate</label>
                       <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">$</span>
+                        <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">$</span>
                         <input
                           type="number" min={SMIN} value={form.budgetMin}
                           onChange={e => setForm(f => ({ ...f, budgetMin: e.target.value, budgetMax: e.target.value }))}
-                          className="w-full rounded-lg border border-border pl-7 pr-3 py-2.5 text-sm focus:border-primary focus:outline-none"
+                          className="w-full rounded-[10px] border border-border bg-card h-11 pl-8 pr-3 text-[14px] focus:border-[var(--forest)] focus:outline-none focus:ring-2 focus:ring-[var(--forest-soft)] transition-shadow"
                           placeholder="—"
                         />
                       </div>
@@ -1105,25 +1133,25 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgRates
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-xs font-medium mb-1">Min rate</label>
+                      <label className="block text-[13px] font-medium text-foreground/80 mb-1.5">Min rate</label>
                       <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">$</span>
+                        <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">$</span>
                         <input
                           type="number" min={SMIN} value={form.budgetMin}
                           onChange={e => setForm(f => ({ ...f, budgetMin: e.target.value }))}
-                          className="w-full rounded-lg border border-border pl-7 pr-3 py-2.5 text-sm focus:border-primary focus:outline-none"
+                          className="w-full rounded-[10px] border border-border bg-card h-11 pl-8 pr-3 text-[14px] focus:border-[var(--forest)] focus:outline-none focus:ring-2 focus:ring-[var(--forest-soft)] transition-shadow"
                           placeholder="10"
                         />
                       </div>
                     </div>
                     <div>
-                      <label className="block text-xs font-medium mb-1">Max rate</label>
+                      <label className="block text-[13px] font-medium text-foreground/80 mb-1.5">Max rate</label>
                       <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">$</span>
+                        <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">$</span>
                         <input
                           type="number" min={SMIN} value={form.budgetMax}
                           onChange={e => setForm(f => ({ ...f, budgetMax: e.target.value }))}
-                          className="w-full rounded-lg border border-border pl-7 pr-3 py-2.5 text-sm focus:border-primary focus:outline-none"
+                          className="w-full rounded-[10px] border border-border bg-card h-11 pl-8 pr-3 text-[14px] focus:border-[var(--forest)] focus:outline-none focus:ring-2 focus:ring-[var(--forest-soft)] transition-shadow"
                           placeholder="100+"
                         />
                       </div>
@@ -1148,28 +1176,111 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgRates
       {/* Step 8 — Review & Generate */}
       {step === 8 && (
         <div className="space-y-6">
-          <div className="flex justify-center">
+          {/* Summary card */}
+          <div className="rounded-[16px] border border-border bg-muted/30 p-5">
+            <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground mb-4">Request overview</p>
+            <div className="grid grid-cols-2 gap-x-6 gap-y-4">
+              {form.careTypes.length > 0 && (
+                <div>
+                  <p className="text-[11px] text-muted-foreground mb-1.5">Care type</p>
+                  <div className="flex flex-wrap gap-1">
+                    {form.careTypes.map(ct => (
+                      <span key={ct} className="text-[12px] px-2.5 py-0.5 rounded-full bg-[var(--forest-soft)] text-[var(--forest-deep)] font-medium capitalize">{ct.replace(/-/g, ' ')}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {form.recipientName && (
+                <div>
+                  <p className="text-[11px] text-muted-foreground mb-1.5">Recipient</p>
+                  <p className="text-[14px] font-medium">{form.recipientName}</p>
+                </div>
+              )}
+              {(form.address.city || form.address.state) && (
+                <div>
+                  <p className="text-[11px] text-muted-foreground mb-1.5">Location</p>
+                  <p className="text-[14px] font-medium">{[form.address.city, form.address.state].filter(Boolean).join(', ')}</p>
+                </div>
+              )}
+              {form.frequency && (
+                <div>
+                  <p className="text-[11px] text-muted-foreground mb-1.5">Schedule</p>
+                  <p className="text-[14px] font-medium capitalize">
+                    {form.frequency.replace(/-/g, ' ')}
+                    {form.schedule.length > 0 ? ` · ${form.schedule.length} day${form.schedule.length !== 1 ? 's' : ''}` : ''}
+                  </p>
+                </div>
+              )}
+              {form.budgetMin && (
+                <div>
+                  <p className="text-[11px] text-muted-foreground mb-1.5">Budget</p>
+                  <p className="text-[14px] font-medium">
+                    ${form.budgetMin}
+                    {form.budgetMax && form.budgetMax !== form.budgetMin ? `–$${form.budgetMax}` : ''}
+                    {form.budgetType === 'daily' ? '/day' : '/hr'}
+                  </p>
+                </div>
+              )}
+              {form.genderPref && form.genderPref !== 'no-preference' && (
+                <div>
+                  <p className="text-[11px] text-muted-foreground mb-1.5">Caregiver</p>
+                  <p className="text-[14px] font-medium capitalize">{form.genderPref.replace(/-/g, ' ')}</p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* AI generate */}
+          <div className="rounded-[16px] border border-dashed border-primary/30 bg-[var(--forest-soft)]/50 p-5">
+            <div className="flex items-start gap-3 mb-4">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--forest-soft)]">
+                <Sparkles className="h-4 w-4 text-[var(--forest-deep)]" />
+              </div>
+              <div>
+                <p className="text-[14px] font-semibold">AI-powered description</p>
+                <p className="text-[12.5px] text-muted-foreground mt-0.5">Generate a polished listing based on your care details.</p>
+              </div>
+            </div>
             <button type="button" onClick={handleGenerate} disabled={isGenerating}
-              className="px-6 py-3 rounded-lg bg-primary text-primary-foreground text-sm font-semibold disabled:opacity-40">
-              {isGenerating ? 'Generating…' : generated ? 'Regenerate suggestion' : 'Suggest a description'}
+              className="w-full h-10 rounded-[10px] bg-primary text-primary-foreground text-[13.5px] font-semibold disabled:opacity-40 transition-all hover:bg-[var(--forest-deep)] hover:shadow-[0_6px_16px_-4px_rgba(15,77,52,0.4)] flex items-center justify-center gap-2">
+              {isGenerating ? (
+                <>
+                  <svg className="animate-spin h-3.5 w-3.5" viewBox="0 0 24 24" fill="none">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
+                  Generating…
+                </>
+              ) : generated ? (
+                <>
+                  <Sparkles className="h-3.5 w-3.5" />
+                  Regenerate
+                </>
+              ) : (
+                <>
+                  <Sparkles className="h-3.5 w-3.5" />
+                  Generate description
+                </>
+              )}
             </button>
           </div>
+
           <div>
-            <label className="block text-sm font-medium mb-1">Title</label>
+            <label className={labelCls}>Title *</label>
             <input type="text" value={form.title}
               onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
               maxLength={100}
-              className="w-full rounded-lg border border-border px-4 py-3 text-sm focus:border-primary focus:outline-none"
-              placeholder="Generate or type a title…" />
+              className={inputCls}
+              placeholder="e.g. In-home personal care for elderly parent in Boston" />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Description</label>
+            <label className={labelCls}>Description *</label>
             <textarea value={form.description}
               onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
               maxLength={500} rows={6}
-              className="w-full rounded-lg border border-border px-4 py-3 text-sm resize-none focus:border-primary focus:outline-none"
-              placeholder="Generate or write a description…" />
-            <p className="text-right text-xs text-muted-foreground mt-1">{form.description.length}/500</p>
+              className="w-full rounded-[10px] border border-border bg-card px-3.5 py-3 text-[14px] focus:border-[var(--forest)] focus:outline-none focus:ring-2 focus:ring-[var(--forest-soft)] transition-shadow resize-none"
+              placeholder="Describe what a typical day looks like, any special needs, and what you're looking for in a caregiver…" />
+            <p className="text-right text-[12px] text-muted-foreground mt-1">{form.description.length}/500</p>
           </div>
         </div>
       )}
