@@ -67,7 +67,7 @@ export async function POST(req: NextRequest) {
     for (const shift of jobShifts) {
       subtotalCents += Math.round(calculateShiftHours(shift.startTime, shift.endTime) * rate * 100)
     }
-    const feeCents = Math.round(subtotalCents * 0.01)
+    const feeCents = Math.round(subtotalCents * 0.11)
 
     try {
       const result = await createAndPayInvoice(stripeCustomerId, jobId, subtotalCents, feeCents)
