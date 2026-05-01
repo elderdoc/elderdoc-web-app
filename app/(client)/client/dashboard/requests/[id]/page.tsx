@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Edit3, FileText, Calendar, MapPin, DollarSign, Users, Clock, Heart, Languages, Phone, MessageSquare, Briefcase, AlertCircle, CalendarDays, Tag } from 'lucide-react'
+import { ArrowLeft, Edit3, Heart, Calendar, MapPin, DollarSign, Users, Clock, Languages, Phone, MessageSquare, Briefcase, CalendarDays, Tag, ChevronRight } from 'lucide-react'
 import { requireRole } from '@/domains/auth/session'
 import { db } from '@/services/db'
 import { careRequests, careRecipients, careRequestLocations, jobs, caregiverProfiles, users } from '@/db/schema'
@@ -12,11 +12,11 @@ const CARE_TYPE_LABELS = Object.fromEntries(CARE_TYPES.map((c) => [c.key, c.labe
 const LANGUAGE_LABELS = Object.fromEntries(LANGUAGES.map((l) => [l.key, l.label]))
 
 const STATUS_META: Record<string, { label: string; bg: string; text: string; dot: string }> = {
-  draft:     { label: 'Draft',     bg: 'bg-muted',                  text: 'text-muted-foreground', dot: 'bg-muted-foreground' },
-  active:    { label: 'Open',      bg: 'bg-blue-50',                text: 'text-blue-700',         dot: 'bg-blue-500' },
-  matched:   { label: 'Matched',   bg: 'bg-[var(--forest-soft)]',   text: 'text-[var(--forest-deep)]', dot: 'bg-[var(--forest)]' },
-  filled:    { label: 'Filled',    bg: 'bg-amber-50',               text: 'text-amber-700',        dot: 'bg-amber-500' },
-  cancelled: { label: 'Cancelled', bg: 'bg-rose-50',                text: 'text-rose-700',         dot: 'bg-rose-500' },
+  draft:     { label: 'Draft',     bg: 'bg-muted',                text: 'text-muted-foreground',     dot: 'bg-muted-foreground/60' },
+  active:    { label: 'Open',      bg: 'bg-blue-50',              text: 'text-blue-700',              dot: 'bg-blue-500' },
+  matched:   { label: 'Matched',   bg: 'bg-[var(--forest-soft)]', text: 'text-[var(--forest-deep)]', dot: 'bg-[var(--forest)]' },
+  filled:    { label: 'Filled',    bg: 'bg-amber-50',             text: 'text-amber-700',             dot: 'bg-amber-500' },
+  cancelled: { label: 'Cancelled', bg: 'bg-rose-50',              text: 'text-rose-700',              dot: 'bg-rose-500' },
 }
 
 const FREQ_LABELS: Record<string, string> = {
@@ -35,16 +35,12 @@ interface PageProps {
   params: Promise<{ id: string }>
 }
 
-function InfoRow({ icon: Icon, label, value }: { icon: any; label: string; value: React.ReactNode }) {
+function Stat({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
-    <div className="flex items-center gap-3 py-3 border-b border-border/60 last:border-b-0">
-      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-muted text-foreground/70">
-        <Icon className="h-4 w-4" />
-      </div>
-      <div className="min-w-0 flex-1">
-        <div className="text-[12px] text-muted-foreground">{label}</div>
-        <div className="text-[14px] text-foreground font-medium">{value}</div>
-      </div>
+    <div className="flex flex-col gap-0.5">
+      <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">{label}</span>
+      <span className="text-[18px] font-semibold tracking-tight text-foreground">{value}</span>
+      {sub && <span className="text-[12px] text-muted-foreground">{sub}</span>}
     </div>
   )
 }
@@ -82,11 +78,7 @@ export default async function CareRequestDetailPage({ params }: PageProps) {
       .where(and(eq(careRequests.id, id), eq(careRequests.clientId, clientId)))
       .limit(1),
     db
-      .select({
-        city:     careRequestLocations.city,
-        state:    careRequestLocations.state,
-        address1: careRequestLocations.address1,
-      })
+      .select({ city: careRequestLocations.city, state: careRequestLocations.state, address1: careRequestLocations.address1 })
       .from(careRequestLocations)
       .where(eq(careRequestLocations.requestId, id))
       .limit(1),
@@ -123,11 +115,11 @@ export default async function CareRequestDetailPage({ params }: PageProps) {
       ? `$${Number(req.budgetMin).toFixed(0)}–$${Number(req.budgetMax).toFixed(0)}${BUDGET_SUFFIX[req.budgetType ?? ''] ?? ''}`
       : `$${Number(req.budgetMin).toFixed(0)}${BUDGET_SUFFIX[req.budgetType ?? ''] ?? ''}`
     : null
-  const location = [loc?.address1, loc?.city, loc?.state].filter(Boolean).join(', ')
+  const location = [loc?.city, loc?.state].filter(Boolean).join(', ')
   const caregiverInitials = (job?.caregiverName ?? '?').split(' ').filter(Boolean).map(s => s[0]).slice(0, 2).join('').toUpperCase()
 
   return (
-    <div className="relative px-6 lg:px-10 py-8 lg:py-10 max-w-[1100px] mx-auto">
+    <div className="relative px-6 lg:px-10 py-8 lg:py-10 max-w-[900px] mx-auto">
       {/* Soft glow */}
       <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
         <div className="absolute right-[-15%] top-[-10%] h-[400px] w-[400px] rounded-full bg-[var(--forest-soft)] blur-[100px] opacity-40" />
@@ -141,116 +133,101 @@ export default async function CareRequestDetailPage({ params }: PageProps) {
         Back to Care Requests
       </Link>
 
-      {/* Hero card */}
-      <div className="rounded-[20px] border border-border bg-card overflow-hidden shadow-[0_4px_20px_-8px_rgba(15,20,16,0.08)]">
-        <div className="relative">
-          {/* Banner gradient */}
-          <div className="h-32 bg-gradient-to-br from-[var(--forest-soft)] via-[var(--cream-deep)] to-[var(--forest-soft)]" />
-          <div className="px-6 sm:px-8 pb-6 -mt-12">
-            <div className="flex items-end justify-between gap-4 flex-wrap">
-              <div className="flex items-end gap-4">
-                <div className="flex h-24 w-24 items-center justify-center rounded-2xl bg-primary text-primary-foreground ring-4 ring-card shadow-[0_8px_24px_-8px_rgba(15,77,52,0.4)]">
-                  <FileText className="h-10 w-10" />
-                </div>
-                <div className="pb-1 min-w-0">
-                  <h1 className="text-[28px] sm:text-[32px] font-semibold tracking-[-0.02em] leading-tight">
-                    {req.title ?? careTypeLabel}
-                  </h1>
-                  <div className="mt-1.5 flex items-center gap-2 flex-wrap">
-                    <span className={`inline-flex items-center gap-1.5 rounded-full ${statusMeta.bg} px-2.5 py-1 text-[12px] font-medium ${statusMeta.text}`}>
-                      <span className={`h-1.5 w-1.5 rounded-full ${statusMeta.dot}`} />
-                      {statusMeta.label}
-                    </span>
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-1 text-[12px] text-foreground/70">
-                      <Tag className="h-3 w-3" />
-                      {careTypeLabel}
-                    </span>
-                    <span className="text-[12px] text-muted-foreground">
-                      Posted {formatDistanceToNow(req.createdAt, { addSuffix: true })}
-                    </span>
-                  </div>
-                </div>
-              </div>
-              <div className="flex gap-2 pb-1">
-                {status !== 'filled' && status !== 'cancelled' && (
-                  <Link
-                    href={`/client/dashboard/requests/${id}/edit`}
-                    className="inline-flex h-10 items-center gap-1.5 rounded-full border border-border bg-card px-4 text-[13.5px] font-medium hover:border-foreground/30 hover:bg-muted transition-all"
-                  >
-                    <Edit3 className="h-3.5 w-3.5" />
-                    Edit
-                  </Link>
-                )}
-                {req.recipientId && (
-                  <Link
-                    href={`/client/dashboard/recipients/${req.recipientId}`}
-                    className="inline-flex h-10 items-center gap-1.5 rounded-full bg-primary px-5 text-[13.5px] font-medium text-primary-foreground hover:bg-[var(--forest-deep)] hover:shadow-[0_8px_18px_-6px_rgba(15,77,52,0.4)] transition-all"
-                  >
-                    <Heart className="h-3.5 w-3.5" />
-                    View recipient
-                  </Link>
-                )}
-              </div>
-            </div>
-            {req.recipientName && (
-              <p className="mt-3 text-[14px] text-foreground/70">
-                For <span className="font-medium text-foreground">{req.recipientName}</span>
-                {req.recipientRel ? <span className="text-muted-foreground capitalize"> · {req.recipientRel.replace(/-/g, ' ')}</span> : null}
-              </p>
+      {/* Request header card */}
+      <div className="rounded-[20px] border border-border bg-card p-6 sm:p-8 shadow-[0_4px_20px_-8px_rgba(15,20,16,0.08)]">
+        {/* Top row: status + actions */}
+        <div className="flex items-center justify-between gap-3 mb-4">
+          <span className={`inline-flex items-center gap-1.5 rounded-full ${statusMeta.bg} px-3 py-1 text-[12.5px] font-semibold ${statusMeta.text}`}>
+            <span className={`h-1.5 w-1.5 rounded-full ${statusMeta.dot}`} />
+            {statusMeta.label}
+          </span>
+          <div className="flex gap-2">
+            {status !== 'filled' && status !== 'cancelled' && (
+              <Link
+                href={`/client/dashboard/requests/${id}/edit`}
+                className="inline-flex h-9 items-center gap-1.5 rounded-full border border-border bg-card px-4 text-[13px] font-medium hover:border-foreground/30 hover:bg-muted transition-all"
+              >
+                <Edit3 className="h-3.5 w-3.5" />
+                Edit
+              </Link>
+            )}
+            {req.recipientId && (
+              <Link
+                href={`/client/dashboard/recipients/${req.recipientId}`}
+                className="inline-flex h-9 items-center gap-1.5 rounded-full bg-primary px-4 text-[13px] font-medium text-primary-foreground hover:bg-[var(--forest-deep)] hover:shadow-[0_8px_18px_-6px_rgba(15,77,52,0.4)] transition-all"
+              >
+                <Heart className="h-3.5 w-3.5" />
+                View recipient
+              </Link>
             )}
           </div>
+        </div>
+
+        {/* Title */}
+        <h1 className="text-[28px] sm:text-[34px] font-semibold tracking-[-0.02em] leading-tight">
+          {req.title ?? careTypeLabel}
+        </h1>
+
+        {/* Metadata row */}
+        <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-[13px] text-muted-foreground">
+          <span className="inline-flex items-center gap-1.5">
+            <Tag className="h-3.5 w-3.5" />
+            {careTypeLabel}
+          </span>
+          {req.recipientName && (
+            <span className="inline-flex items-center gap-1.5">
+              <Heart className="h-3.5 w-3.5" />
+              For <span className="text-foreground font-medium ml-1">{req.recipientName}</span>
+              {req.recipientRel && <span className="capitalize"> · {req.recipientRel.replace(/-/g, ' ')}</span>}
+            </span>
+          )}
+          <span>Posted {formatDistanceToNow(req.createdAt, { addSuffix: true })}</span>
+        </div>
+
+        {/* Key stats strip */}
+        <div className="mt-6 pt-5 border-t border-border/60 grid grid-cols-2 sm:grid-cols-4 gap-5">
+          {budget && <Stat label="Budget" value={budget} />}
+          {req.frequency && <Stat label="Frequency" value={FREQ_LABELS[req.frequency] ?? req.frequency} />}
+          {req.startDate && <Stat label="Start date" value={req.startDate} />}
+          {location && <Stat label="Location" value={location} />}
         </div>
       </div>
 
       {/* Hired caregiver */}
       {job && (
-        <div className="mt-5 rounded-[18px] border border-[var(--forest)]/30 bg-[var(--forest-soft)]/40 p-5">
+        <div className="mt-4 rounded-[18px] border border-[var(--forest)]/25 bg-[var(--forest-soft)]/30 p-5">
           <div className="flex items-center gap-2 mb-3">
-            <span className="inline-flex items-center justify-center h-7 w-7 rounded-full bg-primary text-primary-foreground">
-              <Briefcase className="h-3.5 w-3.5" />
+            <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-primary text-primary-foreground">
+              <Briefcase className="h-3 w-3" />
             </span>
-            <h2 className="text-[14px] font-semibold text-[var(--forest-deep)]">Hired caregiver</h2>
+            <h2 className="text-[13.5px] font-semibold text-[var(--forest-deep)]">Hired caregiver</h2>
             <span className="ml-auto text-[12px] text-muted-foreground">
               Hired {formatDistanceToNow(job.hiredAt, { addSuffix: true })} · <span className="capitalize">{job.jobStatus}</span>
             </span>
           </div>
-          <div className="flex items-center gap-4 flex-wrap">
+          <div className="flex items-center gap-3 flex-wrap">
             {job.caregiverImage ? (
-              <img src={job.caregiverImage} alt={job.caregiverName ?? ''} className="h-14 w-14 rounded-full object-cover ring-2 ring-card shadow-sm" />
+              <img src={job.caregiverImage} alt={job.caregiverName ?? ''} className="h-12 w-12 rounded-full object-cover ring-2 ring-card" />
             ) : (
-              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary text-[14px] font-semibold text-primary-foreground ring-2 ring-card">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-[13px] font-semibold text-primary-foreground ring-2 ring-card">
                 {caregiverInitials}
               </div>
             )}
             <div className="flex-1 min-w-0">
-              <p className="text-[15px] font-semibold">{job.caregiverName}</p>
-              {job.headline && <p className="text-[13px] text-muted-foreground line-clamp-1">{job.headline}</p>}
-              <div className="mt-1 flex flex-wrap gap-x-4 gap-y-0.5 text-[12.5px] text-muted-foreground">
-                {(job.hourlyMin || job.hourlyMax) && (
-                  <span className="inline-flex items-center gap-1">
-                    <DollarSign className="h-3 w-3" />
-                    ${job.hourlyMin ?? '?'}–${job.hourlyMax ?? '?'}/hr
-                  </span>
-                )}
+              <p className="text-[14.5px] font-semibold">{job.caregiverName}</p>
+              {job.headline && <p className="text-[12.5px] text-muted-foreground">{job.headline}</p>}
+              <div className="mt-0.5 flex flex-wrap gap-x-3 text-[12px] text-muted-foreground">
+                {(job.hourlyMin || job.hourlyMax) && <span>${job.hourlyMin ?? '?'}–${job.hourlyMax ?? '?'}/hr</span>}
                 {job.caregiverPhone && (
-                  <span className="inline-flex items-center gap-1">
-                    <Phone className="h-3 w-3" />
-                    {job.caregiverPhone}
-                  </span>
+                  <span className="inline-flex items-center gap-1"><Phone className="h-3 w-3" />{job.caregiverPhone}</span>
                 )}
               </div>
             </div>
             <div className="flex gap-2 shrink-0">
-              <Link
-                href={`/client/dashboard/find-caregivers/${job.profileId}`}
-                className="inline-flex h-9 items-center gap-1.5 rounded-full border border-border bg-card px-4 text-[13px] font-medium hover:border-foreground/30 hover:bg-muted transition-all"
-              >
+              <Link href={`/client/dashboard/find-caregivers/${job.profileId}`} className="inline-flex h-8 items-center rounded-full border border-border bg-card px-3 text-[12.5px] font-medium hover:bg-muted transition-all">
                 View profile
               </Link>
-              <Link
-                href={`/client/dashboard/messages/${job.jobId}`}
-                className="inline-flex h-9 items-center gap-1.5 rounded-full bg-primary px-4 text-[13px] font-medium text-primary-foreground hover:bg-[var(--forest-deep)] transition-all"
-              >
+              <Link href={`/client/dashboard/messages/${job.jobId}`} className="inline-flex h-8 items-center gap-1 rounded-full bg-primary px-3 text-[12.5px] font-medium text-primary-foreground hover:bg-[var(--forest-deep)] transition-all">
                 <MessageSquare className="h-3.5 w-3.5" />
                 Message
               </Link>
@@ -261,130 +238,125 @@ export default async function CareRequestDetailPage({ params }: PageProps) {
 
       {/* Description */}
       {req.description && (
-        <div className="mt-5 rounded-[18px] border border-border bg-card p-5">
-          <h2 className="text-[15px] font-semibold mb-2.5">About this request</h2>
-          <p className="text-[14.5px] leading-[1.6] whitespace-pre-line text-foreground/85">{req.description}</p>
+        <div className="mt-4 rounded-[18px] border border-border bg-card p-5">
+          <h2 className="text-[14px] font-semibold text-muted-foreground uppercase tracking-wide mb-2.5">About this request</h2>
+          <p className="text-[14.5px] leading-[1.65] text-foreground/85">{req.description}</p>
         </div>
       )}
 
-      <div className="mt-5 grid grid-cols-1 lg:grid-cols-3 gap-5">
-        {/* Details */}
-        <div className="rounded-[18px] border border-border bg-card p-5">
-          <h2 className="text-[15px] font-semibold mb-3">Details</h2>
-          <div>
-            <InfoRow icon={Tag} label="Care type" value={careTypeLabel} />
-            {req.frequency && <InfoRow icon={Clock} label="Frequency" value={FREQ_LABELS[req.frequency] ?? req.frequency} />}
-            {budget && <InfoRow icon={DollarSign} label="Budget" value={budget} />}
-            {req.genderPref && (
-              <InfoRow icon={Users} label="Caregiver gender" value={<span className="capitalize">{req.genderPref}</span>} />
-            )}
+      {/* Schedule + preferences */}
+      <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {/* Dates */}
+        {(req.startDate || req.endDate) && (
+          <div className="rounded-[18px] border border-border bg-card p-5">
+            <h2 className="text-[14px] font-semibold text-muted-foreground uppercase tracking-wide mb-3">Dates</h2>
+            <div className="space-y-2.5">
+              {req.startDate && (
+                <div className="flex items-center gap-3">
+                  <Calendar className="h-4 w-4 text-muted-foreground shrink-0" />
+                  <div>
+                    <div className="text-[11px] text-muted-foreground">Start date</div>
+                    <div className="text-[14px] font-medium">{req.startDate}</div>
+                  </div>
+                </div>
+              )}
+              {req.endDate && (
+                <div className="flex items-center gap-3">
+                  <CalendarDays className="h-4 w-4 text-muted-foreground shrink-0" />
+                  <div>
+                    <div className="text-[11px] text-muted-foreground">End date</div>
+                    <div className="text-[14px] font-medium">{req.endDate}</div>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
+        )}
 
-        {/* Schedule dates */}
-        <div className="rounded-[18px] border border-border bg-card p-5">
-          <h2 className="text-[15px] font-semibold mb-3">Schedule</h2>
-          {(req.startDate || req.endDate || (req.schedule && req.schedule.length > 0)) ? (
-            <div>
-              {req.startDate && <InfoRow icon={Calendar} label="Start date" value={req.startDate} />}
-              {req.endDate && <InfoRow icon={CalendarDays} label="End date" value={req.endDate} />}
-              {req.schedule && req.schedule.length > 0 && (
-                <InfoRow
-                  icon={Clock}
-                  label="Shifts"
-                  value={`${req.schedule.length} ${req.schedule.length === 1 ? 'entry' : 'entries'}`}
-                />
+        {/* Preferences */}
+        {(req.genderPref || (req.languagesPreferred?.length ?? 0) > 0 || (req.languagesRequired?.length ?? 0) > 0) && (
+          <div className="rounded-[18px] border border-border bg-card p-5">
+            <h2 className="text-[14px] font-semibold text-muted-foreground uppercase tracking-wide mb-3">Preferences</h2>
+            <div className="space-y-3">
+              {req.genderPref && (
+                <div className="flex items-center gap-3">
+                  <Users className="h-4 w-4 text-muted-foreground shrink-0" />
+                  <div>
+                    <div className="text-[11px] text-muted-foreground">Caregiver gender</div>
+                    <div className="text-[14px] font-medium capitalize">{req.genderPref}</div>
+                  </div>
+                </div>
+              )}
+              {req.languagesRequired && req.languagesRequired.length > 0 && (
+                <div>
+                  <div className="flex items-center gap-1.5 mb-1.5">
+                    <Languages className="h-3.5 w-3.5 text-muted-foreground" />
+                    <span className="text-[11px] text-muted-foreground">Required languages</span>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {req.languagesRequired.map((l: string) => (
+                      <span key={l} className="inline-flex rounded-full bg-[var(--forest-soft)] px-2.5 py-0.5 text-[12px] font-medium text-[var(--forest-deep)]">
+                        {LANGUAGE_LABELS[l] ?? l}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {req.languagesPreferred && req.languagesPreferred.length > 0 && (
+                <div>
+                  <div className="flex items-center gap-1.5 mb-1.5">
+                    <Languages className="h-3.5 w-3.5 text-muted-foreground" />
+                    <span className="text-[11px] text-muted-foreground">Preferred languages</span>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {req.languagesPreferred.map((l: string) => (
+                      <span key={l} className="inline-flex rounded-full bg-muted px-2.5 py-0.5 text-[12px] font-medium text-foreground/80">
+                        {LANGUAGE_LABELS[l] ?? l}
+                      </span>
+                    ))}
+                  </div>
+                </div>
               )}
             </div>
-          ) : (
-            <div className="rounded-lg bg-muted/40 p-6 text-center">
-              <Calendar className="h-5 w-5 mx-auto text-muted-foreground mb-2" />
-              <p className="text-[13px] text-muted-foreground">No schedule yet.</p>
-            </div>
-          )}
-        </div>
-
-        {/* Location */}
-        <div className="rounded-[18px] border border-border bg-card p-5">
-          <h2 className="text-[15px] font-semibold mb-3">Location</h2>
-          {location ? (
-            <div>
-              {loc?.address1 && <InfoRow icon={MapPin} label="Street" value={loc.address1} />}
-              {(loc?.city || loc?.state) && (
-                <InfoRow
-                  icon={MapPin}
-                  label="City, State"
-                  value={[loc.city, loc.state].filter(Boolean).join(', ')}
-                />
-              )}
-            </div>
-          ) : (
-            <div className="rounded-lg bg-muted/40 p-6 text-center">
-              <MapPin className="h-5 w-5 mx-auto text-muted-foreground mb-2" />
-              <p className="text-[13px] text-muted-foreground">No location specified.</p>
-            </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
-      {/* Schedule entries */}
+      {/* Location */}
+      {(loc?.address1 || loc?.city) && (
+        <div className="mt-4 rounded-[18px] border border-border bg-card p-5 flex items-center gap-4">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-muted">
+            <MapPin className="h-4.5 w-4.5 text-foreground/60" />
+          </div>
+          <div>
+            <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide mb-0.5">Location</div>
+            <div className="text-[14.5px] font-medium">
+              {[loc?.address1, loc?.city, loc?.state].filter(Boolean).join(', ')}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Weekly shifts */}
       {req.schedule && req.schedule.length > 0 && (
-        <div className="mt-5 rounded-[18px] border border-border bg-card p-5">
-          <h2 className="text-[15px] font-semibold mb-3 flex items-center gap-2">
+        <div className="mt-4 rounded-[18px] border border-border bg-card p-5">
+          <h2 className="text-[14px] font-semibold text-muted-foreground uppercase tracking-wide mb-3 flex items-center gap-2">
             Weekly shifts
-            <span className="inline-flex items-center justify-center rounded-full bg-muted px-2 py-0.5 text-[11px] tabular-nums text-muted-foreground">
+            <span className="inline-flex items-center justify-center rounded-full bg-muted px-2 py-0.5 text-[11px] tabular-nums text-muted-foreground font-normal">
               {req.schedule.length}
             </span>
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
             {(req.schedule as Array<{ day: string; startTime: string; endTime: string }>).map((entry, i) => (
               <div key={i} className="flex items-center gap-3 rounded-xl bg-muted/40 px-3 py-2.5">
-                <span className="inline-flex h-8 w-12 items-center justify-center rounded-lg bg-[var(--forest-soft)] text-[11px] font-semibold uppercase text-[var(--forest-deep)] tracking-wide">
+                <span className="inline-flex h-8 w-12 items-center justify-center rounded-lg bg-[var(--forest-soft)] text-[11px] font-semibold uppercase text-[var(--forest-deep)] tracking-wide shrink-0">
                   {DAY_LABEL[entry.day.toLowerCase()] ?? entry.day.slice(0, 3)}
                 </span>
-                <span className="text-[14px] font-medium tabular-nums">
+                <span className="text-[13.5px] font-medium tabular-nums">
                   {entry.startTime} – {entry.endTime}
                 </span>
               </div>
             ))}
-          </div>
-        </div>
-      )}
-
-      {/* Languages */}
-      {((req.languagesPreferred && req.languagesPreferred.length > 0) ||
-        (req.languagesRequired && req.languagesRequired.length > 0)) && (
-        <div className="mt-5 rounded-[18px] border border-border bg-card p-5">
-          <h2 className="text-[15px] font-semibold mb-3 flex items-center gap-2">
-            <Languages className="h-4 w-4 text-muted-foreground" />
-            Languages
-          </h2>
-          <div className="space-y-3">
-            {req.languagesRequired && req.languagesRequired.length > 0 && (
-              <div>
-                <p className="text-[12px] font-medium text-muted-foreground uppercase tracking-wide mb-1.5">Required</p>
-                <div className="flex flex-wrap gap-1.5">
-                  {req.languagesRequired.map((l: string) => (
-                    <span key={l} className="inline-flex items-center gap-1 rounded-full bg-[var(--forest-soft)] px-2.5 py-1 text-[12px] font-medium text-[var(--forest-deep)]">
-                      <span className="h-1.5 w-1.5 rounded-full bg-[var(--forest)]" />
-                      {LANGUAGE_LABELS[l] ?? l}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-            {req.languagesPreferred && req.languagesPreferred.length > 0 && (
-              <div>
-                <p className="text-[12px] font-medium text-muted-foreground uppercase tracking-wide mb-1.5">Preferred</p>
-                <div className="flex flex-wrap gap-1.5">
-                  {req.languagesPreferred.map((l: string) => (
-                    <span key={l} className="inline-flex rounded-full bg-muted px-2.5 py-1 text-[12px] font-medium text-foreground/80">
-                      {LANGUAGE_LABELS[l] ?? l}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
         </div>
       )}
