@@ -7,7 +7,7 @@ import { createCareRecipient } from '@/domains/clients/requests'
 import { RELATIONSHIPS, CONDITIONS, MOBILITY_LEVELS, GENDER_OPTIONS, CLIENT_STATUS_GROUPS } from '@/lib/constants'
 import { formatUSPhone } from '@/lib/phone'
 import { StateSelect } from '@/components/state-select'
-import { Users, User, Activity, ClipboardList, FileText } from 'lucide-react'
+import { Users, User, Activity, ClipboardList, FileText, Heart, Brain, Wind, Move, CloudRain, Zap, Eye, Volume2, Plus, AlertTriangle, Sun, MessageCircle, Check, HelpCircle, Utensils, Smile, ShieldOff } from 'lucide-react'
 
 interface RecipientForm {
   relationship: string
@@ -47,6 +47,68 @@ const STEP_META = [
 
 const inputCls = 'w-full rounded-[10px] border border-border bg-card h-11 px-3.5 text-[14px] focus:border-[var(--forest)] focus:outline-none focus:ring-2 focus:ring-[var(--forest-soft)] transition-shadow'
 const labelCls = 'block text-[13px] font-medium text-foreground/80 mb-1.5'
+
+const REL_ICONS: Record<string, React.ElementType> = {
+  'myself':       User,
+  'parent':       Heart,
+  'spouse':       Heart,
+  'grandparent':  Users,
+  'sibling':      Users,
+  'other-family': Users,
+}
+
+const CONDITION_ICONS: Record<string, React.ElementType> = {
+  'alzheimers':         Brain,
+  'dementia':           Brain,
+  'parkinsons':         Activity,
+  'diabetes':           Activity,
+  'heart-disease':      Heart,
+  'stroke':             AlertTriangle,
+  'copd':               Wind,
+  'arthritis':          Move,
+  'depression':         CloudRain,
+  'anxiety':            Zap,
+  'vision-impairment':  Eye,
+  'hearing-impairment': Volume2,
+  'other':              Plus,
+}
+
+const MOBILITY_ICONS: Record<string, React.ElementType> = {
+  'independent':         User,
+  'minimal-assistance':  Activity,
+  'moderate-assistance': Users,
+  'full-assistance':     Users,
+}
+
+const GENDER_RECIPIENT_ICONS: Record<string, React.ElementType> = {
+  'male':              User,
+  'female':            User,
+  'non-binary':        User,
+  'prefer-not-to-say': ShieldOff,
+}
+
+const STATUS_ITEM_ICONS: Record<string, React.ElementType> = {
+  'livesAlone':        User,
+  'livesWith':         Users,
+  'aloneDuringDay':    Sun,
+  'bedBound':          Move,
+  'upAsTolerated':     Activity,
+  'speechProblems':    MessageCircle,
+  'glassesOrContacts': Eye,
+  'visionProblem':     Eye,
+  'hardOfHearing':     Volume2,
+  'amputee':           Activity,
+  'denturesUpper':     Smile,
+  'denturesLower':     Smile,
+  'denturesPartial':   Smile,
+  'orientedAlert':     Check,
+  'forgetful':         Brain,
+  'confused':          HelpCircle,
+  'cane':              Move,
+  'walker':            Activity,
+  'wheelchair':        Activity,
+  'diabetic':          Utensils,
+}
 
 export default function NewRecipientPage() {
   const router = useRouter()
@@ -221,6 +283,7 @@ export default function NewRecipientPage() {
         <div className="grid grid-cols-2 gap-3">
           {RELATIONSHIPS.map((rel) => {
             const selected = form.relationship === rel.key
+            const RelIcon = REL_ICONS[rel.key] ?? Users
             return (
               <button
                 key={rel.key}
@@ -236,15 +299,20 @@ export default function NewRecipientPage() {
                 {selected && (
                   <div className="pointer-events-none absolute right-[-30px] top-[-30px] h-[120px] w-[120px] rounded-full bg-primary/15" />
                 )}
-                <div className="relative flex items-center justify-between gap-2">
+                <div className="relative">
+                  <div className="flex items-start justify-between gap-2 mb-2">
+                    <div className={['flex h-8 w-8 items-center justify-center rounded-xl transition-colors', selected ? 'bg-primary/15 text-[var(--forest-deep)]' : 'bg-muted text-muted-foreground group-hover/rel:bg-[var(--forest-soft)] group-hover/rel:text-[var(--forest-deep)]'].join(' ')}>
+                      <RelIcon className="h-4 w-4" />
+                    </div>
+                    {selected && (
+                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                        <svg width="12" height="9" viewBox="0 0 12 9" fill="none">
+                          <path d="M1 4.5L4.5 8L11 1" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      </span>
+                    )}
+                  </div>
                   <span className="text-[15px] font-semibold tracking-[-0.005em]">{rel.label}</span>
-                  {selected && (
-                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
-                      <svg width="12" height="9" viewBox="0 0 12 9" fill="none">
-                        <path d="M1 4.5L4.5 8L11 1" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                    </span>
-                  )}
                 </div>
               </button>
             )
@@ -311,19 +379,23 @@ export default function NewRecipientPage() {
           <div>
             <label className={labelCls}>Gender</label>
             <div className="grid grid-cols-3 gap-2">
-              {GENDER_OPTIONS.map((g) => (
-                <button
-                  key={g.key}
-                  type="button"
-                  onClick={() => setForm((f) => ({ ...f, gender: g.key }))}
-                  className={[
-                    'rounded-[10px] border-2 px-3 py-2.5 text-[13px] font-medium transition-colors',
-                    form.gender === g.key ? 'border-primary bg-primary/5 text-primary' : 'border-border hover:border-primary/50',
-                  ].join(' ')}
-                >
-                  {g.label}
-                </button>
-              ))}
+              {GENDER_OPTIONS.map((g) => {
+                const GIcon = GENDER_RECIPIENT_ICONS[g.key] ?? User
+                return (
+                  <button
+                    key={g.key}
+                    type="button"
+                    onClick={() => setForm((f) => ({ ...f, gender: g.key }))}
+                    className={[
+                      'rounded-[10px] border-2 px-3 py-2.5 text-[13px] font-medium transition-colors flex items-center justify-center gap-1.5',
+                      form.gender === g.key ? 'border-primary bg-primary/5 text-primary' : 'border-border hover:border-primary/50',
+                    ].join(' ')}
+                  >
+                    <GIcon className="h-3.5 w-3.5 shrink-0" />
+                    {g.label}
+                  </button>
+                )
+              })}
             </div>
           </div>
 
@@ -377,6 +449,7 @@ export default function NewRecipientPage() {
             <div className="grid grid-cols-2 gap-2 mt-2">
               {CONDITIONS.map((c) => {
                 const selected = form.conditions.includes(c.key)
+                const CIcon = CONDITION_ICONS[c.key] ?? Plus
                 return (
                   <button
                     key={c.key}
@@ -392,7 +465,10 @@ export default function NewRecipientPage() {
                     {selected && (
                       <div className="pointer-events-none absolute right-[-16px] top-[-16px] h-[60px] w-[60px] rounded-full bg-primary/10" />
                     )}
-                    <span className="relative">{c.label}</span>
+                    <div className="relative flex items-center gap-2">
+                      <CIcon className={`h-4 w-4 shrink-0 ${selected ? 'text-[var(--forest-deep)]' : 'text-muted-foreground'}`} />
+                      <span>{c.label}</span>
+                    </div>
                   </button>
                 )
               })}
@@ -404,6 +480,7 @@ export default function NewRecipientPage() {
             <div className="grid grid-cols-2 gap-2 mt-2">
               {MOBILITY_LEVELS.map((m) => {
                 const selected = form.mobilityLevel === m.key
+                const MIcon = MOBILITY_ICONS[m.key] ?? Activity
                 return (
                   <button
                     key={m.key}
@@ -419,7 +496,10 @@ export default function NewRecipientPage() {
                     {selected && (
                       <div className="pointer-events-none absolute right-[-16px] top-[-16px] h-[60px] w-[60px] rounded-full bg-primary/10" />
                     )}
-                    <span className="relative">{m.label}</span>
+                    <div className="relative flex items-center gap-2">
+                      <MIcon className={`h-4 w-4 shrink-0 ${selected ? 'text-[var(--forest-deep)]' : 'text-muted-foreground'}`} />
+                      <span>{m.label}</span>
+                    </div>
                   </button>
                 )
               })}
@@ -478,7 +558,15 @@ export default function NewRecipientPage() {
                         {checked && (
                           <div className="pointer-events-none absolute right-[-16px] top-[-16px] h-[60px] w-[60px] rounded-full bg-primary/10" />
                         )}
-                        <span className="relative">{item.label}</span>
+                        {(() => {
+                          const SIcon = STATUS_ITEM_ICONS[item.key]
+                          return (
+                            <div className="relative flex items-center gap-2">
+                              {SIcon && <SIcon className={`h-4 w-4 shrink-0 ${checked ? 'text-[var(--forest-deep)]' : 'text-muted-foreground'}`} />}
+                              <span>{item.label}</span>
+                            </div>
+                          )
+                        })()}
                       </button>
                       {checked && item.key === 'amputee' && (
                         <input

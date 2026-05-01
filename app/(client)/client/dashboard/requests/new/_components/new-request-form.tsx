@@ -10,7 +10,7 @@ import {
   GENDER_PREFERENCES, LANGUAGES, BUDGET_TYPES,
   INFECTION_CONTROL_ITEMS, SAFETY_MEASURE_ITEMS, CLIENT_STATUS_GROUPS,
 } from '@/lib/constants'
-import { MapPin, Heart, Users, CalendarDays, ClipboardList, Settings2, BookOpen, Sparkles, DollarSign, Brain, Activity, Stethoscope } from 'lucide-react'
+import { MapPin, Heart, Users, CalendarDays, ClipboardList, Settings2, BookOpen, Sparkles, DollarSign, Brain, Activity, Stethoscope, Repeat, Sun, Clock, User, Car, Navigation, Check, CalendarCheck, Globe } from 'lucide-react'
 import { LoadingQuotes } from '@/components/loading-quotes'
 import { StateSelect } from '@/components/state-select'
 import { DatePicker } from '@/components/date-picker'
@@ -97,6 +97,26 @@ const CARE_TYPE_META: Record<string, { icon: React.ElementType; desc: string }> 
   'dementia-care':          { icon: Brain,         desc: 'Specialized memory care and cognitive support' },
   'mobility-assistance':    { icon: Activity,      desc: 'Safe movement, transfers, and fall prevention' },
   'post-hospital-recovery': { icon: Stethoscope,   desc: 'Recovery support after surgery or hospitalisation' },
+}
+
+const FREQ_ICONS: Record<string, React.ElementType> = {
+  'one-time':  CalendarDays,
+  'weekly':    Repeat,
+  'bi-weekly': CalendarCheck,
+  'daily':     Sun,
+  'as-needed': Clock,
+}
+
+const TRANSPORT_ICONS: Record<string, React.ElementType> = {
+  'requires-vehicle': Car,
+  'client-provides':  MapPin,
+  'commute-ok':       Navigation,
+  'no-preference':    Check,
+}
+
+const BUDGET_TYPE_ICONS: Record<string, React.ElementType> = {
+  'hourly': Clock,
+  'daily':  CalendarDays,
 }
 
 const inputCls = 'w-full rounded-[10px] border border-border bg-card h-11 px-3.5 text-[14px] focus:border-[var(--forest)] focus:outline-none focus:ring-2 focus:ring-[var(--forest-soft)] transition-shadow'
@@ -599,23 +619,27 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgRates
           <div>
             <label className={labelCls}>Frequency *</label>
             <div className="grid grid-cols-3 gap-2">
-              {CARE_FREQUENCIES.map((f) => (
-                <button key={f.key} type="button"
-                  onClick={() => setForm(fm => {
-                    const ALL_DAYS = ['monday','tuesday','wednesday','thursday','friday','saturday','sunday']
-                    if (f.key === 'daily') {
-                      return { ...fm, frequency: f.key, sameTimeEveryDay: true,
-                        schedule: ALL_DAYS.map(d => ({ day: d, startTime: fm.sharedStartTime, endTime: fm.sharedEndTime })) }
-                    }
-                    if (f.key === 'one-time' || f.key === 'as-needed') {
-                      return { ...fm, frequency: f.key, sameTimeEveryDay: true, schedule: [] }
-                    }
-                    return { ...fm, frequency: f.key, schedule: [] }
-                  })}
-                  className={['rounded-xl border-2 px-3 py-2.5 text-sm font-medium transition-colors', form.frequency === f.key ? 'border-primary bg-primary/5 text-primary' : 'border-border hover:border-primary/50'].join(' ')}>
-                  {f.label}
-                </button>
-              ))}
+              {CARE_FREQUENCIES.map((f) => {
+                const FIcon = FREQ_ICONS[f.key]
+                return (
+                  <button key={f.key} type="button"
+                    onClick={() => setForm(fm => {
+                      const ALL_DAYS = ['monday','tuesday','wednesday','thursday','friday','saturday','sunday']
+                      if (f.key === 'daily') {
+                        return { ...fm, frequency: f.key, sameTimeEveryDay: true,
+                          schedule: ALL_DAYS.map(d => ({ day: d, startTime: fm.sharedStartTime, endTime: fm.sharedEndTime })) }
+                      }
+                      if (f.key === 'one-time' || f.key === 'as-needed') {
+                        return { ...fm, frequency: f.key, sameTimeEveryDay: true, schedule: [] }
+                      }
+                      return { ...fm, frequency: f.key, schedule: [] }
+                    })}
+                    className={['rounded-[10px] border-2 px-3 py-2.5 text-[13px] font-medium transition-colors flex items-center justify-center gap-1.5', form.frequency === f.key ? 'border-primary bg-primary/5 text-primary' : 'border-border hover:border-primary/50'].join(' ')}>
+                    {FIcon && <FIcon className="h-3.5 w-3.5 shrink-0" />}
+                    {f.label}
+                  </button>
+                )
+              })}
             </div>
           </div>
 
@@ -654,7 +678,8 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgRates
                 {DAYS_OF_WEEK.map((d) => (
                   <button key={d.key} type="button"
                     onClick={() => toggleDay(d.key)}
-                    className={['rounded-xl border-2 px-4 py-2.5 text-sm font-medium transition-colors', form.schedule.some(s => s.day === d.key) ? 'border-primary bg-primary/5 text-primary' : 'border-border hover:border-primary/50'].join(' ')}>
+                    className={['rounded-[10px] border-2 px-3 py-2.5 text-[13px] font-medium transition-colors flex items-center gap-1', form.schedule.some(s => s.day === d.key) ? 'border-primary bg-primary/5 text-primary' : 'border-border hover:border-primary/50'].join(' ')}>
+                    <CalendarDays className="h-3 w-3 shrink-0" />
                     {d.label.slice(0, 3)}
                   </button>
                 ))}
@@ -680,10 +705,11 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgRates
                     type="button"
                     onClick={() => setIncrement(inc)}
                     className={[
-                      'rounded-xl border-2 px-4 py-2 text-sm font-medium transition-colors',
+                      'rounded-[10px] border-2 px-4 py-2 text-[13px] font-medium transition-colors flex items-center gap-1.5',
                       increment === inc ? 'border-primary bg-primary/5 text-primary' : 'border-border hover:border-primary/50',
                     ].join(' ')}
                   >
+                    <Clock className="h-3.5 w-3.5 shrink-0" />
                     {inc === 60 ? '1 hr' : `${inc} min`}
                   </button>
                 ))}
@@ -970,13 +996,17 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgRates
           <div>
             <label className="block text-sm font-medium mb-3">Caregiver Gender Preference *</label>
             <div className="grid grid-cols-3 gap-2">
-              {GENDER_PREFERENCES.map((g) => (
-                <button key={g.key} type="button"
-                  onClick={() => setForm((f) => ({ ...f, genderPref: g.key }))}
-                  className={['rounded-xl border-2 px-3 py-2.5 text-sm font-medium transition-colors', form.genderPref === g.key ? 'border-primary bg-primary/5 text-primary' : 'border-border hover:border-primary/50'].join(' ')}>
-                  {g.label}
-                </button>
-              ))}
+              {GENDER_PREFERENCES.map((g) => {
+                const GIcon = g.key === 'no-preference' ? Users : User
+                return (
+                  <button key={g.key} type="button"
+                    onClick={() => setForm((f) => ({ ...f, genderPref: g.key }))}
+                    className={['rounded-[10px] border-2 px-3 py-2.5 text-[13px] font-medium transition-colors flex items-center justify-center gap-1.5', form.genderPref === g.key ? 'border-primary bg-primary/5 text-primary' : 'border-border hover:border-primary/50'].join(' ')}>
+                    <GIcon className="h-3.5 w-3.5 shrink-0" />
+                    {g.label}
+                  </button>
+                )
+              })}
             </div>
           </div>
           <div>
@@ -987,22 +1017,28 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgRates
                 { key: 'client-provides',   label: 'Client will provide transportation', desc: 'We will arrange or cover transportation for the caregiver.' },
                 { key: 'commute-ok',        label: 'Commuting is fine',                  desc: 'The caregiver can use public transit, rideshare, or walk.' },
                 { key: 'no-preference',     label: 'No preference',                       desc: 'Transportation is not a factor for this request.' },
-              ].map(opt => (
-                <button
-                  key={opt.key}
-                  type="button"
-                  onClick={() => setForm(f => ({ ...f, transportationPref: opt.key }))}
-                  className={[
-                    'w-full rounded-xl border-2 px-4 py-3 text-left transition-colors',
-                    form.transportationPref === opt.key
-                      ? 'border-primary bg-primary/5'
-                      : 'border-border hover:border-primary/50',
-                  ].join(' ')}
-                >
-                  <p className={`text-sm font-medium ${form.transportationPref === opt.key ? 'text-primary' : ''}`}>{opt.label}</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">{opt.desc}</p>
-                </button>
-              ))}
+              ].map(opt => {
+                const TIcon = TRANSPORT_ICONS[opt.key]
+                return (
+                  <button
+                    key={opt.key}
+                    type="button"
+                    onClick={() => setForm(f => ({ ...f, transportationPref: opt.key }))}
+                    className={[
+                      'w-full rounded-xl border-2 px-4 py-3 text-left transition-colors',
+                      form.transportationPref === opt.key
+                        ? 'border-primary bg-primary/5'
+                        : 'border-border hover:border-primary/50',
+                    ].join(' ')}
+                  >
+                    <div className="flex items-center gap-2 mb-0.5">
+                      {TIcon && <TIcon className={`h-4 w-4 shrink-0 ${form.transportationPref === opt.key ? 'text-primary' : 'text-muted-foreground'}`} />}
+                      <p className={`text-sm font-medium ${form.transportationPref === opt.key ? 'text-primary' : ''}`}>{opt.label}</p>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-0.5 pl-6">{opt.desc}</p>
+                  </button>
+                )
+              })}
             </div>
           </div>
           <div>
@@ -1011,7 +1047,8 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgRates
               {LANGUAGES.map((l) => (
                 <button key={l.key} type="button"
                   onClick={() => togglePreferredLanguage(l.key)}
-                  className={['rounded-xl border-2 px-4 py-2 text-sm transition-colors', form.languagesPreferred.includes(l.key) ? 'border-primary bg-primary/5 text-primary' : 'border-border hover:border-primary/50'].join(' ')}>
+                  className={['rounded-[10px] border-2 px-3 py-2 text-[13px] transition-colors flex items-center gap-1.5', form.languagesPreferred.includes(l.key) ? 'border-primary bg-primary/5 text-primary' : 'border-border hover:border-primary/50'].join(' ')}>
+                  <Globe className="h-3.5 w-3.5 shrink-0" />
                   {l.label}
                 </button>
               ))}
@@ -1032,7 +1069,8 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgRates
                   {LANGUAGES.map((l) => (
                     <button key={l.key} type="button"
                       onClick={() => toggleRequiredLanguage(l.key)}
-                      className={['rounded-xl border-2 px-4 py-2 text-sm transition-colors', form.languagesRequired.includes(l.key) ? 'border-primary bg-primary/5 text-primary' : 'border-border hover:border-primary/50'].join(' ')}>
+                      className={['rounded-[10px] border-2 px-3 py-2 text-[13px] transition-colors flex items-center gap-1.5', form.languagesRequired.includes(l.key) ? 'border-primary bg-primary/5 text-primary' : 'border-border hover:border-primary/50'].join(' ')}>
+                      <Globe className="h-3.5 w-3.5 shrink-0" />
                       {l.label}
                     </button>
                   ))}
@@ -1047,13 +1085,17 @@ export function NewRequestForm({ initialRecipients, initialRecipientId, avgRates
                 : 'Please enter your hourly rate for this job *'}
             </label>
             <div className="flex gap-2 mb-4">
-              {BUDGET_TYPES.map((b) => (
-                <button key={b.key} type="button"
-                  onClick={() => setForm((f) => ({ ...f, budgetType: b.key, budgetMin: '', budgetMax: '' }))}
-                  className={['rounded-xl border-2 px-4 py-3 text-sm font-medium transition-colors', form.budgetType === b.key ? 'border-primary bg-primary/5 text-primary' : 'border-border hover:border-primary/50'].join(' ')}>
-                  {b.label}
-                </button>
-              ))}
+              {BUDGET_TYPES.map((b) => {
+                const BIcon = BUDGET_TYPE_ICONS[b.key]
+                return (
+                  <button key={b.key} type="button"
+                    onClick={() => setForm((f) => ({ ...f, budgetType: b.key, budgetMin: '', budgetMax: '' }))}
+                    className={['rounded-xl border-2 px-4 py-3 text-sm font-medium transition-colors flex items-center gap-2', form.budgetType === b.key ? 'border-primary bg-primary/5 text-primary' : 'border-border hover:border-primary/50'].join(' ')}>
+                    {BIcon && <BIcon className="h-4 w-4 shrink-0" />}
+                    {b.label}
+                  </button>
+                )
+              })}
             </div>
             {form.budgetType && (() => {
               const SMIN = 10, SMAX = 100
