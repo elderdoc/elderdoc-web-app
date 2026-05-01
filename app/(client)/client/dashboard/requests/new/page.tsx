@@ -1,6 +1,6 @@
 import { requireRole } from '@/domains/auth/session'
 import { db } from '@/services/db'
-import { careRecipients, caregiverProfiles } from '@/db/schema'
+import { careRecipients, caregiverProfiles, caregiverCareTypes } from '@/db/schema'
 import { eq, isNotNull, avg } from 'drizzle-orm'
 import { NewRequestForm } from './_components/new-request-form'
 
@@ -13,7 +13,7 @@ export default async function NewRequestPage({ searchParams }: PageProps) {
   const userId = session.user.id!
   const { recipientId } = await searchParams
 
-  const [recipients, rateRow] = await Promise.all([
+  const [recipients, avgRateRows] = await Promise.all([
     db
       .select({
         id:           careRecipients.id,
@@ -31,22 +31,31 @@ export default async function NewRequestPage({ searchParams }: PageProps) {
       .where(eq(careRecipients.clientId, userId)),
     db
       .select({
-        avgMin: avg(caregiverProfiles.hourlyMin),
-        avgMax: avg(caregiverProfiles.hourlyMax),
+        careType: caregiverCareTypes.careType,
+        avgMin:   avg(caregiverProfiles.hourlyMin),
+        avgMax:   avg(caregiverProfiles.hourlyMax),
       })
       .from(caregiverProfiles)
-      .where(isNotNull(caregiverProfiles.hourlyMin)),
+      .innerJoin(caregiverCareTypes, eq(caregiverProfiles.id, caregiverCareTypes.caregiverId))
+      .where(isNotNull(caregiverProfiles.hourlyMin))
+      .groupBy(caregiverCareTypes.careType),
   ])
 
-  const avgHourlyMin = rateRow[0]?.avgMin ? Math.round(Number(rateRow[0].avgMin)) : null
-  const avgHourlyMax = rateRow[0]?.avgMax ? Math.round(Number(rateRow[0].avgMax)) : null
+  const avgRatesByCareType: Record<string, { min: number; max: number }> = {}
+  for (const row of avgRateRows) {
+    if (row.avgMin && row.avgMax) {
+      avgRatesByCareType[row.careType] = {
+        min: Math.round(Number(row.avgMin)),
+        max: Math.round(Number(row.avgMax)),
+      }
+    }
+  }
 
   return (
     <NewRequestForm
       initialRecipients={recipients}
       initialRecipientId={recipientId}
-      avgHourlyMin={avgHourlyMin}
-      avgHourlyMax={avgHourlyMax}
+      avgRatesByCareType={avgRatesByCareType}
     />
   )
 }
