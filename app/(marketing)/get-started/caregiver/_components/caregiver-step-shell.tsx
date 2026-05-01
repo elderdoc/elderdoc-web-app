@@ -28,8 +28,14 @@ export function CaregiverStepShell({
   backHref,
 }: CaregiverStepShellProps) {
   return (
-    <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-20 border-b border-border bg-background/95 backdrop-blur-md">
+    <div className="min-h-screen bg-background relative overflow-hidden">
+      {/* Soft mesh bg */}
+      <div className="pointer-events-none absolute inset-0 -z-10">
+        <div className="absolute right-[-15%] top-[-30%] h-[500px] w-[500px] rounded-full bg-[var(--forest-soft)] blur-[120px] opacity-50" />
+        <div className="absolute left-[-15%] bottom-[-30%] h-[400px] w-[400px] rounded-full bg-[var(--cream-deep)] blur-[120px] opacity-70" />
+      </div>
+
+      <header className="sticky top-0 z-20 border-b border-border/60 bg-background/85 backdrop-blur-md">
         <div className="mx-auto flex h-16 max-w-3xl items-center justify-between px-6">
           <Link
             href={backHref}
@@ -50,7 +56,7 @@ export function CaregiverStepShell({
         </div>
 
         <div className="mb-10 text-center max-w-xl mx-auto animate-rise">
-          <h1 className="text-[28px] sm:text-[34px] md:text-[40px] font-semibold tracking-[-0.02em] leading-[1.1] text-foreground">
+          <h1 className="text-[28px] sm:text-[36px] md:text-[44px] font-semibold tracking-[-0.025em] leading-[1.1] text-foreground">
             {title}
           </h1>
           {subtitle && (

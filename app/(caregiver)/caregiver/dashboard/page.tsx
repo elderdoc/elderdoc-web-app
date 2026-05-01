@@ -5,6 +5,7 @@ import { eq, and, desc, count } from 'drizzle-orm'
 import { formatDistanceToNow } from 'date-fns'
 import Link from 'next/link'
 import { Suspense } from 'react'
+import { Briefcase, Clock, Inbox, ArrowRight, Sparkles, Activity, MapPin } from 'lucide-react'
 import { matchJobsForCaregiver, type MatchedJob } from '@/domains/matching/match-jobs'
 
 type ActivityItem =
@@ -20,7 +21,7 @@ const CARE_TYPE_LABELS: Record<string, string> = {
 }
 
 const BUDGET_LABEL: Record<string, string> = {
-  'hourly': '/hr', 'per-visit': '/visit', 'monthly': '/mo', 'bi-weekly': '/2wk',
+  'hourly': '/hr', 'daily': '/day', 'per-visit': '/visit', 'monthly': '/mo', 'bi-weekly': '/2wk',
 }
 
 function MatchedJobCard({ job, rank }: { job: MatchedJob; rank: number }) {
@@ -31,49 +32,67 @@ function MatchedJobCard({ job, rank }: { job: MatchedJob; rank: number }) {
     : null
 
   return (
-    <div className="relative rounded-xl border border-border bg-card p-5 flex gap-4">
-      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
-        {rank}
-      </div>
-      <div className="min-w-0 flex-1">
-        <div className="flex items-start justify-between gap-2">
-          <p className="text-sm font-semibold text-foreground truncate">{job.title ?? careTypeLabel}</p>
-          {budget && (
-            <span className="shrink-0 text-xs font-medium text-primary">{budget}</span>
+    <Link
+      href="/caregiver/dashboard/find-jobs"
+      className="group/job relative block rounded-[16px] border border-border bg-card p-5 transition-all hover:border-foreground/15 hover:shadow-[0_8px_24px_-12px_rgba(15,20,16,0.1)] hover:-translate-y-0.5"
+    >
+      <div className="flex gap-4">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--forest-soft)] text-[14px] font-semibold tabular-nums text-[var(--forest-deep)]">
+          {rank}
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-start justify-between gap-3">
+            <h3 className="text-[16px] font-semibold tracking-[-0.01em] truncate transition-colors group-hover/job:text-primary">
+              {job.title ?? careTypeLabel}
+            </h3>
+            {budget && (
+              <span className="shrink-0 text-[14px] font-semibold text-foreground tabular-nums">{budget}</span>
+            )}
+          </div>
+          <div className="mt-2 flex flex-wrap items-center gap-1.5">
+            <span className="inline-flex items-center rounded-full bg-muted px-2.5 py-0.5 text-[11.5px] text-foreground/80">
+              {careTypeLabel}
+            </span>
+            {job.frequency && (
+              <span className="inline-flex items-center rounded-full bg-muted px-2.5 py-0.5 text-[11.5px] text-foreground/80 capitalize">
+                {job.frequency.replace(/-/g, ' ')}
+              </span>
+            )}
+            {location && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-0.5 text-[11.5px] text-foreground/80">
+                <MapPin className="h-3 w-3" />
+                {location}
+              </span>
+            )}
+          </div>
+          {job.reason && (
+            <div className="mt-3 rounded-[10px] bg-[var(--forest-soft)]/50 px-3 py-2 text-[12.5px] text-[var(--forest-deep)] leading-snug">
+              ✓ {job.reason}
+            </div>
           )}
         </div>
-        <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
-          <span>{careTypeLabel}</span>
-          {job.frequency && <span>{job.frequency.replace(/-/g, ' ')}</span>}
-          {location && <span>{location}</span>}
-        </div>
-        {job.reason && (
-          <p className="mt-2 text-xs text-muted-foreground leading-relaxed italic">{job.reason}</p>
-        )}
       </div>
-      <Link
-        href="/caregiver/dashboard/find-jobs"
-        className="absolute inset-0 rounded-xl"
-        aria-label={`View ${job.title ?? careTypeLabel}`}
-      />
-    </div>
+    </Link>
   )
 }
 
 async function MatchedJobsSection({ profileId }: { profileId: string }) {
-  const jobs = await matchJobsForCaregiver(profileId)
-  if (jobs.length === 0) return null
+  const matched = await matchJobsForCaregiver(profileId)
+  if (matched.length === 0) return null
 
   return (
     <section className="mb-10">
-      <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-base font-semibold">Top Matched Jobs</h2>
-        <Link href="/caregiver/dashboard/find-jobs" className="text-xs text-primary hover:underline">
-          View all →
+      <div className="mb-5 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Sparkles className="h-4 w-4 text-primary" />
+          <h2 className="text-[22px] font-semibold tracking-[-0.015em]">Top matched jobs</h2>
+        </div>
+        <Link href="/caregiver/dashboard/find-jobs" className="inline-flex items-center gap-1 text-[13px] font-medium text-primary hover:underline underline-offset-4">
+          View all <ArrowRight className="h-3.5 w-3.5" />
         </Link>
       </div>
       <div className="space-y-3">
-        {jobs.map((job, i) => (
+        {matched.slice(0, 3).map((job, i) => (
           <MatchedJobCard key={job.requestId} job={job} rank={i + 1} />
         ))}
       </div>
@@ -91,10 +110,22 @@ export default async function CaregiverDashboard() {
 
   if (!profile) {
     return (
-      <div className="p-4 lg:p-8">
-        <h1 className="text-2xl font-semibold">Complete your profile to get started.</h1>
-        <Link href="/get-started/caregiver/step-1" className="mt-4 inline-block text-primary underline text-sm">
-          Start onboarding →
+      <div className="px-6 py-16 max-w-2xl mx-auto text-center">
+        <div className="mx-auto h-14 w-14 rounded-full bg-[var(--forest-soft)] flex items-center justify-center mb-5">
+          <Briefcase className="h-6 w-6 text-[var(--forest-deep)]" />
+        </div>
+        <h1 className="text-[28px] font-semibold tracking-tight">
+          Complete your profile to <span className="font-serif italic font-normal text-primary">get started</span>.
+        </h1>
+        <p className="mt-3 text-[15px] text-muted-foreground">
+          Set up your profile so families can find and match with you.
+        </p>
+        <Link
+          href="/get-started/caregiver/step-1"
+          className="mt-6 inline-flex h-11 items-center gap-2 rounded-full bg-primary px-5 text-[14px] font-medium text-primary-foreground hover:bg-[var(--forest-deep)] hover:shadow-[0_8px_18px_-6px_rgba(15,77,52,0.4)] transition-all"
+        >
+          Start onboarding
+          <ArrowRight className="h-4 w-4" />
         </Link>
       </div>
     )
@@ -146,38 +177,71 @@ export default async function CaregiverDashboard() {
   ].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()).slice(0, 10)
 
   const stats = [
-    { label: 'Active Jobs',      value: Number(activeJobCount?.value ?? 0),     href: '/caregiver/dashboard/my-jobs' },
-    { label: 'Upcoming Shifts',  value: Number(upcomingShiftCount?.value ?? 0),  href: '/caregiver/dashboard/shifts' },
-    { label: 'Pending Offers',   value: Number(pendingOfferCount?.value ?? 0),   href: '/caregiver/dashboard/offers' },
+    { label: 'Active jobs',     value: Number(activeJobCount?.value ?? 0),     href: '/caregiver/dashboard/my-jobs', icon: Briefcase },
+    { label: 'Upcoming shifts', value: Number(upcomingShiftCount?.value ?? 0), href: '/caregiver/dashboard/shifts',  icon: Clock },
+    { label: 'Pending offers',  value: Number(pendingOfferCount?.value ?? 0),  href: '/caregiver/dashboard/offers',  icon: Inbox },
   ]
 
+  const firstName = session.user.name?.split(' ')[0] ?? 'there'
+
   return (
-    <div className="p-4 lg:p-8">
-      <h1 className="text-2xl font-semibold mb-1">
-        Welcome back{session.user.name ? `, ${session.user.name.split(' ')[0]}` : ''}
-      </h1>
-      <p className="text-muted-foreground text-sm mb-8">Here&apos;s what&apos;s happening with your care work.</p>
+    <div className="relative px-6 lg:px-10 py-8 lg:py-10 max-w-[1200px] mx-auto">
+      {/* Soft gradient mesh */}
+      <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
+        <div className="absolute right-[-20%] top-[-10%] h-[500px] w-[500px] rounded-full bg-[var(--forest-soft)] blur-[120px] opacity-40" />
+      </div>
+
+      {/* Welcome */}
+      <header className="mb-10">
+        <div className="flex items-center gap-2 text-[13px] font-medium text-primary mb-3">
+          <Briefcase className="h-3.5 w-3.5" />
+          Caregiver dashboard
+        </div>
+        <h1 className="text-[32px] sm:text-[42px] md:text-[48px] font-semibold tracking-[-0.025em] leading-[1.1]">
+          Welcome back, <span className="font-serif italic font-normal text-primary">{firstName}</span>.
+        </h1>
+        <p className="mt-2 text-[15px] text-foreground/65">
+          Here&apos;s what&apos;s happening with your care work today.
+        </p>
+      </header>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-10">
-        {stats.map((stat) => (
-          <Link
-            key={stat.label}
-            href={stat.href}
-            className="rounded-xl border border-border bg-card p-5 hover:shadow-md transition-shadow"
-          >
-            <p className="text-3xl font-semibold">{stat.value}</p>
-            <p className="text-sm text-muted-foreground mt-1">{stat.label}</p>
-          </Link>
-        ))}
-      </div>
+      <section className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10">
+        {stats.map((s, i) => {
+          const Icon = s.icon
+          return (
+            <Link
+              key={s.label}
+              href={s.href}
+              className="group/stat relative overflow-hidden rounded-[18px] border border-border bg-card p-5 transition-all hover:border-foreground/15 hover:shadow-[0_12px_32px_-12px_rgba(15,20,16,0.12)] hover:-translate-y-1 animate-rise"
+              style={{ animationDelay: `${i * 80}ms` }}
+            >
+              <div className="absolute right-[-30px] top-[-30px] h-[120px] w-[120px] rounded-full bg-[var(--forest-soft)] opacity-40 transition-all group-hover/stat:opacity-60 group-hover/stat:scale-110" />
+
+              <div className="relative flex items-start justify-between">
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[var(--forest-soft)] text-[var(--forest-deep)] shadow-[0_2px_8px_-2px_rgba(15,77,52,0.18)]">
+                  <Icon className="h-5 w-5" />
+                </div>
+                <ArrowRight className="h-4 w-4 text-foreground/30 transition-all group-hover/stat:translate-x-0.5 group-hover/stat:text-primary" />
+              </div>
+
+              <div className="relative mt-6">
+                <div className="text-[40px] sm:text-[44px] font-semibold tabular-nums tracking-[-0.025em] leading-none">
+                  {s.value}
+                </div>
+                <div className="mt-2 text-[13.5px] text-muted-foreground">{s.label}</div>
+              </div>
+            </Link>
+          )
+        })}
+      </section>
 
       {/* Matched Jobs */}
       <Suspense fallback={
         <div className="mb-10">
-          <div className="mb-4 h-5 w-40 animate-pulse rounded bg-muted" />
+          <div className="mb-5 h-7 w-44 animate-pulse rounded bg-muted" />
           <div className="space-y-3">
-            {[1,2,3].map(i => <div key={i} className="h-20 animate-pulse rounded-xl bg-muted" />)}
+            {[1,2,3].map(i => <div key={i} className="h-24 animate-pulse rounded-[16px] bg-muted" />)}
           </div>
         </div>
       }>
@@ -185,28 +249,45 @@ export default async function CaregiverDashboard() {
       </Suspense>
 
       {/* Activity */}
-      <h2 className="text-base font-semibold mb-4">Recent Activity</h2>
-      {activity.length === 0 ? (
-        <p className="text-sm text-muted-foreground">No recent activity.</p>
-      ) : (
-        <ul className="space-y-3">
-          {activity.map((item, i) => (
-            <li key={`${item.type}-${item.createdAt.getTime()}-${i}`} className="flex items-start gap-3">
-              <span className="mt-0.5 h-2 w-2 rounded-full bg-primary shrink-0" />
-              <div>
-                <p className="text-sm">
-                  {item.type === 'application'
-                    ? `Applied for ${CARE_TYPE_LABELS[item.careType] ?? item.careType} care`
-                    : `Shift scheduled for ${item.date} at ${item.startTime}`}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {formatDistanceToNow(item.createdAt, { addSuffix: true })}
-                </p>
-              </div>
-            </li>
-          ))}
-        </ul>
-      )}
+      <section>
+        <div className="flex items-center gap-2 mb-5">
+          <h2 className="text-[22px] font-semibold tracking-[-0.015em]">Recent activity</h2>
+          <span className="inline-flex items-center justify-center rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground tabular-nums">
+            {activity.length}
+          </span>
+        </div>
+        {activity.length === 0 ? (
+          <div className="rounded-[18px] border border-border bg-card p-8 text-center">
+            <div className="mx-auto h-10 w-10 rounded-full bg-muted flex items-center justify-center mb-3">
+              <Activity className="h-4 w-4 text-muted-foreground" />
+            </div>
+            <p className="text-[14px] text-muted-foreground">No recent activity.</p>
+          </div>
+        ) : (
+          <div className="rounded-[18px] border border-border bg-card overflow-hidden">
+            <ol className="divide-y divide-border">
+              {activity.map((item, i) => (
+                <li key={`${item.type}-${item.createdAt.getTime()}-${i}`} className="flex gap-3 px-5 py-3.5">
+                  <span className={[
+                    'mt-1 h-2 w-2 shrink-0 rounded-full',
+                    item.type === 'application' ? 'bg-primary' : 'bg-amber-500',
+                  ].join(' ')} />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[14px] leading-snug">
+                      {item.type === 'application'
+                        ? <>Applied for <span className="font-medium">{CARE_TYPE_LABELS[item.careType] ?? item.careType}</span> care</>
+                        : <>Shift scheduled for <span className="font-medium">{item.date} at {item.startTime}</span></>}
+                    </p>
+                    <p className="mt-0.5 text-[12px] text-muted-foreground">
+                      {formatDistanceToNow(item.createdAt, { addSuffix: true })}
+                    </p>
+                  </div>
+                </li>
+              ))}
+            </ol>
+          </div>
+        )}
+      </section>
     </div>
   )
 }

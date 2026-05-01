@@ -3,7 +3,7 @@
 import { useState, useTransition, Suspense } from 'react'
 import { signIn } from 'next-auth/react'
 import Link from 'next/link'
-import { Eye, EyeOff, ArrowRight, Heart, ShieldCheck } from 'lucide-react'
+import { Eye, EyeOff, ArrowRight, Heart, ShieldCheck, Star } from 'lucide-react'
 import { registerUser } from '@/domains/auth/register'
 import { useRouter, useSearchParams } from 'next/navigation'
 
@@ -82,53 +82,66 @@ function SignInInner({ stats }: { stats: Stats }) {
 
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
-      {/* Soft glow background */}
-      <div className="pointer-events-none absolute inset-0 -z-10">
-        <div className="absolute right-[-10%] top-[-20%] h-[500px] w-[500px] rounded-full bg-[var(--forest-soft)] blur-3xl opacity-50" />
-        <div className="absolute left-[-15%] bottom-[-30%] h-[500px] w-[500px] rounded-full bg-[var(--cream-deep)] blur-3xl opacity-60" />
-      </div>
-
       <div className="grid min-h-screen lg:grid-cols-2">
-        {/* Left informational pane */}
-        <div className="hidden lg:flex flex-col justify-between border-r border-border px-12 xl:px-16 py-12">
-          <Link href="/" className="text-[22px] font-semibold tracking-tight">
-            Elderdoc
-          </Link>
+        {/* Left photographic pane */}
+        <div className="hidden lg:block relative overflow-hidden">
+          <img
+            src="https://images.unsplash.com/photo-1581579186913-45ac3e6efe93?auto=format&fit=crop&w=1200&q=80"
+            alt=""
+            className="absolute inset-0 h-full w-full object-cover"
+          />
+          {/* Dark gradient overlay for text legibility */}
+          <div className="absolute inset-0 bg-gradient-to-br from-foreground/85 via-foreground/60 to-foreground/85" />
 
-          <div>
-            <span className="inline-flex items-center gap-2 rounded-full bg-[var(--forest-soft)] px-3 py-1.5 text-[13px] font-medium text-[var(--forest-deep)]">
-              <Heart className="h-3.5 w-3.5" />
-              Welcome back
-            </span>
-            <h1 className="mt-5 text-[44px] xl:text-[56px] font-semibold tracking-[-0.025em] leading-[1.05]">
-              The right care, made simple.
-            </h1>
-            <p className="mt-5 max-w-md text-[15px] leading-[1.6] text-foreground/70">
-              Sign in to coordinate care, review caregiver matches, and manage the people who matter most.
-            </p>
+          {/* Content over photo */}
+          <div className="relative z-10 flex flex-col justify-between h-full p-12 xl:p-16 text-background">
+            <Link href="/" className="text-[22px] font-semibold tracking-tight">
+              Elderdoc
+            </Link>
 
-            <div className="mt-10 grid grid-cols-3 gap-4 max-w-sm">
-              {[
-                { v: stats.caregivers, l: 'caregivers' },
-                { v: stats.families, l: 'families' },
-                { v: stats.matches, l: 'matches' },
-              ].map((s) => (
-                <div key={s.l} className="rounded-[12px] border border-border bg-card px-3 py-4 text-center">
-                  <div className="text-[20px] font-semibold tabular-nums tracking-tight">{formatNum(s.v)}</div>
-                  <div className="mt-1 text-[11px] text-muted-foreground">{s.l}</div>
+            <div>
+              <div className="inline-flex items-center gap-2 rounded-full bg-background/15 backdrop-blur-md border border-background/20 px-3 py-1.5 text-[13px] font-medium">
+                <Heart className="h-3.5 w-3.5" />
+                Welcome back
+              </div>
+              <h1 className="mt-6 text-[44px] xl:text-[60px] font-semibold tracking-[-0.025em] leading-[1.05]">
+                Care that&apos;s already{' '}
+                <span className="font-serif italic font-normal text-[var(--forest-soft)]">in motion</span>.
+              </h1>
+              <p className="mt-6 max-w-md text-[15px] leading-[1.6] text-background/80">
+                Sign in to coordinate care, review caregiver matches, and manage the people who matter most.
+              </p>
+
+              {/* Floating glass card with stats */}
+              <div className="mt-10 rounded-[18px] bg-background/10 backdrop-blur-xl border border-background/20 p-5 max-w-sm">
+                <div className="flex items-center gap-2 mb-3 text-[12px] text-background/70">
+                  <Star className="h-3 w-3 fill-amber-300 text-amber-300" />
+                  <span className="font-medium text-background">4.9 / 5</span>
+                  <span>· {formatNum(stats.families)} families</span>
                 </div>
-              ))}
+                <p className="text-[14px] leading-[1.55] text-background">
+                  &ldquo;After three weeks of dead ends, Elderdoc matched mom with Margaret in two days.&rdquo;
+                </p>
+                <div className="mt-3 text-[11.5px] text-background/60">
+                  — Sarah K., Boston
+                </div>
+              </div>
             </div>
-          </div>
 
-          <div className="flex items-center gap-2 text-[13px] text-muted-foreground">
-            <ShieldCheck className="h-4 w-4 text-primary" />
-            <span>Background-checked &amp; verified caregivers</span>
+            <div className="flex items-center gap-2 text-[13px] text-background/70">
+              <ShieldCheck className="h-4 w-4 text-[var(--forest-soft)]" />
+              <span>Background-checked &amp; verified caregivers</span>
+            </div>
           </div>
         </div>
 
         {/* Right form pane */}
-        <div className="flex items-center justify-center px-6 py-12 sm:px-10">
+        <div className="flex items-center justify-center px-6 py-12 sm:px-10 relative">
+          {/* Subtle gradient bg for the form side */}
+          <div className="pointer-events-none absolute inset-0 -z-10">
+            <div className="absolute right-[-15%] top-[-20%] h-[400px] w-[400px] rounded-full bg-[var(--forest-soft)] blur-[100px] opacity-50" />
+          </div>
+
           <div className="w-full max-w-[420px]">
             <div className="lg:hidden mb-8">
               <Link href="/" className="text-[22px] font-semibold tracking-tight">
@@ -137,16 +150,20 @@ function SignInInner({ stats }: { stats: Stats }) {
             </div>
 
             <div>
-              <h2 className="text-[28px] sm:text-[32px] font-semibold tracking-[-0.02em] leading-[1.15]">
-                {tab === 'signin' ? 'Welcome back' : 'Create your account'}
+              <h2 className="text-[28px] sm:text-[36px] font-semibold tracking-[-0.02em] leading-[1.1]">
+                {tab === 'signin' ? (
+                  <>Welcome <span className="font-serif italic font-normal text-primary">back</span>.</>
+                ) : (
+                  <>Begin with <span className="font-serif italic font-normal text-primary">care</span>.</>
+                )}
               </h2>
               <p className="mt-2 text-[14.5px] text-muted-foreground">
-                {tab === 'signin' ? 'Sign in to continue.' : 'Get started in minutes.'}
+                {tab === 'signin' ? 'Sign in to continue.' : 'Create your account in seconds.'}
               </p>
             </div>
 
             {/* Pill tab switcher */}
-            <div className="mt-8 inline-flex p-1 bg-muted rounded-full">
+            <div className="mt-7 inline-flex p-1 bg-muted rounded-full">
               <button
                 type="button"
                 onClick={() => { setTab('signin'); setError(null) }}
@@ -171,7 +188,7 @@ function SignInInner({ stats }: { stats: Stats }) {
               </button>
             </div>
 
-            <div className="mt-7">
+            <div className="mt-6">
               {tab === 'signin' ? (
                 <form onSubmit={handleSignIn} className="space-y-4">
                   <div>
