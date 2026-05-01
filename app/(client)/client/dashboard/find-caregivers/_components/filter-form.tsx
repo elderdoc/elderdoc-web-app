@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation'
 import { useCallback, useRef, useState } from 'react'
 import { CARE_TYPES, CERTIFICATIONS, US_STATES } from '@/lib/constants'
 import { SelectField } from '@/components/select-field'
-import { MapPin, DollarSign, Briefcase, ArrowUp, ArrowDown } from 'lucide-react'
+import { MapPin, DollarSign, Briefcase, ArrowUp, ArrowDown, X } from 'lucide-react'
 
 interface Props {
   activeRequests: { id: string; title: string | null; careType: string }[]
@@ -31,25 +31,20 @@ const EXPERIENCE_OPTIONS = [
 const CARE_TYPE_OPTIONS = CARE_TYPES.map((ct) => ({ value: ct.key, label: ct.label }))
 const STATE_OPTIONS = US_STATES.map((s) => ({ value: s, label: s }))
 
-// Distance cycles: '' → 'distance-asc' → 'distance-desc' → ''
+// Cycles forward only — X button clears
 function nextDistanceSort(cur?: string) {
   if (!cur || !cur.startsWith('distance')) return 'distance-asc'
-  if (cur === 'distance-asc') return 'distance-desc'
-  return undefined
+  return 'distance-desc'
 }
 
-// Price cycles: '' → 'price-asc' → 'price-desc' → ''
 function nextPriceSort(cur?: string) {
   if (!cur || !cur.startsWith('price')) return 'price-asc'
-  if (cur === 'price-asc') return 'price-desc'
-  return undefined
+  return 'price-desc'
 }
 
-// Jobs cycles: '' → 'jobs-desc' → 'jobs-asc' → ''
 function nextJobsSort(cur?: string) {
   if (!cur || !cur.startsWith('jobs')) return 'jobs-desc'
-  if (cur === 'jobs-desc') return 'jobs-asc'
-  return undefined
+  return 'jobs-asc'
 }
 
 export function FilterForm({ activeRequests, currentFilters }: Props) {
@@ -138,46 +133,68 @@ export function FilterForm({ activeRequests, currentFilters }: Props) {
         {/* Distance toggle */}
         <div className="flex flex-col gap-1">
           <span className="text-xs font-medium text-muted-foreground">Distance</span>
-          <button
-            type="button"
-            onClick={() => push({ sort: nextDistanceSort(sort) })}
-            className={[
-              'inline-flex h-9 items-center gap-1.5 rounded-[10px] border-2 px-3 text-[12.5px] font-medium transition-all',
-              sort?.startsWith('distance')
-                ? 'border-primary bg-primary/5 text-primary'
-                : 'border-border text-muted-foreground hover:border-primary/50 hover:text-foreground',
-            ].join(' ')}
-          >
-            <MapPin className="h-3.5 w-3.5 shrink-0" />
-            {sort === 'distance-asc' ? (
-              <><ArrowUp className="h-3 w-3" /> Nearest</>
-            ) : sort === 'distance-desc' ? (
-              <><ArrowDown className="h-3 w-3" /> Farthest</>
-            ) : 'Distance'}
-          </button>
+          <div className="inline-flex items-center">
+            <button
+              type="button"
+              onClick={() => push({ sort: nextDistanceSort(sort) })}
+              className={[
+                'inline-flex h-9 items-center gap-1.5 px-3 text-[12.5px] font-medium transition-all border-2',
+                sort?.startsWith('distance')
+                  ? 'rounded-l-[10px] rounded-r-none border-r-0 border-primary bg-primary/5 text-primary'
+                  : 'rounded-[10px] border-border text-muted-foreground hover:border-primary/50 hover:text-foreground',
+              ].join(' ')}
+            >
+              <MapPin className="h-3.5 w-3.5 shrink-0" />
+              {sort === 'distance-asc' ? (
+                <><ArrowUp className="h-3 w-3" /> Nearest</>
+              ) : sort === 'distance-desc' ? (
+                <><ArrowDown className="h-3 w-3" /> Farthest</>
+              ) : 'Distance'}
+            </button>
+            {sort?.startsWith('distance') && (
+              <button
+                type="button"
+                onClick={() => push({ sort: undefined })}
+                className="inline-flex h-9 w-7 items-center justify-center rounded-r-[10px] border-2 border-primary bg-primary/5 text-primary transition-all hover:bg-primary/15"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Price toggle + min/max inputs */}
         <div className="flex flex-col gap-1">
           <span className="text-xs font-medium text-muted-foreground">Price ($/hr)</span>
           <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => push({ sort: nextPriceSort(sort) })}
-              className={[
-                'inline-flex h-9 items-center gap-1.5 rounded-[10px] border-2 px-3 text-[12.5px] font-medium transition-all shrink-0',
-                sort?.startsWith('price')
-                  ? 'border-primary bg-primary/5 text-primary'
-                  : 'border-border text-muted-foreground hover:border-primary/50 hover:text-foreground',
-              ].join(' ')}
-            >
-              <DollarSign className="h-3.5 w-3.5 shrink-0" />
-              {sort === 'price-asc' ? (
-                <><ArrowUp className="h-3 w-3" /> Low</>
-              ) : sort === 'price-desc' ? (
-                <><ArrowDown className="h-3 w-3" /> High</>
-              ) : 'Price'}
-            </button>
+            <div className="inline-flex items-center shrink-0">
+              <button
+                type="button"
+                onClick={() => push({ sort: nextPriceSort(sort) })}
+                className={[
+                  'inline-flex h-9 items-center gap-1.5 px-3 text-[12.5px] font-medium transition-all border-2',
+                  sort?.startsWith('price')
+                    ? 'rounded-l-[10px] rounded-r-none border-r-0 border-primary bg-primary/5 text-primary'
+                    : 'rounded-[10px] border-border text-muted-foreground hover:border-primary/50 hover:text-foreground',
+                ].join(' ')}
+              >
+                <DollarSign className="h-3.5 w-3.5 shrink-0" />
+                {sort === 'price-asc' ? (
+                  <><ArrowUp className="h-3 w-3" /> Low</>
+                ) : sort === 'price-desc' ? (
+                  <><ArrowDown className="h-3 w-3" /> High</>
+                ) : 'Price'}
+              </button>
+              {sort?.startsWith('price') && (
+                <button
+                  type="button"
+                  onClick={() => push({ sort: undefined })}
+                  className="inline-flex h-9 w-7 items-center justify-center rounded-r-[10px] border-2 border-primary bg-primary/5 text-primary transition-all hover:bg-primary/15"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              )}
+            </div>
             <div className="relative">
               <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground text-xs">$</span>
               <input
@@ -206,24 +223,35 @@ export function FilterForm({ activeRequests, currentFilters }: Props) {
 
         {/* Jobs done toggle */}
         <div className="flex flex-col gap-1">
-          <span className="text-xs font-medium text-muted-foreground">Jobs done</span>
-          <button
-            type="button"
-            onClick={() => push({ sort: nextJobsSort(sort) })}
-            className={[
-              'inline-flex h-9 items-center gap-1.5 rounded-[10px] border-2 px-3 text-[12.5px] font-medium transition-all',
-              sort?.startsWith('jobs')
-                ? 'border-primary bg-primary/5 text-primary'
-                : 'border-border text-muted-foreground hover:border-primary/50 hover:text-foreground',
-            ].join(' ')}
-          >
-            <Briefcase className="h-3.5 w-3.5 shrink-0" />
-            {sort === 'jobs-desc' ? (
-              <><ArrowDown className="h-3 w-3" /> Most</>
-            ) : sort === 'jobs-asc' ? (
-              <><ArrowUp className="h-3 w-3" /> Fewest</>
-            ) : 'Jobs'}
-          </button>
+          <span className="text-xs font-medium text-muted-foreground">Jobs completed</span>
+          <div className="inline-flex items-center">
+            <button
+              type="button"
+              onClick={() => push({ sort: nextJobsSort(sort) })}
+              className={[
+                'inline-flex h-9 items-center gap-1.5 px-3 text-[12.5px] font-medium transition-all border-2',
+                sort?.startsWith('jobs')
+                  ? 'rounded-l-[10px] rounded-r-none border-r-0 border-primary bg-primary/5 text-primary'
+                  : 'rounded-[10px] border-border text-muted-foreground hover:border-primary/50 hover:text-foreground',
+              ].join(' ')}
+            >
+              <Briefcase className="h-3.5 w-3.5 shrink-0" />
+              {sort === 'jobs-desc' ? (
+                <><ArrowDown className="h-3 w-3" /> Most</>
+              ) : sort === 'jobs-asc' ? (
+                <><ArrowUp className="h-3 w-3" /> Fewest</>
+              ) : 'Jobs completed'}
+            </button>
+            {sort?.startsWith('jobs') && (
+              <button
+                type="button"
+                onClick={() => push({ sort: undefined })}
+                className="inline-flex h-9 w-7 items-center justify-center rounded-r-[10px] border-2 border-primary bg-primary/5 text-primary transition-all hover:bg-primary/15"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
