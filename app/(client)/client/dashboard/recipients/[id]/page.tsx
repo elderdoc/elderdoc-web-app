@@ -89,15 +89,17 @@ export default async function RecipientDetailPage({ params }: PageProps) {
           </div>
           <div className="relative z-10 px-6 sm:px-8 pb-6">
             {/* Avatar + action buttons */}
-            <div className="flex items-end justify-between gap-4 flex-wrap -mt-12">
-              {r.photoUrl ? (
-                <img src={r.photoUrl} alt={r.name} className="h-24 w-24 rounded-2xl object-cover ring-4 ring-card shadow-[0_8px_24px_-8px_rgba(15,20,16,0.2)]" />
-              ) : (
-                <div className="flex h-24 w-24 items-center justify-center rounded-2xl bg-primary text-[24px] font-bold text-primary-foreground ring-4 ring-card shadow-[0_8px_24px_-8px_rgba(15,77,52,0.4)]">
-                  {initials}
-                </div>
-              )}
-              <div className="flex gap-2 pb-1">
+            <div className="flex items-end justify-between gap-4 flex-wrap">
+              <div className="-mt-12">
+                {r.photoUrl ? (
+                  <img src={r.photoUrl} alt={r.name} className="h-24 w-24 rounded-2xl object-cover ring-4 ring-card shadow-[0_8px_24px_-8px_rgba(15,20,16,0.2)]" />
+                ) : (
+                  <div className="flex h-24 w-24 items-center justify-center rounded-2xl bg-primary text-[24px] font-bold text-primary-foreground ring-4 ring-card shadow-[0_8px_24px_-8px_rgba(15,77,52,0.4)]">
+                    {initials}
+                  </div>
+                )}
+              </div>
+              <div className="flex items-center gap-2 pb-1 pt-4">
                 <Link
                   href={`/client/dashboard/recipients/${r.id}/edit`}
                   className="inline-flex h-10 items-center gap-1.5 rounded-full border border-border bg-card px-4 text-[13.5px] font-medium hover:border-foreground/30 hover:bg-muted transition-all"
