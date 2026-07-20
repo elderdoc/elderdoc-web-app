@@ -5,7 +5,7 @@ import { payments } from '@/db/schema'
 import { eq } from 'drizzle-orm'
 import { revalidatePath } from 'next/cache'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY ?? 'sk_test_stub')
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_stub')
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET ?? ''
 
 export async function POST(req: NextRequest) {

@@ -2,7 +2,7 @@ import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand } fro
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 
 const s3 = new S3Client({
-  region: process.env.STORAGE_REGION ?? 'us-east-1',
+  region: process.env.STORAGE_REGION || 'us-east-1',
   endpoint: process.env.STORAGE_ENDPOINT,
   forcePathStyle: !!process.env.STORAGE_ENDPOINT,
   credentials: {
