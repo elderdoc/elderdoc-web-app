@@ -80,7 +80,7 @@ export async function POST(req: NextRequest) {
 
   await db
     .update(caregiverProfiles)
-    .set({ completedStep: Math.max(curr?.step ?? 0, 6) })
+    .set({ completedStep: Math.max(curr?.step ?? 0, 6), status: 'active' })
     .where(eq(caregiverProfiles.id, cg.profileId))
 
   return NextResponse.json({ success: true, completedStep: 6 })
