@@ -1,0 +1,376 @@
+'use client'
+
+import { useRouter } from 'next/navigation'
+import { useCallback, useRef, useState } from 'react'
+import { CERTIFICATIONS, LANGUAGES, US_STATES } from '@/lib/constants'
+import type { CareType } from '@/lib/care-types'
+import { SelectField } from '@/components/select-field'
+import { MapPin, DollarSign, Briefcase, ArrowUp, ArrowDown, X } from 'lucide-react'
+
+interface Props {
+  activeRequests: { id: string; title: string | null; careType: string }[]
+  currentFilters: {
+    careType?: string
+    state?: string
+    rateMin?: string
+    rateMax?: string
+    certifications?: string[]
+    languages?: string[]
+    experience?: string
+    sort?: string
+    page?: string
+  }
+  careTypes: CareType[]
+}
+
+const EXPERIENCE_OPTIONS = [
+  { value: '1 year',    label: '1 year' },
+  { value: '2 years',   label: '2 years' },
+  { value: '3 years',   label: '3 years' },
+  { value: '5 years',   label: '5 years' },
+  { value: '10+ years', label: '10+ years' },
+]
+
+const STATE_OPTIONS = US_STATES.map((s) => ({ value: s, label: s }))
+
+function nextDistanceSort(cur?: string) {
+  if (!cur || !cur.startsWith('distance')) return 'distance-asc'
+  return 'distance-desc'
+}
+function nextPriceSort(cur?: string) {
+  if (!cur || !cur.startsWith('price')) return 'price-asc'
+  return 'price-desc'
+}
+function nextJobsSort(cur?: string) {
+  if (!cur || !cur.startsWith('jobs')) return 'jobs-desc'
+  return 'jobs-asc'
+}
+
+export function FilterForm({ activeRequests, currentFilters, careTypes }: Props) {
+  const router = useRouter()
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const careTypeOptions = careTypes.map((ct) => ({ value: ct.key, label: ct.label }))
+  const [showCertFilter, setShowCertFilter] = useState(
+    (currentFilters.certifications?.length ?? 0) > 0
+  )
+  const [showLangFilter, setShowLangFilter] = useState(
+    (currentFilters.languages?.length ?? 0) > 0
+  )
+
+  const buildParams = useCallback(
+    (overrides: Record<string, string | string[] | undefined>) => {
+      const params = new URLSearchParams()
+      const merged: Record<string, string | string[] | undefined> = {
+        careType:      currentFilters.careType,
+        state:         currentFilters.state,
+        rateMin:       currentFilters.rateMin,
+        rateMax:       currentFilters.rateMax,
+        certifications: currentFilters.certifications,
+        languages:     currentFilters.languages,
+        experience:    currentFilters.experience,
+        sort:          currentFilters.sort,
+        page:          currentFilters.page,
+        ...overrides,
+      }
+      if (merged.careType)    params.set('careType',    merged.careType as string)
+      if (merged.state)       params.set('state',       merged.state as string)
+      if (merged.rateMin)     params.set('rateMin',     merged.rateMin as string)
+      if (merged.rateMax)     params.set('rateMax',     merged.rateMax as string)
+      if (merged.experience)  params.set('experience',  merged.experience as string)
+      if (merged.sort)        params.set('sort',        merged.sort as string)
+      if (merged.page)        params.set('page',        merged.page as string)
+      const certs = merged.certifications as string[] | undefined
+      if (certs?.length)      params.set('certifications', certs.join(','))
+      const langs = merged.languages as string[] | undefined
+      if (langs?.length)      params.set('languages', langs.join(','))
+      return params.toString()
+    },
+    [currentFilters],
+  )
+
+  function push(overrides: Record<string, string | string[] | undefined>) {
+    const qs = buildParams({ ...overrides, page: undefined })
+    router.push(`/client/dashboard/find-caregivers${qs ? `?${qs}` : ''}`)
+  }
+
+  function pushDebounced(overrides: Record<string, string | undefined>) {
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(() => push(overrides), 300)
+  }
+
+  function toggleCert(key: string) {
+    const cur = currentFilters.certifications ?? []
+    const next = cur.includes(key) ? cur.filter(c => c !== key) : [...cur, key]
+    push({ certifications: next.length ? next : undefined })
+  }
+
+  function toggleLang(key: string) {
+    const cur = currentFilters.languages ?? []
+    const next = cur.includes(key) ? cur.filter(l => l !== key) : [...cur, key]
+    push({ languages: next.length ? next : undefined })
+  }
+
+  const sort  = currentFilters.sort
+  const certs = currentFilters.certifications ?? []
+  const langs = currentFilters.languages ?? []
+
+  const hasActiveFilters = !!(
+    currentFilters.careType || currentFilters.state || currentFilters.experience ||
+    currentFilters.rateMin || currentFilters.rateMax ||
+    certs.length > 0 || langs.length > 0
+  )
+
+  return (
+    <div className="space-y-5">
+      {/* Row 1: care type + state + experience */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div>
+          <label className="block text-xs font-medium mb-1">Care Type</label>
+          <SelectField
+            options={[{ value: '', label: 'Any' }, ...careTypeOptions]}
+            value={currentFilters.careType ?? ''}
+            onChange={(val) => push({ careType: val || undefined })}
+            placeholder="Any"
+          />
+        </div>
+        <div>
+          <label className="block text-xs font-medium mb-1">State</label>
+          <SelectField
+            options={[{ value: '', label: 'Any' }, ...STATE_OPTIONS]}
+            value={currentFilters.state ?? ''}
+            onChange={(val) => push({ state: val || undefined })}
+            placeholder="Any"
+          />
+        </div>
+        <div>
+          <label className="block text-xs font-medium mb-1">Experience</label>
+          <SelectField
+            options={[{ value: '', label: 'Any' }, ...EXPERIENCE_OPTIONS]}
+            value={currentFilters.experience ?? ''}
+            onChange={(val) => push({ experience: val || undefined })}
+            placeholder="Any"
+          />
+        </div>
+      </div>
+
+      {/* Row 2: sort toggle buttons + price inputs */}
+      <div className="flex flex-wrap items-end gap-3">
+        {/* Distance toggle */}
+        <div className="flex flex-col gap-1">
+          <span className="text-xs font-medium text-muted-foreground">Distance</span>
+          <div className="inline-flex items-center">
+            <button
+              type="button"
+              onClick={() => push({ sort: nextDistanceSort(sort) })}
+              className={[
+                'inline-flex h-9 items-center gap-1.5 px-3 text-[12.5px] font-medium transition-all border-2',
+                sort?.startsWith('distance')
+                  ? 'rounded-l-[10px] rounded-r-none border-r-0 border-primary bg-primary/5 text-primary'
+                  : 'rounded-[10px] border-border text-muted-foreground hover:border-primary/50 hover:text-foreground',
+              ].join(' ')}
+            >
+              <MapPin className="h-3.5 w-3.5 shrink-0" />
+              {sort === 'distance-asc' ? (
+                <><ArrowUp className="h-3 w-3" /> Nearest</>
+              ) : sort === 'distance-desc' ? (
+                <><ArrowDown className="h-3 w-3" /> Farthest</>
+              ) : 'Distance'}
+            </button>
+            {sort?.startsWith('distance') && (
+              <button
+                type="button"
+                onClick={() => push({ sort: undefined })}
+                className="inline-flex h-9 w-7 items-center justify-center rounded-r-[10px] border-2 border-primary bg-primary/5 text-primary transition-all hover:bg-primary/15"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Price toggle + min/max inputs */}
+        <div className="flex flex-col gap-1">
+          <span className="text-xs font-medium text-muted-foreground">Price ($/hr)</span>
+          <div className="flex items-center gap-2">
+            <div className="inline-flex items-center shrink-0">
+              <button
+                type="button"
+                onClick={() => push({ sort: nextPriceSort(sort) })}
+                className={[
+                  'inline-flex h-9 items-center gap-1.5 px-3 text-[12.5px] font-medium transition-all border-2',
+                  sort?.startsWith('price')
+                    ? 'rounded-l-[10px] rounded-r-none border-r-0 border-primary bg-primary/5 text-primary'
+                    : 'rounded-[10px] border-border text-muted-foreground hover:border-primary/50 hover:text-foreground',
+                ].join(' ')}
+              >
+                <DollarSign className="h-3.5 w-3.5 shrink-0" />
+                {sort === 'price-asc' ? (
+                  <><ArrowUp className="h-3 w-3" /> Low</>
+                ) : sort === 'price-desc' ? (
+                  <><ArrowDown className="h-3 w-3" /> High</>
+                ) : 'Price'}
+              </button>
+              {sort?.startsWith('price') && (
+                <button
+                  type="button"
+                  onClick={() => push({ sort: undefined })}
+                  className="inline-flex h-9 w-7 items-center justify-center rounded-r-[10px] border-2 border-primary bg-primary/5 text-primary transition-all hover:bg-primary/15"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              )}
+            </div>
+            <div className="relative">
+              <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground text-xs">$</span>
+              <input
+                type="number"
+                min={0}
+                defaultValue={currentFilters.rateMin ?? ''}
+                onChange={(e) => pushDebounced({ rateMin: e.target.value || undefined })}
+                placeholder="Min"
+                className="h-9 w-20 rounded-[10px] border border-border bg-background pl-6 pr-2 text-[12.5px] focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/30"
+              />
+            </div>
+            <span className="text-xs text-muted-foreground">–</span>
+            <div className="relative">
+              <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground text-xs">$</span>
+              <input
+                type="number"
+                min={0}
+                defaultValue={currentFilters.rateMax ?? ''}
+                onChange={(e) => pushDebounced({ rateMax: e.target.value || undefined })}
+                placeholder="Max"
+                className="h-9 w-20 rounded-[10px] border border-border bg-background pl-6 pr-2 text-[12.5px] focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/30"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Jobs done toggle */}
+        <div className="flex flex-col gap-1">
+          <span className="text-xs font-medium text-muted-foreground">Jobs completed</span>
+          <div className="inline-flex items-center">
+            <button
+              type="button"
+              onClick={() => push({ sort: nextJobsSort(sort) })}
+              className={[
+                'inline-flex h-9 items-center gap-1.5 px-3 text-[12.5px] font-medium transition-all border-2',
+                sort?.startsWith('jobs')
+                  ? 'rounded-l-[10px] rounded-r-none border-r-0 border-primary bg-primary/5 text-primary'
+                  : 'rounded-[10px] border-border text-muted-foreground hover:border-primary/50 hover:text-foreground',
+              ].join(' ')}
+            >
+              <Briefcase className="h-3.5 w-3.5 shrink-0" />
+              {sort === 'jobs-desc' ? (
+                <><ArrowDown className="h-3 w-3" /> Most</>
+              ) : sort === 'jobs-asc' ? (
+                <><ArrowUp className="h-3 w-3" /> Fewest</>
+              ) : 'Jobs completed'}
+            </button>
+            {sort?.startsWith('jobs') && (
+              <button
+                type="button"
+                onClick={() => push({ sort: undefined })}
+                className="inline-flex h-9 w-7 items-center justify-center rounded-r-[10px] border-2 border-primary bg-primary/5 text-primary transition-all hover:bg-primary/15"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Certifications */}
+      <div>
+        <label className="flex items-center gap-2 cursor-pointer select-none mb-2">
+          <input
+            type="checkbox"
+            checked={showCertFilter}
+            onChange={e => {
+              setShowCertFilter(e.target.checked)
+              if (!e.target.checked) push({ certifications: undefined })
+            }}
+            className="h-4 w-4 rounded border-input accent-primary"
+          />
+          <span className="text-xs font-medium">Special certifications needed</span>
+          {certs.length > 0 && (
+            <span className="inline-flex items-center justify-center h-4 min-w-4 rounded-full bg-primary text-[10px] font-medium text-primary-foreground px-1">
+              {certs.length}
+            </span>
+          )}
+        </label>
+        {showCertFilter && (
+          <div className="flex flex-wrap gap-2 mt-1">
+            {CERTIFICATIONS.map(c => (
+              <button
+                key={c.key}
+                type="button"
+                onClick={() => toggleCert(c.key)}
+                className={[
+                  'inline-flex h-8 items-center rounded-[8px] border-2 px-3 text-[12px] font-medium transition-colors',
+                  certs.includes(c.key)
+                    ? 'border-primary bg-primary/5 text-primary'
+                    : 'border-border text-muted-foreground hover:border-primary/50 hover:text-foreground',
+                ].join(' ')}
+              >
+                {c.label}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Widen search tip */}
+      {hasActiveFilters && (
+        <div className="flex items-center gap-2.5 rounded-[10px] border border-blue-200 bg-blue-50 px-4 py-2.5">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 text-blue-500">
+            <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
+          </svg>
+          <p className="text-[12.5px] text-blue-800">
+            <span className="font-semibold">Tip:</span> Not finding the right fit? Try selecting fewer filters to widen your search.
+          </p>
+        </div>
+      )}
+
+      {/* Languages required */}
+      <div>
+        <label className="flex items-center gap-2 cursor-pointer select-none mb-2">
+          <input
+            type="checkbox"
+            checked={showLangFilter}
+            onChange={e => {
+              setShowLangFilter(e.target.checked)
+              if (!e.target.checked) push({ languages: undefined })
+            }}
+            className="h-4 w-4 rounded border-input accent-primary"
+          />
+          <span className="text-xs font-medium">Language required</span>
+          {langs.length > 0 && (
+            <span className="inline-flex items-center justify-center h-4 min-w-4 rounded-full bg-primary text-[10px] font-medium text-primary-foreground px-1">
+              {langs.length}
+            </span>
+          )}
+        </label>
+        {showLangFilter && (
+          <div className="flex flex-wrap gap-2 mt-1">
+            {LANGUAGES.map(l => (
+              <button
+                key={l.key}
+                type="button"
+                onClick={() => toggleLang(l.key)}
+                className={[
+                  'inline-flex h-8 items-center rounded-[8px] border-2 px-3 text-[12px] font-medium transition-colors',
+                  langs.includes(l.key)
+                    ? 'border-primary bg-primary/5 text-primary'
+                    : 'border-border text-muted-foreground hover:border-primary/50 hover:text-foreground',
+                ].join(' ')}
+              >
+                {l.label}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}

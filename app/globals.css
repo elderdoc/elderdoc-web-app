@@ -1,0 +1,204 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  /* Re-export runtime tokens */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /* Brand layer */
+  --color-cream: var(--cream);
+  --color-cream-deep: var(--cream-deep);
+  --color-ink: var(--ink);
+  --color-forest: var(--forest);
+  --color-forest-deep: var(--forest-deep);
+  --color-forest-soft: var(--forest-soft);
+  --color-sage: var(--sage);
+
+  /* Typography */
+  --font-display: 'Geist', system-ui, -apple-system, sans-serif;
+  --font-sans: 'Geist', system-ui, -apple-system, sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, Menlo, monospace;
+  --font-serif: 'Instrument Serif', Georgia, serif;
+
+  /* Shadows — soft and confident */
+  --shadow-sm: 0 1px 2px rgba(15, 20, 16, 0.04);
+  --shadow-card: 0 1px 3px rgba(15, 20, 16, 0.04), 0 1px 2px rgba(15, 20, 16, 0.03);
+  --shadow-elevated: 0 4px 12px -4px rgba(15, 20, 16, 0.08), 0 2px 4px rgba(15, 20, 16, 0.04);
+  --shadow-modal: 0 24px 48px -12px rgba(15, 20, 16, 0.18), 0 4px 12px rgba(15, 20, 16, 0.06);
+  --shadow-green: 0 8px 24px -8px rgba(15, 77, 52, 0.32);
+
+  /* Radius — soft, modern */
+  --radius: 0.625rem;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
+  --radius-card: 14px;
+  --radius-input: 10px;
+  --radius-button: 999px;
+  --radius-pill: 999px;
+  --radius-modal: 16px;
+}
+
+:root {
+  /* Warm modern palette — gentle and trustworthy */
+  --cream:        #FCFAF7;
+  --cream-deep:   #F4F0E8;
+  --ink:          #131816;
+  --forest:       #1A6B4A;
+  --forest-deep:  #0E4D34;
+  --forest-soft:  #E6EFEB;
+  --sage:         #6F8C75;
+
+  --background:           var(--cream);
+  --foreground:           var(--ink);
+  --card:                 #FFFFFF;
+  --card-foreground:      var(--ink);
+  --popover:              #FFFFFF;
+  --popover-foreground:   var(--ink);
+
+  --primary:              var(--forest);
+  --primary-foreground:   #FFFFFF;
+  --secondary:            #F4F0E8;
+  --secondary-foreground: var(--ink);
+
+  --muted:                #F2EEE6;
+  --muted-foreground:     #6B6759;
+
+  --accent:               var(--forest-soft);
+  --accent-foreground:    var(--forest-deep);
+
+  --destructive:          #B14444;
+  --destructive-foreground: #FFFFFF;
+
+  --border:               #E8E2D4;
+  --input:                #DDD6C5;
+  --ring:                 var(--forest);
+}
+
+.dark {
+  --background:           #0E1612;
+  --foreground:           #F0EAD9;
+  --card:                 #16201B;
+  --card-foreground:      #F0EAD9;
+  --popover:              #16201B;
+  --popover-foreground:   #F0EAD9;
+  --primary:              #6FAA8A;
+  --primary-foreground:   #0E1612;
+  --secondary:            #1F2C26;
+  --secondary-foreground: #F0EAD9;
+  --muted:                #1B2620;
+  --muted-foreground:     #9C9483;
+  --accent:               #1F2C26;
+  --accent-foreground:    #F0EAD9;
+  --destructive:          #D17878;
+  --destructive-foreground: #0E1612;
+  --border:               rgba(240, 234, 217, 0.1);
+  --input:                rgba(240, 234, 217, 0.15);
+  --ring:                 #6FAA8A;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-sans);
+    line-height: 1.55;
+    font-feature-settings: 'cv11';
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+    font-weight: 600;
+  }
+
+  /* Tabular nums on data */
+  .tabular-nums, code, kbd, samp, time {
+    font-feature-settings: 'tnum' on;
+    font-variant-numeric: tabular-nums;
+  }
+
+  *, *::before, *::after {
+    transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform;
+    transition-timing-function: cubic-bezier(0.32, 0.72, 0, 1);
+    transition-duration: 200ms;
+  }
+
+  ::selection {
+    background: var(--forest-soft);
+    color: var(--forest-deep);
+  }
+
+  /* Soft scrollbars */
+  ::-webkit-scrollbar { width: 12px; height: 12px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 999px;
+    border: 3px solid var(--background);
+  }
+  ::-webkit-scrollbar-thumb:hover { background: var(--input); }
+}
+
+@layer components {
+  /* Section eyebrow — small clear label */
+  .eyebrow {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--forest-deep);
+    letter-spacing: 0;
+  }
+
+  /* Dotted card dashed border helper */
+  .dashed-card {
+    background-image: linear-gradient(45deg, var(--cream-deep) 25%, transparent 25%, transparent 75%, var(--cream-deep) 75%);
+  }
+}
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes scale-in {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.animate-rise { animation: rise 500ms cubic-bezier(0.32, 0.72, 0, 1) both; }
+.animate-fade-in { animation: fade-in 400ms cubic-bezier(0.32, 0.72, 0, 1) both; }
+.animate-scale-in { animation: scale-in 300ms cubic-bezier(0.32, 0.72, 0, 1) both; }
