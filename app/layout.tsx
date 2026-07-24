@@ -1,15 +1,10 @@
 import type { Metadata } from 'next'
 import { Geist, Geist_Mono, Instrument_Serif } from 'next/font/google'
-import dynamic from 'next/dynamic'
 import './globals.css'
 import { ToastProvider } from '@/components/toast'
 import { auth } from '@/auth'
 import { getAppKnowledge } from '@/lib/knowledge-cache'
-
-const SupportChatWidget = dynamic(
-  () => import('@/components/support-chat/support-chat-widget').then((m) => ({ default: m.SupportChatWidget })),
-  { ssr: false },
-)
+import { SupportChatLoader } from './support-chat-loader'
 
 const geist = Geist({
   subsets: ['latin'],
@@ -49,7 +44,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     >
       <body className="min-h-screen bg-background text-foreground antialiased">
         <ToastProvider>{children}</ToastProvider>
-        {session?.user?.id && <SupportChatWidget isLoggedIn={true} />}
+        {session?.user?.id && <SupportChatLoader />}
       </body>
     </html>
   )
