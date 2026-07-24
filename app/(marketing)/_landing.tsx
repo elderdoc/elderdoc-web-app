@@ -1,3 +1,4 @@
+import Image from 'next/image'
 import Link from 'next/link'
 import { Shield, Heart, CheckCircle2, ArrowRight, Star, Quote, Clock, MapPin, Lock, Award, MessageCircle } from 'lucide-react'
 
@@ -174,10 +175,13 @@ export function Landing({ stats }: { stats: LandingStats }) {
                 <div className="relative">
                   {/* Main hero image */}
                   <div className="relative aspect-[4/5] sm:aspect-[5/6] rounded-[28px] overflow-hidden bg-[var(--cream-deep)] shadow-[0_24px_60px_-20px_rgba(15,20,16,0.25)]">
-                    <img
+                    <Image
                       src="https://images.unsplash.com/photo-1581579186913-45ac3e6efe93?auto=format&fit=crop&w=1000&q=80"
                       alt="Caregiver with elderly woman"
-                      className="h-full w-full object-cover"
+                      fill
+                      priority
+                      className="object-cover"
+                      sizes="(max-width: 1024px) 100vw, (max-width: 1280px) 50vw, 42vw"
                     />
                     {/* Subtle gradient overlay */}
                     <div className="absolute inset-0 bg-gradient-to-t from-foreground/20 via-transparent to-transparent" />
@@ -191,7 +195,7 @@ export function Landing({ stats }: { stats: LandingStats }) {
                         'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=80&q=80',
                         'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=80&q=80',
                       ].map((u, i) => (
-                        <img key={i} src={u} alt="" className="h-8 w-8 rounded-full object-cover ring-2 ring-card" />
+                        <Image key={i} src={u} alt="" width={32} height={32} className="h-8 w-8 rounded-full object-cover ring-2 ring-card" />
                       ))}
                     </div>
                     <div>
@@ -211,7 +215,7 @@ export function Landing({ stats }: { stats: LandingStats }) {
                       &ldquo;Mom finally has someone she actually <span className="font-medium">trusts</span>.&rdquo;
                     </p>
                     <div className="mt-2 flex items-center gap-2">
-                      <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=80&q=80" alt="" className="h-6 w-6 rounded-full object-cover" />
+                      <Image src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=80&q=80" alt="" width={24} height={24} className="h-6 w-6 rounded-full object-cover" />
                       <div className="text-[11px] text-muted-foreground">Sarah K., Boston</div>
                     </div>
                   </div>
@@ -303,10 +307,12 @@ export function Landing({ stats }: { stats: LandingStats }) {
                 >
                   {/* Image */}
                   <div className="aspect-[4/5] rounded-[18px] overflow-hidden bg-[var(--cream-deep)] mb-5 relative">
-                    <img
+                    <Image
                       src={step.img}
                       alt=""
-                      className="h-full w-full object-cover transition-transform duration-700 group-hover/step:scale-105"
+                      fill
+                      className="object-cover transition-transform duration-700 group-hover/step:scale-105"
+                      sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 25vw"
                     />
                     <div className="absolute top-3 left-3 flex h-9 w-9 items-center justify-center rounded-full bg-card text-[14px] font-semibold tabular-nums shadow-[0_2px_8px_-2px_rgba(15,20,16,0.15)]">
                       {step.n}
@@ -360,7 +366,7 @@ export function Landing({ stats }: { stats: LandingStats }) {
                     &ldquo;{t.quote}&rdquo;
                   </p>
                   <div className="mt-6 flex items-center gap-3">
-                    <img src={t.img} alt="" className="h-10 w-10 rounded-full object-cover ring-2 ring-card shadow-sm" />
+                    <Image src={t.img} alt="" width={40} height={40} className="h-10 w-10 rounded-full object-cover ring-2 ring-card shadow-sm" />
                     <div>
                       <div className="text-[14px] font-semibold">{t.name}</div>
                       <div className="text-[12.5px] text-muted-foreground">{t.role}</div>
@@ -385,11 +391,13 @@ export function Landing({ stats }: { stats: LandingStats }) {
           <div className="relative mx-auto max-w-7xl px-6 lg:px-10">
             <div className="grid grid-cols-12 gap-8 lg:gap-12 items-center">
               <div className="col-span-12 lg:col-span-6">
-                <div className="aspect-[4/5] rounded-[24px] overflow-hidden">
-                  <img
+                <div className="relative aspect-[4/5] rounded-[24px] overflow-hidden">
+                  <Image
                     src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&w=1000&q=80"
                     alt="Caregiver portrait"
-                    className="h-full w-full object-cover"
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 1024px) 100vw, 50vw"
                   />
                 </div>
               </div>
@@ -485,10 +493,12 @@ export function Landing({ stats }: { stats: LandingStats }) {
             <div className="relative rounded-[28px] overflow-hidden">
               {/* Background image */}
               <div className="absolute inset-0">
-                <img
+                <Image
                   src="https://images.unsplash.com/photo-1576765608535-5f04d1e3f289?auto=format&fit=crop&w=1600&q=80"
                   alt=""
-                  className="h-full w-full object-cover"
+                  fill
+                  className="object-cover"
+                  sizes="100vw"
                 />
                 <div className="absolute inset-0 bg-gradient-to-r from-foreground via-foreground/85 to-foreground/40" />
               </div>
